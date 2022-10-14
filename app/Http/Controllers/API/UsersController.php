@@ -66,6 +66,7 @@ class UsersController extends BaseController
      */
 
     public function login(Request $request){
+        // dd($request->email);
         try {
             if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
                 $user = Auth::user();

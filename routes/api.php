@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UsersController;
+use App\Http\Controllers\API\VerificationCodesController;
+use App\Models\VerificationCodes;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,12 +23,11 @@ Route::controller(UsersController::class)->group(function(){
     Route::post('login', 'login');
 });
 
-/** --- Generate OTP What's App --- */
-
-Route::controller(AuthOtpController::class)->group(function(){
+/** --- Verification Codes --- */
+Route::controller(VerificationCodesController::class)->group(function(){
     Route::post('checkOtp/{user_id}', 'checkOtp');
-    Route::post('/generate/{user_id}', 'generate')->name('generateNewOtp');
-    Route::post('/regenerate/{user_id}', 'updateOtp')->name('regenerateOtp');
+    Route::get('/generate/{user_id}', 'generate')->name('generateNewOtp');
+    Route::get('/regenerate/{user_id}', 'updateOtp')->name('regenerateOtp');
 });
 
 Route::get('sendSMS', [App\Http\Controllers\API\TwilioSMSController::class, 'index']);
