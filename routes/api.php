@@ -20,10 +20,14 @@ use App\Models\VerificationCodes;
 /**--- Users --- */
 Route::controller(UsersController::class)->group(function(){
     Route::get('users', 'index');
-    Route::get('user/{id}', 'getUserById');
+    Route::get('users/detail/{id}', 'show');
     Route::post('register', 'register'); 
     Route::post('login', 'login');
-    Route::post('user/update', 'updateUser');
+    Route::put('users/update', 'update');
+    Route::delete('users/{id}', 'delete');
+
+    Route::get('users/trash', 'trash');
+    Route::post('users/restore/{id}', 'restore');
 });
 
 /** --- Verification Codes --- */
