@@ -23,8 +23,30 @@ class UsersController extends BaseController
 
     /** get all users */
     public function index(){
-        $users = User::all();
-        return $this->sendResponse($users, 'Displaying all users data');
+        try {
+            $users = User::all();
+            if (!$users) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            return $this->sendResponse($users, 'Displaying all users data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => $th]);
+        }
+        
+    }
+
+    public function getUserById($id)
+    {
+        try {
+            $user = User::where('id', $id)->first();
+            if (!$user) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            return $this->sendResponse($user, 'User detail by Id');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => $th]);
+        }
+        
     }
 
     public function register(Request $request){
