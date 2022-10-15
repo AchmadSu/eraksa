@@ -23,6 +23,7 @@ Route::controller(UsersController::class)->group(function(){
     Route::get('user/{id}', 'getUserById');
     Route::post('register', 'register'); 
     Route::post('login', 'login');
+    Route::post('user/update', 'updateUser');
 });
 
 /** --- Verification Codes --- */
