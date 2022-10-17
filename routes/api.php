@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UsersController;
+use App\Http\Controllers\API\VerificationCodesController;
+use App\Models\VerificationCodes;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,13 +19,19 @@ use App\Http\Controllers\API\UsersController;
 
 /**--- Users --- */
 Route::controller(UsersController::class)->group(function(){
+    Route::get('users', 'index');
+    Route::get('users/detail/{id}', 'show');
     Route::post('register', 'register'); 
     Route::post('login', 'login');
+    Route::put('users/update', 'update');
+    Route::delete('users/{id}', 'delete');
+
+    Route::get('users/trash', 'trash');
+    Route::post('users/restore/{id}', 'restore');
 });
 
-/** --- Generate OTP What's App --- */
-
-Route::controller(AuthOtpController::class)->group(function(){
+/** --- Verification Codes --- */
+Route::controller(VerificationCodesController::class)->group(function(){
     Route::post('checkOtp/{user_id}', 'checkOtp');
     Route::post('/generate/{user_id}', 'generate')->name('generateNewOtp');
     Route::post('/regenerate/{user_id}', 'updateOtp')->name('regenerateOtp');
@@ -33,6 +41,9 @@ Route::get('sendSMS', [App\Http\Controllers\API\TwilioSMSController::class, 'ind
 
 Route::middleware('auth:sanctum')->group(function(){
     Route::resource('products', ProductController::class);
+    Route::resource('roles', RoleController::class);
+    Route::resource('users', UserController::class);
+    // Route::resource()
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
