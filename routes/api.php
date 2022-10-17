@@ -41,6 +41,9 @@ Route::get('sendSMS', [App\Http\Controllers\API\TwilioSMSController::class, 'ind
 
 Route::middleware('auth:sanctum')->group(function(){
     Route::resource('products', ProductController::class);
+    Route::resource('roles', RoleController::class);
+    Route::resource('users', UserController::class);
+    // Route::resource()
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

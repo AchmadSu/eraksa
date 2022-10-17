@@ -4,10 +4,13 @@ namespace App\Http\Controllers\API;
 
 use Carbon\Carbon;
 use App\Models\User;
+use Twilio\Rest\Client;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
+use App\Models\VerificationCodes;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Model\Roles;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +18,7 @@ use Illuminate\Support\Facades\Validator;
 use Symfony\Component\Console\Input\Input;
 use App\Http\Controllers\API\BaseController;
 use App\Http\Controllers\API\AuthOtpController as AuthOtpController;
+use Throwable;
 
 class UsersController extends BaseController
 {
@@ -131,10 +135,11 @@ class UsersController extends BaseController
                 return $this->sendError('Account deleted.', ['error' => 'Akun anda sudah dihapus, silakan hubungi admin!']);
             }
 
-            $checkUserStatus = User::where('status', $request->email)->where('status', '0')->first();
-            if (!$checkUserStatus) {
-                return $this->sendError('Invalid OTP', ['error' => 'OTP anda belum tervalidasi, silakan masukkan kode OTP dengan benar!']);
-            }
+            // $checkUserStatus = User::where('email', $request->email)->where('status', '0')->first();
+            // // dd($checkUserStatus);exit();
+            // if ($checkUserStatus) {
+            //     return $this->sendError('Invalid OTP', ['error' => 'OTP anda belum tervalidasi, silakan masukkan kode OTP dengan benar!']);
+            // }
 
             if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
                 $user = Auth::user();
@@ -173,16 +178,22 @@ class UsersController extends BaseController
 
             $checkUser = User::where('id', $id)->first();
             if (!$checkUser) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+                return $this->sendError('Error!', ['error' => 'Data user tidak ditemukan!']);
             }
 
             $checkPassword = Auth::attempt(['id' => $id, 'password' => $old_password]);
-            // $checkPassword = User::where('id', $id)->where('password', $old_password)->first();
-            // dd($checkPassword);exit();
+            $checkPhone = Auth::attempt(['id' => $id, 'phone' => $phone]);
 
-            if ($checkPassword == NULL) {
-                return $this->sendError('Error!', ['error' => 'Password yang anda masukkan salah!']);
+            // dd($checkPhone);
+
+            if (!$checkPassword) {
+                return $this->sendError('Error!', $credentials = ['Password yang anda masukkan salah!']);
             }
+
+            if (!$checkPhone) {
+                $this->updatePhone("$id", $phone);
+            }
+
             if ($new_password == NULL) {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
@@ -280,5 +291,51 @@ class UsersController extends BaseController
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
+    }
+
+    /** Generate OTP Update Phone Number*/ 
+    protected function updatePhone(String $user_id, String $phone){
+        try {
+            if(!VerificationCodes::where('user_id', $user_id)->first()){
+                return $this->sendError('Error!', ['error'=>'Tidak ada data user!']);
+            } 
+            $setStatus = User::where('id', $user_id)->update(['status' => '0']);
+            $otp = rand(100000, 999999);
+            $updateVerificationCode = VerificationCodes::where('user_id', $user_id)->update([
+                'otp' => $otp,
+                'expired_at' => Carbon::now()->addMinutes(10),
+            ]);
+            
+            $strPhone = "$phone";
+            $strOtp = "$otp";
+            // return var_dump($strOtp);
+            $this->sendWhatsappNotification($strOtp, $strPhone);
+            // $tokenMsg = Str::random(15);
+            // $success['token'] = $tokenMsg;
+            // $success['message'] = "Kode OTP telah dikirim. Silakan buka pesan di What's App anda!";
+            // return $this->sendResponse($success, 'Kode OTP Terkirim.');   
+        } catch (\Throwable $e) {
+            return $this->sendError('Error!', ['error' => $e]);
+        }
+    }
+
+    /** Sending OTP via Whats App */
+    private function sendWhatsappNotification(String $otp, String $recipient){
+        try {
+            $tokenMsg = Str::random(15);
+            $sid    = getenv("TWILIO_SID"); 
+            $token  = getenv("TWILIO_AUTH_TOKEN"); 
+            $twilio = new Client($sid, $token); 
+            $message = $twilio->messages 
+                            ->create("whatsapp:$recipient", // to 
+                                    array( 
+                                        "from" => "whatsapp:".getenv("TWILIO_NUMBER"),       
+                                        "body" => "ERAKSA\nAssets Management System\n\nKode OTP anda: *$otp*.\n\nKode ini hanya akan berlaku dalam 10 menit ke depan. Jangan bagikan kode ini kepada siapapun!$tokenMsg" 
+                                    ) 
+                            );
+        } catch (\Throwable $e) {
+            return $this->sendError('Error!', ['error' => $e]);
+        }
+        
     }
 }

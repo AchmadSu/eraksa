@@ -110,7 +110,7 @@ class VerificationCodesController extends BaseController
                 return $this->sendError('OTP Kadaluarsa.', ['error'=>'Otp sudah melewati batas waktu penginputan!']);
             } else {
                 $this->setValidate($user_id);
-                User::where('id', $user_id)->update(['status' => '1']);
+                $this->setUserStatus($user_id);
                 $success['status'] = "Nomor tervalidasi";
                 $success['token'] = $verificationCode->createToken('MyApp')->plainTextToken;
                 return $this->sendResponse($success, 'Kode OTP Benar.');
@@ -127,6 +127,17 @@ class VerificationCodesController extends BaseController
         try {
             $updateValidate = VerificationCodes::where('user_id', $user_id)->update(array('status' => "1"));
             return $updateValidate;
+        } catch (Exception $e) {
+            return $this->sendError('Error!', ['error' => $e]);
+        }
+        
+    }
+
+    /** Set User Status to validate */
+    private function setUserStatus(String $user_id){
+        try {
+            $updateStatus = User::where('id', $user_id)->update(['status' => '1']);
+            return $updateStatus;
         } catch (Exception $e) {
             return $this->sendError('Error!', ['error' => $e]);
         }
