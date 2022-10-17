@@ -164,7 +164,7 @@ class UsersController extends BaseController
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-
+    
     public function update(Request $request)
     {
         try {
@@ -175,15 +175,14 @@ class UsersController extends BaseController
             $new_password = $request->new_password;
             $confirm_new_password = $request->confirm_new_password;
             $phone = $request->phone;
-
+            
             $checkUser = User::where('id', $id)->first();
             if (!$checkUser) {
                 return $this->sendError('Error!', ['error' => 'Data user tidak ditemukan!']);
             }
-
+            
             $checkPassword = Auth::attempt(['id' => $id, 'password' => $old_password]);
-            $checkPhone = Auth::attempt(['id' => $id, 'phone' => $phone]);
-
+            $checkPhone = User::where('id', $id)->where('phone', $phone)->first();
             // dd($checkPhone);
 
             if (!$checkPassword) {
@@ -220,12 +219,11 @@ class UsersController extends BaseController
                     'password' => bcrypt($new_password),
                 );
             }
-
             if ($validator->fails()) {
                 return $this->sendError('Error!', $validator->errors());
             }
 
-            // dd($data['name']);exit();
+            // dd($data);exit();
 
             $updateDataUser = User::where('id', $request->id)->update($data);
             $tokenMsg = Str::random(15);
@@ -299,11 +297,13 @@ class UsersController extends BaseController
             if(!VerificationCodes::where('user_id', $user_id)->first()){
                 return $this->sendError('Error!', ['error'=>'Tidak ada data user!']);
             } 
-            $setStatus = User::where('id', $user_id)->update(['status' => '0']);
+            $setStatusUser = User::where('id', $user_id)->update(['status' => '0']);
+            $setStatusOtp = VerificationCodes::where('user_id', $user_id)->update(['status' => '0']);
             $otp = rand(100000, 999999);
             $updateVerificationCode = VerificationCodes::where('user_id', $user_id)->update([
                 'otp' => $otp,
                 'expired_at' => Carbon::now()->addMinutes(10),
+                'status' => '0',
             ]);
             
             $strPhone = "$phone";
