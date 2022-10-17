@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers\API;
 
-use App\User;
 use Exception;
 use Carbon\Carbon;
+use App\Models\User;
 use Twilio\Rest\Client;
 // use GuzzleHttp\Client;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\VerificationCode;
 // use App\Http\Controllers\Controller;
+use App\Models\VerificationCodes;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Models\VerificationCodes;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Enum;
 use App\Providers\RouteServiceProvider;
@@ -110,6 +110,7 @@ class VerificationCodesController extends BaseController
                 return $this->sendError('OTP Kadaluarsa.', ['error'=>'Otp sudah melewati batas waktu penginputan!']);
             } else {
                 $this->setValidate($user_id);
+                User::where('id', $user_id)->update(['status' => '1']);
                 $success['status'] = "Nomor tervalidasi";
                 $success['token'] = $verificationCode->createToken('MyApp')->plainTextToken;
                 return $this->sendResponse($success, 'Kode OTP Benar.');

@@ -24,10 +24,9 @@ class UsersController extends BaseController
      * @return \Illuminate\Http\Response
     */
 
-    /** get all users */
     public function index(){
         try {
-            $users = User::all()->where('deleted_at', NULL);
+            $users = User::all();
             if (!$users) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
@@ -38,7 +37,12 @@ class UsersController extends BaseController
         
     }
 
-    /** get all users in trash */
+    /** 
+     * Get All Users in Trash
+     * 
+     * @return \Illuminate\Http\Response
+    */
+
     public function trash(){
         try {
             $users = DB::table('users')->whereNotNull('deleted_at')->get();
@@ -125,6 +129,11 @@ class UsersController extends BaseController
             $checkUserDeleted = User::where('email', $request->email)->where('deleted_at', NULL)->first();
             if (!$checkUserDeleted) {
                 return $this->sendError('Account deleted.', ['error' => 'Akun anda sudah dihapus, silakan hubungi admin!']);
+            }
+
+            $checkUserStatus = User::where('status', $request->email)->where('status', '0')->first();
+            if (!$checkUserStatus) {
+                return $this->sendError('Invalid OTP', ['error' => 'OTP anda belum tervalidasi, silakan masukkan kode OTP dengan benar!']);
             }
 
             if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
