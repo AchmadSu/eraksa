@@ -30,6 +30,17 @@ class UsersController extends BaseController
      * @return \Illuminate\Http\Response
     */
 
+    public function __construct()
+    {
+        $this->middleware('permission:get all users', ['only' => ['index']]);
+        $this->middleware('permission:get user by id', ['only' => ['show']]);
+        $this->middleware('permission:get users in trash', ['only' => ['trash']]);
+        $this->middleware('permission:delete user', ['only' => ['delete']]);
+        $this->middleware('permission:restore user', ['only' => ['restore']]);
+        // $this->middleware('permission:unpublish posts', ['only' => ['unpublish']]);
+    }
+
+
     public function index(){
         try {
             // dd(Auth::user());
@@ -170,7 +181,8 @@ class UsersController extends BaseController
 
     public function register(Request $request){
         try {
-            if (Auth::check()) {
+            // dd(Auth::user());
+            if (Auth::user()) {
                 return $this->sendError('Account is already login.', ['error' => 'Akun anda sedang aktif!']);
             }
             $validator = Validator::make($request->all(),[
