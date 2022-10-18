@@ -25,9 +25,10 @@ Route::controller(UsersController::class)->group(function(){
     Route::post('login', 'login');
     Route::put('users/update', 'update');
     Route::delete('users/{id}', 'delete');
+    Route::post('logout', 'logout');
 
     Route::get('users/trash', 'trash');
-    Route::post('users/restore/{id}', 'restore');
+    Route::put('users/restore/{id}', 'restore');
 });
 
 /** --- Verification Codes --- */
@@ -37,15 +38,15 @@ Route::controller(VerificationCodesController::class)->group(function(){
     Route::post('/regenerate/{user_id}', 'updateOtp')->name('regenerateOtp');
 });
 
-Route::get('sendSMS', [App\Http\Controllers\API\TwilioSMSController::class, 'index']);
+// Route::get('sendSMS', [App\Http\Controllers\API\TwilioSMSController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function(){
-    Route::resource('products', ProductController::class);
-    Route::resource('roles', RoleController::class);
-    Route::resource('users', UserController::class);
+    // Route::resource('products', ProductController::class);
+    // Route::resource('roles', RoleController::class);
+    Route::resource('users', UsersController::class);
     // Route::resource()
 });
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });

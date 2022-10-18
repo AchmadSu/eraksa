@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use DB;
+use Throwable;
 use Carbon\Carbon;
 use App\Models\User;
 use Twilio\Rest\Client;
@@ -9,7 +11,6 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use App\Models\VerificationCodes;
-use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Model\Roles;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -18,10 +19,11 @@ use Illuminate\Support\Facades\Validator;
 use Symfony\Component\Console\Input\Input;
 use App\Http\Controllers\API\BaseController;
 use App\Http\Controllers\API\AuthOtpController as AuthOtpController;
-use Throwable;
+use Illuminate\Support\Facades\Session;
 
 class UsersController extends BaseController
 {
+    /** ATTRIVE USER DATA */
     /** 
      * Get All Users
      * 
@@ -30,6 +32,11 @@ class UsersController extends BaseController
 
     public function index(){
         try {
+            // dd(Auth::user());
+            if (!Auth::check()) {
+                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            }
+            // dd(Auth::user()->name);
             $users = User::all();
             if (!$users) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -49,9 +56,16 @@ class UsersController extends BaseController
 
     public function trash(){
         try {
-            $users = DB::table('users')->whereNotNull('deleted_at')->get();
-            // dd($users);exit();
-            if (!$users) {
+            // dd(Auth::check());
+            if (!Auth::check()) {
+                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            }
+            // \DB::enableQueryLog();
+            $users = User::onlyTrashed()->get();
+            // $users = DB::table('users')->whereNotNull('deleted_at')->get();
+            // dd(\DB::getQueryLog());
+            // var_dump($users->isEmpty());exit();
+            if ($users->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             return $this->sendResponse($users, 'Displaying all trash data');
@@ -71,7 +85,12 @@ class UsersController extends BaseController
     public function show(Int $id)
     {
         try {
-            $user = User::where('id', $id)->where('deleted_at', NULL)->first();
+            if (!Auth::check()) {
+                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            }
+            // \DB::enableQueryLog();
+            $user = User::where('id', $id)->first();
+            // dd(\DB::getQueryLog());
             if (!$user) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
@@ -82,6 +101,66 @@ class UsersController extends BaseController
         
     }
 
+    /** LOGIN AND LOGOUT */
+
+    /**
+     * Login API
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function login(Request $request){
+        try {
+            if (Auth::check()) {
+                return $this->sendError('Account is already login.', ['error' => 'Akun anda sedang aktif!']);
+            }
+            $checkUserDeleted = User::where('email', $request->email)->where('deleted_at', NULL)->first();
+            if (!$checkUserDeleted) {
+                return $this->sendError('Account deleted.', ['error' => 'Akun anda sudah dihapus, silakan hubungi admin!']);
+            }
+
+            // $checkUserStatus = User::where('email', $request->email)->where('status', '0')->first();
+            // // dd($checkUserStatus);exit();
+            // if ($checkUserStatus) {
+            //     return $this->sendError('Invalid OTP', ['error' => 'OTP anda belum tervalidasi, silakan masukkan kode OTP dengan benar!']);
+            // }
+
+            if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
+                $user = Auth::user();
+                $success['token'] = $user->createToken('MyApp')->plainTextToken;
+                $success['name'] = $user->name;
+                return $this->sendResponse($success, 'Anda berhasil masuk!');
+    
+                // return Route::resource('user', UserController::class);
+            } else {
+                return $this->sendError('Unauthorised.', ['error'=> 'Email atau Password salah!']);
+            }
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!'.$th, ['error' => $th]);
+        }
+        
+    }
+
+    /**
+     * Logout API.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
+        $success['msg'] = "Logged out!";
+        $success['token'] = Str::random(15);
+        return $this->sendResponse($success, 'Anda berhasil keluar!');
+    }
+
+    /** CRUD USER */
+    
     /**
      * Register API
      * 
@@ -91,6 +170,9 @@ class UsersController extends BaseController
 
     public function register(Request $request){
         try {
+            if (Auth::check()) {
+                return $this->sendError('Account is already login.', ['error' => 'Akun anda sedang aktif!']);
+            }
             $validator = Validator::make($request->all(),[
                 'name' => 'required',
                 'email' => 'required|email',
@@ -104,8 +186,10 @@ class UsersController extends BaseController
             }
     
             $input = $request->all();
-    
-            if(User::where('email', $input['email'])->first()){
+            // \DB::enableQueryLog();
+            $checkEmail = User::where('email', $input['email'])->first();
+            // dd(\DB::getQueryLog());
+            if($checkEmail){
                 return $this->sendError('Data sudah ada!', ['error'=>'Email sudah terdaftar, silakan login!']);
             }
     
@@ -122,43 +206,6 @@ class UsersController extends BaseController
     }
 
     /**
-     * Login API
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-
-    public function login(Request $request){
-        try {
-            $checkUserDeleted = User::where('email', $request->email)->where('deleted_at', NULL)->first();
-            if (!$checkUserDeleted) {
-                return $this->sendError('Account deleted.', ['error' => 'Akun anda sudah dihapus, silakan hubungi admin!']);
-            }
-
-            // $checkUserStatus = User::where('email', $request->email)->where('status', '0')->first();
-            // // dd($checkUserStatus);exit();
-            // if ($checkUserStatus) {
-            //     return $this->sendError('Invalid OTP', ['error' => 'OTP anda belum tervalidasi, silakan masukkan kode OTP dengan benar!']);
-            // }
-
-            if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
-                $user = Auth::user();
-                $success['token'] = $user->createToken('MyApp')->plainTextToken;
-                $success['name'] = $user->name;
-                $success['id'] = $user->id;
-                return $this->sendResponse($success, 'Anda berhasil masuk!');
-    
-                // return Route::resource('user', UserController::class);
-            } else {
-                return $this->sendError('Unauthorised.', ['error'=> 'Email atau Password salah!']);
-            }
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error' => $th]);
-        }
-        
-    }
-    
-    /**
      * Update User
      * 
      * @param \Illuminate\Http\Request $request
@@ -168,6 +215,9 @@ class UsersController extends BaseController
     public function update(Request $request)
     {
         try {
+            if (!Auth::check()) {
+                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            }
             $id = $request->id;
             $name = $request->name;
             $email = $request->email;
@@ -247,9 +297,14 @@ class UsersController extends BaseController
     public function delete(Int $id)
     {
         try {
+            if (!Auth::check()) {
+                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            }
+            // \DB::enableQueryLog();
             $checkUser = User::where('id', $id)->first();
+            // dd(\DB::getQueryLog());
             // dd($checkUser);exit();
-            if($checkUser == false){
+            if(!$checkUser){
                 return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
             }
             $deleteUser = User::where('id', $id)->update(['deleted_at' => Carbon::now()]);
@@ -273,13 +328,19 @@ class UsersController extends BaseController
 
     public function restore(Int $id)
     {
+        // return "Cek";exit();
         try {
-            $checkUser = DB::table('users')->whereNotNull('deleted_at')->where('id', $id)->get();
-            // dd(!$checkUser);exit();
-            if($checkUser == false){
+            if (!Auth::check()) {
+                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            }
+            // \DB::enableQueryLog();
+            $checkUser = User::onlyTrashed()->where('id', $id)->get();
+            // dd(\DB::getQueryLog());
+            
+            if($checkUser->isEmpty()){
                 return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
             }
-            $restoreUser = DB::table('users')->whereNotNull('deleted_at')->where('id', $id)->update(['deleted_at' => null]);
+            $restoreUser = User::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
             $tokenMsg = Str::random(15);
             $success['token'] = $tokenMsg;
             $success['message'] = "Restore user data";
@@ -291,9 +352,14 @@ class UsersController extends BaseController
         }
     }
 
+    /** GENERATE OTP AND SEND OTP TO NUMBER ACCOUNT */
+
     /** Generate OTP Update Phone Number*/ 
     protected function updatePhone(String $user_id, String $phone){
         try {
+            if (!Auth::check()) {
+                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            }
             if(!VerificationCodes::where('user_id', $user_id)->first()){
                 return $this->sendError('Error!', ['error'=>'Tidak ada data user!']);
             } 
@@ -325,12 +391,13 @@ class UsersController extends BaseController
             $tokenMsg = Str::random(15);
             $sid    = getenv("TWILIO_SID"); 
             $token  = getenv("TWILIO_AUTH_TOKEN"); 
-            $twilio = new Client($sid, $token); 
+            $twilio = new Client($sid, $token);
+            $text   = "ERAKSA\nAssets Management System\n\nKode OTP anda: *$otp*.\n\nKode ini hanya akan berlaku dalam 10 menit ke depan. Jangan bagikan kode ini kepada siapapun!$tokenMsg"; 
             $message = $twilio->messages 
                             ->create("whatsapp:$recipient", // to 
                                     array( 
                                         "from" => "whatsapp:".getenv("TWILIO_NUMBER"),       
-                                        "body" => "ERAKSA\nAssets Management System\n\nKode OTP anda: *$otp*.\n\nKode ini hanya akan berlaku dalam 10 menit ke depan. Jangan bagikan kode ini kepada siapapun!$tokenMsg" 
+                                        "body" => "$text",
                                     ) 
                             );
         } catch (\Throwable $e) {
