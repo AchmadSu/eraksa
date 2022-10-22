@@ -164,10 +164,10 @@ class UsersController extends BaseController
             if (Auth::user()) {
                 return $this->sendError('Account is already login.', ['error' => 'Akun anda sedang aktif!']);
             }
-            // $checkUserDeleted = User::where('email', $request->email)->where('deleted_at', NULL)->first();
-            // if (!$checkUserDeleted) {
-            //     return $this->sendError('Account deleted.', ['error' => 'Akun anda sudah dihapus, silakan hubungi admin!']);
-            // }
+            $checkUserDeleted = User::where('email', $request->email)->where('deleted_at', NULL)->first();
+            if (!$checkUserDeleted) {
+                return $this->sendError('Account deleted.', ['error' => 'Akun anda sudah dihapus, silakan hubungi admin!']);
+            }
 
             // $checkUserStatus = User::where('email', $request->email)->where('status', '0')->first();
             // // dd($checkUserStatus);exit();
@@ -225,7 +225,7 @@ class UsersController extends BaseController
                     'email' => 'required|email',
                     'password' => 'required',
                     'confirm_pass' => 'required|same:password',
-                    'phone' => ['required','numeric'],
+                    'phone' => 'required|numeric|unique:users,phone',
                 ]);
         
                 if ($validator->fails()){
@@ -370,6 +370,39 @@ class UsersController extends BaseController
     }
 
     /**
+     * Put User into trash
+     * 
+     * @param \Illuminate\Http\Request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function deleteMultiple(Request $request)
+    {
+        try {
+            if (Auth::user()) {
+                // \DB::enableQueryLog();
+                $ids = $request->ids;
+                $checkUsers = User::whereIn('id', $ids)->get();
+                // dd(\DB::getQueryLog());
+                // dd($checkUsers);exit();
+                if($checkUsers->isEmpty()){
+                    return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
+                }
+                $deleteUsers = User::whereIn('id', $ids)->update(['deleted_at' => Carbon::now()]);
+                $tokenMsg = Str::random(15);
+                $success['token'] = $tokenMsg;
+                $success['message'] = "Delete data";
+                $success['data'] = $deleteUsers;
+                return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
+            } else {
+                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            }
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', $th);
+        }
+    }
+
+    /**
      * Restore User from trash
      * 
      * @param int $id
@@ -394,6 +427,40 @@ class UsersController extends BaseController
                 $success['message'] = "Restore user data";
                 $success['data'] = $restoreUser;
                 return $this->sendResponse($success, 'Data dipulihkan');
+            } else {
+                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            }
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', $th);
+        }
+    }
+
+    /**
+     * Restore User from trash
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function restoreMultiple(Request $request)
+    {
+        // return "Cek";exit();
+        try {
+            if (Auth::user()) {
+                $ids = $request->ids;
+                // \DB::enableQueryLog();
+                $checkUser = User::onlyTrashed()->whereIn('id', $ids)->get();
+                // dd(\DB::getQueryLog());
+                
+                if($checkUser->isEmpty()){
+                    return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
+                }
+                $restoreUser = User::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
+                $tokenMsg = Str::random(15);
+                $success['token'] = $tokenMsg;
+                $success['message'] = "Restore selected user data";
+                $success['data'] = $restoreUser;
+                return $this->sendResponse($success, 'Data terpilih dipulihkan');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
             }
