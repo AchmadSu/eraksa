@@ -19,9 +19,19 @@ class Assets extends Model
         'code',
         'category_id',
         'user_id',
-        'date',
         'condition',
         'status',
-        'placement_id'
+        'date',
+        'placement_id',
+        'deleted_at'
     ];
+
+    // /**
+    //  * The attributes that should be cast.
+    //  *
+    //  * @var array<string, string>
+    //  */
+    // protected $casts = [
+    //     'date' => 'datetime',
+    // ];
 }

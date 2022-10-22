@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\AssetsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UsersController;
@@ -19,17 +20,36 @@ use App\Models\VerificationCodes;
 
 /**--- Users --- */
 Route::controller(UsersController::class)->group(function(){
+    Route::post('register', 'register'); 
+    Route::post('login', 'login');
+    Route::post('logout', 'logout');
+
     Route::get('users/getAll', 'index');
     Route::get('users/getAllSuperAdmin', 'getSuperAdmin');
     Route::get('users/detail/{id}', 'show');
-    Route::post('register', 'register'); 
-    Route::post('login', 'login');
+
     Route::put('users/update', 'update');
-    Route::delete('users/{id}', 'delete');
-    Route::post('logout', 'logout');
+    Route::delete('users/delete/{id}', 'delete');
+    Route::delete('users/deleteMultiple', 'deleteMultiple');
 
     Route::get('users/trash', 'trash');
     Route::put('users/restore/{id}', 'restore');
+    Route::put('users/restoreMultiple', 'restoreMultiple');
+});
+
+/**--- Assets --- */
+Route::controller(AssetsController::class)->group(function(){
+    Route::get('assets/getAll', 'index');
+    Route::get('assets/detail/{id}', 'show');
+    
+    Route::post('assets/create', 'create'); 
+    Route::put('assets/update', 'update');
+    Route::delete('assets/delete/{id}', 'delete');
+    Route::delete('assets/deleteMultiple', 'deleteMultiple');
+
+    Route::get('assets/trash', 'trash');
+    Route::put('assets/restore/{id}', 'restore');
+    Route::put('assets/restoreMultiple', 'restoreMultiple');
 });
 
 /** --- Verification Codes --- */
