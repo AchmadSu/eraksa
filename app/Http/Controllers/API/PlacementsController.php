@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use Carbon\Carbon;
 use App\Models\Assets;
 use App\Models\CategoryAssets;
+use App\Models\Placements;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -14,12 +15,12 @@ use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\API\BaseController;
 
-class CategoryAssetsController extends BaseController
+class PlacementsController extends BaseController
 {
-    /** ATTRIVE CATEGORY ASSETS DATA */
+    /** ATTRIVE PLACEMENT ASSETS DATA */
 
     /** 
-     * Get All Category Assets
+     * Get All Placement Assets
      * 
      * @return \Illuminate\Http\Response
     */
@@ -30,13 +31,13 @@ class CategoryAssetsController extends BaseController
             if (Auth::user()) {
                 // dd(Auth::user()->name);
                 // \DB::enableQueryLog();
-                $categoryAssets = CategoryAssets::all();
+                $placements = Placements::all();
                 // dd(\DB::getQueryLog());
-                // dd($categoryAssets);
-                if ($categoryAssets->isEmpty()) {
+                // dd($placements);
+                if ($placements->isEmpty()) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
                 }
-                return $this->sendResponse($categoryAssets, 'Displaying all category assets data');
+                return $this->sendResponse($placements, 'Displaying all assets data');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
             }
@@ -46,7 +47,7 @@ class CategoryAssetsController extends BaseController
     }
 
     /** 
-     * Get All Category Assets in Trash
+     * Get All Placement Assets in Trash
      * 
      * @return \Illuminate\Http\Response
     */
@@ -57,12 +58,12 @@ class CategoryAssetsController extends BaseController
             if (Auth::user()) {
                 // dd(Auth::user());
                 // \DB::enableQueryLog();
-                $categoryAssets = CategoryAssets::onlyTrashed()->get();
+                $placements = Placements::onlyTrashed()->get();
                 // dd(\DB::getQueryLog());
-                if ($categoryAssets->isEmpty()) {
+                if ($placements->isEmpty()) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
                 }
-                return $this->sendResponse($categoryAssets, 'Displaying all trash data');
+                return $this->sendResponse($placements, 'Displaying all trash data');
 
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -73,7 +74,7 @@ class CategoryAssetsController extends BaseController
     }
 
     /** 
-     * Get Category Asset By Id
+     * Get Placement Asset By Id
      * 
      * @param Int $id
      * @return \Illuminate\Http\Response
@@ -84,12 +85,12 @@ class CategoryAssetsController extends BaseController
         try {
             if (Auth::user()) {
                 // \DB::enableQueryLog();
-                $categoryAsset = CategoryAssets::where('id', $id)->first();
+                $placements = Placements::where('id', $id)->first();
                 // dd(\DB::getQueryLog());
-                if (!$categoryAsset) {
+                if (!$placements) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
                 }
-                return $this->sendResponse($categoryAsset, 'Category Asset detail by Id');
+                return $this->sendResponse($placements, 'Asset detail by Id');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
             }
@@ -99,10 +100,10 @@ class CategoryAssetsController extends BaseController
         
     }
 
-    /** CRUD CATEGORY ASSETS */
+    /** CRUD PLACEMENT ASSETS */
     
     /**
-     * Create Category Asset
+     * Create Placement Asset
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -112,8 +113,7 @@ class CategoryAssetsController extends BaseController
         try {
             if (Auth::user()) {
                 $validator = Validator::make($request->all(),[
-                    'name' => 'required|unique:category_assets,name',
-                    'description' => 'required|min:5'
+                    'name' => 'required|unique:placements,name|min:3',
                 ]);
         
                 if ($validator->fails()){
@@ -121,10 +121,10 @@ class CategoryAssetsController extends BaseController
                 }
         
                 $input = $request->all();
-                $createCategory = CategoryAssets::create($input);
+                $createCategory = Placements::create($input);
                 $success['token'] = Str::random(15);
         
-                return $this->sendResponse($success, 'Category Asset ditambahkan!');
+                return $this->sendResponse($success, 'Placement ditambahkan!');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Anda harus masuk terlebih dulu!']);
             }    
@@ -134,7 +134,7 @@ class CategoryAssetsController extends BaseController
     }
 
     /**
-     * Update Category Asset
+     * Update Placement Asset
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -145,40 +145,22 @@ class CategoryAssetsController extends BaseController
         try {
             if (Auth::user()) {
                 $id = $request->id;
-                $new_name = $request->new_name;
-                $description = $request->description;
-                
-                if ($new_name == NULL) {
-                    $validator = Validator::make($request->all(), [
-                        'description' => 'required|min:5',
-                    ]);
-                                
-                    $data = array(
-                        'description' => $description
-                    );
+                $name = $request->name;
+                $validator = Validator::make($request->all(),[
+                    'name' => 'required|unique:placements,name|min:3'
+                ]);
                     
-                } elseif ($new_name != NULL) {
-                    $validator = Validator::make($request->all(),[
-                        'new_name' => 'required|unique:category_assets,name',
-                        'description' => 'required|min:5'
-                    ]);
-                                
-                    $data = array(
-                        'name' => $new_name,
-                        'description' => $description
-                    );
-                }
                 if ($validator->fails()) {
                     return $this->sendError('Error!', $validator->errors());
                 }
 
                 // dd($data);exit();
 
-                $updateDataCategoryAssets = CategoryAssets::where('id', $id)->update($data);
+                $updateDataPlacements = Placements::where('id', $id)->update(['name' => $name]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
-                $success['message'] = "Category Asset berhasil diupdate!";
-                $success['data'] = $updateDataCategoryAssets;
+                $success['message'] = "Placement berhasil diupdate!";
+                $success['data'] = $updateDataPlacements;
                 return $this->sendResponse($success, 'Update data');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -200,12 +182,12 @@ class CategoryAssetsController extends BaseController
         try {
             if (Auth::user()) {
                 // \DB::enableQueryLog();
-                $checkCategoryAsset = CategoryAssets::where('id', $id)->first();
+                $checkCategoryAsset = Placements::where('id', $id)->first();
                 // dd(\DB::getQueryLog());
                 if(!$checkCategoryAsset){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
                 }
-                $deleteCategoryAsset = CategoryAssets::where('id', $id)->update(['deleted_at' => Carbon::now()]);
+                $deleteCategoryAsset = Placements::where('id', $id)->update(['deleted_at' => Carbon::now()]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Delete data";
@@ -233,17 +215,17 @@ class CategoryAssetsController extends BaseController
                 $ids = $request->ids;
                 // dd($ids);
                 // \DB::enableQueryLog();
-                $checkCategoryAssets = CategoryAssets::whereIn('id', $ids)->get();
+                $checkPlacements = Placements::whereIn('id', $ids)->get();
                 // dd(\DB::getQueryLog());
-                // dd($checkCategoryAssets);
-                if($checkCategoryAssets->isEmpty()){
+                // dd($checkPlacements);
+                if($checkPlacements->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
                 }
-                $deleteCategoryAssets = CategoryAssets::whereIn('id', $ids)->update(['deleted_at' => Carbon::now()]);
+                $deletePlacements = Placements::whereIn('id', $ids)->update(['deleted_at' => Carbon::now()]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Delete selected data";
-                $success['data'] = $deleteCategoryAssets;
+                $success['data'] = $deletePlacements;
                 return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -266,16 +248,16 @@ class CategoryAssetsController extends BaseController
         try {
             if (Auth::user()) {
                 // \DB::enableQueryLog();
-                $checkCatgeoryAsset = CategoryAssets::onlyTrashed()->where('id', $id)->get();
+                $checkCatgeoryAsset = Placements::onlyTrashed()->where('id', $id)->get();
                 // dd(\DB::getQueryLog());
                 
                 if($checkCatgeoryAsset->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
                 }
-                $restoreCategoryAsset = CategoryAssets::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
+                $restoreCategoryAsset = Placements::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
-                $success['message'] = "Restore category asset data";
+                $success['message'] = "Restore placement data";
                 $success['data'] = $restoreCategoryAsset;
                 return $this->sendResponse($success, 'Data dipulihkan');
             } else {
@@ -300,16 +282,16 @@ class CategoryAssetsController extends BaseController
             if (Auth::user()) {
                 $ids = $request->ids;
                 // \DB::enableQueryLog();
-                $checkCategoryAssets = CategoryAssets::onlyTrashed()->whereIn('id', $ids)->get();
+                $checkPlacements = Placements::onlyTrashed()->whereIn('id', $ids)->get();
                 // dd(\DB::getQueryLog());
                 
-                if($checkCategoryAssets->isEmpty()){
+                if($checkPlacements->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
                 }
-                $restoreCategoryAsset = CategoryAssets::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
+                $restoreCategoryAsset = Placements::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
-                $success['message'] = "Restore category asset data";
+                $success['message'] = "Restore placement data";
                 $success['data'] = $restoreCategoryAsset;
                 return $this->sendResponse($success, 'Data dipulihkan');
             } else {
