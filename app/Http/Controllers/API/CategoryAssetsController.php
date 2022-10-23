@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use Carbon\Carbon;
 use App\Models\Assets;
+use App\Models\CategoryAssets;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -13,12 +14,12 @@ use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\API\BaseController;
 
-class AssetsController extends BaseController
+class CategoryAssetsController extends BaseController
 {
-    /** ATTRIVE ASSETS DATA */
+    /** ATTRIVE CATEGORY ASSETS DATA */
 
     /** 
-     * Get All Assets
+     * Get All Category Assets
      * 
      * @return \Illuminate\Http\Response
     */
@@ -29,7 +30,7 @@ class AssetsController extends BaseController
             if (Auth::user()) {
                 // dd(Auth::user()->name);
                 // \DB::enableQueryLog();
-                $assets = Assets::all();
+                $assets = CategoryAssets::all();
                 // dd(\DB::getQueryLog());
                 // dd($assets);
                 if ($assets->isEmpty()) {
@@ -45,7 +46,7 @@ class AssetsController extends BaseController
     }
 
     /** 
-     * Get All Assets in Trash
+     * Get All Category Assets in Trash
      * 
      * @return \Illuminate\Http\Response
     */
@@ -56,7 +57,7 @@ class AssetsController extends BaseController
             if (Auth::user()) {
                 // dd(Auth::user());
                 // \DB::enableQueryLog();
-                $assets = Assets::onlyTrashed()->get();
+                $assets = CategoryAssets::onlyTrashed()->get();
                 // dd(\DB::getQueryLog());
                 if ($assets->isEmpty()) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -72,7 +73,7 @@ class AssetsController extends BaseController
     }
 
     /** 
-     * Get Asset By Id
+     * Get Category Asset By Id
      * 
      * @param Int $id
      * @return \Illuminate\Http\Response
@@ -83,7 +84,7 @@ class AssetsController extends BaseController
         try {
             if (Auth::user()) {
                 // \DB::enableQueryLog();
-                $asset = Assets::where('id', $id)->first();
+                $asset = CategoryAssets::where('id', $id)->first();
                 // dd(\DB::getQueryLog());
                 if (!$asset) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -98,10 +99,10 @@ class AssetsController extends BaseController
         
     }
 
-    /** CRUD ASSETS */
+    /** CRUD CATEGORY ASSETS */
     
     /**
-     * Create Assets
+     * Create Category Asset
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -111,12 +112,8 @@ class AssetsController extends BaseController
         try {
             if (Auth::user()) {
                 $validator = Validator::make($request->all(),[
-                    'name' => 'required',
-                    'code' => 'required|unique:assets,code',
-                    'user_id' => 'required',
-                    'date' => 'required',
-                    'condition' => 'required',
-                    'status' => 'required',
+                    'name' => 'required|unique:category_assets,name',
+                    'description' => 'required|min:5'
                 ]);
         
                 if ($validator->fails()){
@@ -124,7 +121,7 @@ class AssetsController extends BaseController
                 }
         
                 $input = $request->all();
-                $createAsset = Assets::create($input);
+                $createCategory = CategoryAssets::create($input);
                 $success['token'] = Str::random(15);
         
                 return $this->sendResponse($success, 'Asset ditambahkan!');
@@ -137,7 +134,7 @@ class AssetsController extends BaseController
     }
 
     /**
-     * Update Asset
+     * Update Category Asset
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -148,53 +145,27 @@ class AssetsController extends BaseController
         try {
             if (Auth::user()) {
                 $id = $request->id;
-                $name = $request->name;
-                $new_code = $request->new_code;
-                $category_id = $request->category_id;
-                $user_id = $request->user_id;
-                $placement_id = $request->placement_id;
-                $date = $request->date;
-                $condition = $request->condition;
-                $status = $request->status;
+                $new_name = $request->new_name;
+                $description = $request->description;
                 
-                if ($new_code == NULL) {
+                if ($new_name == NULL) {
                     $validator = Validator::make($request->all(), [
-                        'name' => 'required',
-                        'user_id' => 'required',
-                        'date' => 'required',
-                        'condition' => 'required',
-                        'status' => 'required',
+                        'description' => 'required|min:5',
                     ]);
                                 
                     $data = array(
-                        'name' => $name,
-                        'category_id' => $category_id,
-                        'user_id' => $user_id,
-                        'placement_id' => $placement_id,
-                        'date' => $date,
-                        'condition' => $condition,
-                        'status' => $status,
+                        'description' => $description
                     );
                     
-                } elseif ($new_code != NULL) {
+                } elseif ($new_name != NULL) {
                     $validator = Validator::make($request->all(),[
-                        'name' => 'required',
-                        'user_id' => 'required',
-                        'new_code' => 'required|unique:assets,code',
-                        'date' => 'required',
-                        'condition' => 'required',
-                        'status' => 'required',
+                        'new_name' => 'required|unique:category_assets,name',
+                        'description' => 'required|min:5'
                     ]);
                                 
                     $data = array(
-                        'name' => $name,
-                        'code' => $new_code,
-                        'category_id' => $category_id,
-                        'user_id' => $user_id,
-                        'placement_id' => $placement_id,
-                        'date' => $date,
-                        'condition' => $condition,
-                        'status' => $status,
+                        'name' => $new_name,
+                        'description' => $description
                     );
                 }
                 if ($validator->fails()) {
@@ -203,11 +174,11 @@ class AssetsController extends BaseController
 
                 // dd($data);exit();
 
-                $updateDataAssets = Assets::where('id', $id)->update($data);
+                $updateDataCategoryAssets = CategoryAssets::where('id', $id)->update($data);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Asset berhasil diupdate!";
-                $success['data'] = $updateDataAssets;
+                $success['data'] = $updateDataCategoryAssets;
                 return $this->sendResponse($success, 'Update data');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -218,7 +189,7 @@ class AssetsController extends BaseController
     }
 
     /**
-     * Put Asset into trash
+     * Put Category Asset into trash
      * 
      * @param int $id
      * @return \Illuminate\Http\Response
@@ -229,16 +200,16 @@ class AssetsController extends BaseController
         try {
             if (Auth::user()) {
                 // \DB::enableQueryLog();
-                $checkAsset = Assets::where('id', $id)->first();
+                $checkCategoryAsset = CategoryAssets::where('id', $id)->first();
                 // dd(\DB::getQueryLog());
-                if(!$checkAsset){
+                if(!$checkCategoryAsset){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
                 }
-                $deleteAsset = Assets::where('id', $id)->update(['deleted_at' => Carbon::now()]);
+                $deleteCategoryAsset = CategoryAssets::where('id', $id)->update(['deleted_at' => Carbon::now()]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Delete data";
-                $success['data'] = $deleteAsset;
+                $success['data'] = $deleteCategoryAsset;
                 return $this->sendResponse($success, 'Data berhasil dihapus');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -249,7 +220,7 @@ class AssetsController extends BaseController
     }
 
     /**
-     * Put Multiple Assets into trash
+     * Put Multiple Category Asset into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -262,17 +233,17 @@ class AssetsController extends BaseController
                 $ids = $request->ids;
                 // dd($ids);
                 // \DB::enableQueryLog();
-                $checkAssets = Assets::whereIn('id', $ids)->get();
+                $checkCategoryAssets = CategoryAssets::whereIn('id', $ids)->get();
                 // dd(\DB::getQueryLog());
-                // dd($checkAssets);
-                if($checkAssets->isEmpty()){
+                // dd($checkCategoryAssets);
+                if($checkCategoryAssets->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
                 }
-                $deleteAssets = Assets::whereIn('id', $ids)->update(['deleted_at' => Carbon::now()]);
+                $deleteCategoryAssets = CategoryAssets::whereIn('id', $ids)->update(['deleted_at' => Carbon::now()]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Delete selected data";
-                $success['data'] = $deleteAssets;
+                $success['data'] = $deleteCategoryAssets;
                 return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -283,7 +254,7 @@ class AssetsController extends BaseController
     }
 
     /**
-     * Restore Asset from trash
+     * Restore Category Asset from trash
      * 
      * @param int $id
      * @return \Illuminate\Http\Response
@@ -295,17 +266,17 @@ class AssetsController extends BaseController
         try {
             if (Auth::user()) {
                 // \DB::enableQueryLog();
-                $checkAsset = Assets::onlyTrashed()->where('id', $id)->get();
+                $checkCatgeoryAsset = CategoryAssets::onlyTrashed()->where('id', $id)->get();
                 // dd(\DB::getQueryLog());
                 
-                if($checkAsset->isEmpty()){
+                if($checkCatgeoryAsset->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
                 }
-                $restoreAsset = Assets::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
+                $restoreCategoryAsset = CategoryAssets::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Restore asset data";
-                $success['data'] = $restoreAsset;
+                $success['data'] = $restoreCategoryAsset;
                 return $this->sendResponse($success, 'Data dipulihkan');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -316,7 +287,7 @@ class AssetsController extends BaseController
     }
 
     /**
-     * Restore Multiple Assetsx from trash
+     * Restore Multiple Category Asset from trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -329,17 +300,17 @@ class AssetsController extends BaseController
             if (Auth::user()) {
                 $ids = $request->ids;
                 // \DB::enableQueryLog();
-                $checkAssets = Assets::onlyTrashed()->whereIn('id', $ids)->get();
+                $checkCategoryAssets = CategoryAssets::onlyTrashed()->whereIn('id', $ids)->get();
                 // dd(\DB::getQueryLog());
                 
-                if($checkAssets->isEmpty()){
+                if($checkCategoryAssets->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
                 }
-                $restoreAsset = Assets::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
+                $restoreCategoryAsset = CategoryAssets::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Restore asset data";
-                $success['data'] = $restoreAsset;
+                $success['data'] = $restoreCategoryAsset;
                 return $this->sendResponse($success, 'Data dipulihkan');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);

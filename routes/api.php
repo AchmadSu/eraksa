@@ -1,11 +1,12 @@
 <?php
 
-use App\Http\Controllers\API\AssetsController;
 use Illuminate\Http\Request;
+use App\Models\VerificationCodes;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UsersController;
+use App\Http\Controllers\API\AssetsController;
+use App\Http\Controllers\API\CategoryAssetsController;
 use App\Http\Controllers\API\VerificationCodesController;
-use App\Models\VerificationCodes;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,6 +51,21 @@ Route::controller(AssetsController::class)->group(function(){
     Route::get('assets/trash', 'trash');
     Route::put('assets/restore/{id}', 'restore');
     Route::put('assets/restoreMultiple', 'restoreMultiple');
+});
+
+/**--- Category Assets --- */
+Route::controller(CategoryAssetsController::class)->group(function(){
+    Route::get('categoryAssets/getAll', 'index');
+    Route::get('categoryAssets/detail/{id}', 'show');
+    
+    Route::post('categoryAssets/create', 'create'); 
+    Route::put('categoryAssets/update', 'update');
+    Route::delete('categoryAssets/delete/{id}', 'delete');
+    Route::delete('categoryAssets/deleteMultiple', 'deleteMultiple');
+
+    Route::get('categoryAssets/trash', 'trash');
+    Route::put('categoryAssets/restore/{id}', 'restore');
+    Route::put('categoryAssets/restoreMultiple', 'restoreMultiple');
 });
 
 /** --- Verification Codes --- */
