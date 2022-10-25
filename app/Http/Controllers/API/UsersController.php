@@ -222,10 +222,10 @@ class UsersController extends BaseController
             if (!Auth::user()) {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
-                    'email' => 'required|email',
+                    'email' => 'required|email|unique:users,phone',
                     'password' => 'required',
                     'confirm_pass' => 'required|same:password',
-                    'phone' => ['required','numeric'],
+                    'phone' => 'required|numeric|unique:users,phone',
                 ]);
         
                 if ($validator->fails()){
@@ -300,17 +300,17 @@ class UsersController extends BaseController
                 if ($new_password == NULL) {
                     $validator = Validator::make($request->all(),[
                         'name' => 'required',
-                        'email' => 'required|email',
-                        'phone' => ['required','numeric'],
+                        'email' => 'required|email|unique:users,email',
+                        'phone' => 'required|numeric|unique:users,phone',
                     ]);
 
                 } elseif ($new_password != NULL) {
                     $validator = Validator::make($request->all(),[
                         'name' => 'required',
-                        'email' => 'required|email',
+                        'email' => 'required|email|unique:users,email',
                         'new_password' => 'required',
                         'confirm_new_password' => 'required|same:new_password',
-                        'phone' => ['required','numeric'],
+                        'phone' => 'required|numeric|unique:users,phone',
                     ]);
 
                     $updateDataUser->password = bcrypt($new_password);
