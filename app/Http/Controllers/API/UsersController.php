@@ -284,7 +284,7 @@ class UsersController extends BaseController
                 // dd($checkPhone);
 
                 if (!$checkPassword) {
-                    return $this->sendError('Error!', $credentials = ['Password yang anda masukkan salah!']);
+                    return $this->sendError('Error!', $credentials = ['Password lama yang anda masukkan salah!']);
                 }
 
                 if (!$checkPhone) {
