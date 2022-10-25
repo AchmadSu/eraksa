@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Assets extends Model
+class Assets extends Model implements Auditable
 {
+    use \OwenIt\Auditing\Auditable;
     use HasFactory, SoftDeletes;
     /**
      * the attributes that are mass assignable. 
@@ -25,6 +28,7 @@ class Assets extends Model
         'placement_id',
         'deleted_at'
     ];
+    protected $guarded = [];
 
     // /**
     //  * The attributes that should be cast.
