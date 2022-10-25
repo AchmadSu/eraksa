@@ -7,9 +7,11 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class VerificationCodes extends Model implements JWTSubject
+class VerificationCodes extends Model implements JWTSubject, Auditable
 {
+    use \OwenIt\Auditing\Auditable;
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = ['user_id', 'otp', 'expired_at', 'status'];

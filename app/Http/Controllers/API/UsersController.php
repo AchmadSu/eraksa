@@ -164,10 +164,10 @@ class UsersController extends BaseController
             if (Auth::user()) {
                 return $this->sendError('Account is already login.', ['error' => 'Akun anda sedang aktif!']);
             }
-            $checkUserDeleted = User::where('email', $request->email)->where('deleted_at', NULL)->first();
-            if (!$checkUserDeleted) {
-                return $this->sendError('Account deleted.', ['error' => 'Akun anda sudah dihapus, silakan hubungi admin!']);
-            }
+            // $checkUserDeleted = User::where('email', $request->email)->where('deleted_at', NULL)->first();
+            // if (!$checkUserDeleted) {
+            //     return $this->sendError('Account deleted.', ['error' => 'Akun anda sudah dihapus, silakan hubungi admin!']);
+            // }
 
             // $checkUserStatus = User::where('email', $request->email)->where('status', '0')->first();
             // // dd($checkUserStatus);exit();
@@ -225,7 +225,7 @@ class UsersController extends BaseController
                     'email' => 'required|email',
                     'password' => 'required',
                     'confirm_pass' => 'required|same:password',
-                    'phone' => 'required|numeric|unique:users,phone',
+                    'phone' => ['required','numeric'],
                 ]);
         
                 if ($validator->fails()){
@@ -266,7 +266,10 @@ class UsersController extends BaseController
     {
         try {
             if (Auth::user()) {
+                // dd(Auth::user()->name);
                 $id = $request->id;
+                $updateDataUser = User::find($id);
+                
                 $name = $request->name;
                 $email = $request->email;
                 $old_password = $request->old_password;
@@ -284,11 +287,14 @@ class UsersController extends BaseController
                 // dd($checkPhone);
 
                 if (!$checkPassword) {
-                    return $this->sendError('Error!', $credentials = ['Password yang anda masukkan salah!']);
+                    return $this->sendError('Error!', $credentials = ['Password lama yang anda masukkan salah!']);
                 }
 
                 if (!$checkPhone) {
+                    // dd($checkPhone);
                     $this->updatePhone("$id", $phone);
+                    $updateDataUser->phone = $phone;
+                    $updateDataUser->status = "0";
                 }
 
                 if ($new_password == NULL) {
@@ -297,11 +303,7 @@ class UsersController extends BaseController
                         'email' => 'required|email',
                         'phone' => ['required','numeric'],
                     ]);
-                    $data = array(
-                        'name' => $name,
-                        'email' => $email,
-                        'phone' => $phone,
-                    );
+
                 } elseif ($new_password != NULL) {
                     $validator = Validator::make($request->all(),[
                         'name' => 'required',
@@ -310,20 +312,19 @@ class UsersController extends BaseController
                         'confirm_new_password' => 'required|same:new_password',
                         'phone' => ['required','numeric'],
                     ]);
-                    $data = array(
-                        'name' => $name,
-                        'email' => $email,
-                        'phone' => $phone,
-                        'password' => bcrypt($new_password),
-                    );
+
+                    $updateDataUser->password = bcrypt($new_password);
                 }
                 if ($validator->fails()) {
                     return $this->sendError('Error!', $validator->errors());
                 }
 
+                $updateDataUser->name = $name;
+                $updateDataUser->email = $email;
+
                 // dd($data);exit();
 
-                $updateDataUser = User::where('id', $request->id)->update($data);
+                $updateDataUser->save();
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Data berhasil diupdate!";
@@ -355,7 +356,11 @@ class UsersController extends BaseController
                 if(!$checkUser){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
                 }
-                $deleteUser = User::where('id', $id)->update(['deleted_at' => Carbon::now()]);
+
+                $deleteUser = User::find($id);
+                $deleteUser->deleted_at = Carbon::now();
+                $deleteUser->delete();
+
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Delete data";
@@ -370,9 +375,9 @@ class UsersController extends BaseController
     }
 
     /**
-     * Put User into trash
+     * Put Multiple User into trash
      * 
-     * @param \Illuminate\Http\Request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
@@ -380,19 +385,30 @@ class UsersController extends BaseController
     {
         try {
             if (Auth::user()) {
-                // \DB::enableQueryLog();
                 $ids = $request->ids;
-                $checkUsers = User::whereIn('id', $ids)->get();
+                // \DB::enableQueryLog();
+                $checkUser = User::whereIn('id', $ids)->first();
                 // dd(\DB::getQueryLog());
-                // dd($checkUsers);exit();
-                if($checkUsers->isEmpty()){
+                // dd($checkUser);exit();
+                if(!$checkUser){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
                 }
-                $deleteUsers = User::whereIn('id', $ids)->update(['deleted_at' => Carbon::now()]);
+
+                // \DB::enableQueryLog();
+                $deleteUser = User::findMany($ids);
+                // dd(\DB::getQueryLog());
+                $counter = 0;
+                foreach ($deleteUser as $rowUsers) {
+                    $deleteUser = User::find($rowUsers->id);
+                    $deleteUser->deleted_at = Carbon::now();
+                    $deleteUser->delete();
+                    $counter++;
+                }
+
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
-                $success['message'] = "Delete data";
-                $success['data'] = $deleteUsers;
+                $success['message'] = "Delete selected data";
+                $success['total_data'] = $counter;
                 return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -421,7 +437,10 @@ class UsersController extends BaseController
                 if($checkUser->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
                 }
-                $restoreUser = User::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
+                $restoreUser = User::onlyTrashed()->find($id);
+                $restoreUser->deleted_at = null;
+                $restoreUser->restore();
+                
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Restore user data";
@@ -436,7 +455,7 @@ class UsersController extends BaseController
     }
 
     /**
-     * Restore User from trash
+     * Restore Multiple User from trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -455,11 +474,24 @@ class UsersController extends BaseController
                 if($checkUser->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
                 }
-                $restoreUser = User::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
+
+                // \DB::enableQueryLog();
+                $deleteUser = User::onlyTrashed()->findMany($ids);
+                // dd(\DB::getQueryLog());
+                $counter = 0;
+                
+                foreach ($deleteUser as $rowUsers) {
+                    // dd($deleteUser);
+                    $restoreUser = User::onlyTrashed()->find($rowUsers->id);
+                    $restoreUser->deleted_at = null;
+                    $restoreUser->restore();
+                    $counter++;
+                }                
+                
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
-                $success['message'] = "Restore selected user data";
-                $success['data'] = $restoreUser;
+                $success['message'] = "Restore multiple user data";
+                $success['total_data'] = $counter;
                 return $this->sendResponse($success, 'Data terpilih dipulihkan');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -475,10 +507,11 @@ class UsersController extends BaseController
     protected function updatePhone(String $user_id, String $phone){
         try {
             if (Auth::user()) {
-                if(!VerificationCodes::where('user_id', $user_id)->first()){
+                $check = VerificationCodes::where('user_id', $user_id)->first();
+                if(!$check){
                     return $this->sendError('Error!', ['error'=>'Tidak ada data user!']);
-                } 
-                $setStatusUser = User::where('id', $user_id)->update(['status' => '0']);
+                }
+                // dd($check->id);
                 $setStatusOtp = VerificationCodes::where('user_id', $user_id)->update(['status' => '0']);
                 $otp = rand(100000, 999999);
                 $updateVerificationCode = VerificationCodes::where('user_id', $user_id)->update([

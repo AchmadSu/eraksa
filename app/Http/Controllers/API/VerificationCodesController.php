@@ -138,8 +138,10 @@ class VerificationCodesController extends BaseController
     /** Set User Status to validate */
     private function setUserStatus(String $user_id){
         try {
-            $updateStatus = User::where('id', $user_id)->update(['status' => '1']);
-            return $updateStatus;
+            $updateStatus = User::find($user_id);
+            $updateStatus->status = '1';
+            // $updateStatus->save();
+            return $updateStatus->save();
         } catch (Exception $e) {
             return $this->sendError('Error!', ['error' => $e]);
         }
