@@ -271,11 +271,12 @@ class UsersController extends BaseController
                 $updateDataUser = User::find($id);
                 
                 $name = $request->name;
-                $email = $request->email;
+                $new_email = $request->new_email;
                 $old_password = $request->old_password;
                 $new_password = $request->new_password;
                 $confirm_new_password = $request->confirm_new_password;
                 $phone = $request->phone;
+                $new_phone = $request->new_phone;
                 
                 $checkUser = User::where('id', $id)->first();
                 if (!$checkUser) {
@@ -290,37 +291,44 @@ class UsersController extends BaseController
                     return $this->sendError('Error!', $credentials = ['Password lama yang anda masukkan salah!']);
                 }
 
-                if (!$checkPhone) {
-                    // dd($checkPhone);
-                    $this->updatePhone("$id", $phone);
-                    $updateDataUser->phone = $phone;
-                    $updateDataUser->status = "0";
-                }
-
                 if ($new_password == NULL) {
                     $validator = Validator::make($request->all(),[
                         'name' => 'required',
-                        'email' => 'required|email|unique:users,email',
-                        'phone' => 'required|numeric|unique:users,phone',
+                        'new_email' => 'email|unique:users,email',
+                        'new_phone' => 'numeric|unique:users,phone',
                     ]);
+                    
+                    if ($new_email != NULL) {
+                        $updateDataUser->email = $new_email;
+                    }
 
                 } elseif ($new_password != NULL) {
                     $validator = Validator::make($request->all(),[
                         'name' => 'required',
-                        'email' => 'required|email|unique:users,email',
+                        'new_email' => 'email|unique:users,email',
                         'new_password' => 'required',
                         'confirm_new_password' => 'required|same:new_password',
-                        'phone' => 'required|numeric|unique:users,phone',
+                        'new_phone' => 'numeric|unique:users,phone',
                     ]);
+
+                    if ($new_email != NULL) {
+                        $updateDataUser->email = $new_email;
+                    }
 
                     $updateDataUser->password = bcrypt($new_password);
                 }
+
+                if (!$checkPhone) {
+                    $this->updatePhone("$id", $new_phone);
+                    $updateDataUser->phone = $new_phone;
+                    $updateDataUser->status = "0";
+                }
+
                 if ($validator->fails()) {
                     return $this->sendError('Error!', $validator->errors());
                 }
 
                 $updateDataUser->name = $name;
-                $updateDataUser->email = $email;
 
                 // dd($data);exit();
 
