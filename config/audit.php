@@ -24,7 +24,7 @@ return [
     |
     */
 
-    'user'      => [
+    'user' => [
         'morph_prefix' => 'user',
         'guards'       => [
             'web',
