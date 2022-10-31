@@ -229,10 +229,7 @@ class UsersController extends BaseController
                     'phone' => 'required|numeric|unique:users,phone',
                 ]);
         
-                if ($validator->fails()){
-                    return $this->sendError('Validator Error.', $validator->errors());
-                }
-        
+                
                 $input = $request->all();
                 // \DB::enableQueryLog();
                 $checkEmail = User::where('email', $input['email'])->first();
@@ -240,9 +237,27 @@ class UsersController extends BaseController
                 if($checkEmail){
                     return $this->sendError('Data sudah ada!', ['error'=>'Email sudah terdaftar, silakan login!']);
                 }
-        
+                
                 // $input['otp'] = rand(1000, 9999);
                 $input['password'] = bcrypt($input['password']);
+                $spiltPhone = str_split($input['phone']);
+                if($spiltPhone[0] === '8'){
+                    $input['phone'] = '+62'.$input['phone'];
+                }
+                // dd($spiltPhone[0].$spiltPhone[1]);
+                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                    $input['phone'] = '+'.$input['phone'];
+                }
+
+                $checkPhone = User::where('phone', $input['phone'])->first();
+                if($checkPhone){
+                    return $this->sendError('Data sudah ada!', ['error'=>'Nomor sudah terdaftar, silakan login!']);
+                }
+
+                if ($validator->fails()){
+                    return $this->sendError('Validator Error.', $validator->errors());
+                }
+
                 $user = User::create($input);
                 $success['token'] = $user->createToken('MyApp')->plainTextToken;
                 $success['name'] = $user->name;
