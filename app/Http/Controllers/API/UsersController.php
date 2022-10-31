@@ -240,6 +240,7 @@ class UsersController extends BaseController
                 
                 // $input['otp'] = rand(1000, 9999);
                 $input['password'] = bcrypt($input['password']);
+
                 $spiltPhone = str_split($input['phone']);
                 if($spiltPhone[0] === '8'){
                     $input['phone'] = '+62'.$input['phone'];
@@ -300,6 +301,16 @@ class UsersController extends BaseController
                 }
                 
                 $checkPassword = Auth::attempt(['id' => $id, 'password' => $old_password]);
+
+                $spiltPhone = str_split($phone);
+                if($spiltPhone[0] === '8'){
+                    $phone = '+62'.$phone;
+                }
+                // dd($spiltPhone[0].$spiltPhone[1]);
+                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                    $phone = '+'.$phone;
+                }
+
                 $checkPhone = User::where('id', $id)->where('phone', $phone)->first();
                 // dd($checkPhone);
 
@@ -334,11 +345,24 @@ class UsersController extends BaseController
                     $updateDataUser->password = bcrypt($new_password);
                 }
 
-                if (!$checkPhone) {
-                    $this->updatePhone("$id", $new_phone);
-                    $updateDataUser->phone = $new_phone;
-                    $updateDataUser->status = "0";
-                }
+                if ($checkPhone) {
+                    if($new_phone != NULL) {
+                        $spiltPhone = str_split($new_phone);
+                        if($spiltPhone[0] === '8'){
+                            $new_phone = '+62'.$new_phone;
+                        }
+                        // dd($spiltPhone[0].$spiltPhone[1]);
+                        if($spiltPhone[0].$spiltPhone[1] === '62'){
+                            $new_phone = '+'.$new_phone;
+                        }
+
+                        $this->updatePhone("$id", $new_phone);
+                        $updateDataUser->phone = $new_phone;
+                        $updateDataUser->status = "0";
+                    }
+                } else {
+                    return $this->sendError('Error!', ['error' => 'Nomor lama yang anda masukkan salah!']);
+                }   
 
                 if ($validator->fails()) {
                     return $this->sendError('Error!', $validator->errors());
