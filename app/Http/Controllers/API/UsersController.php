@@ -242,6 +242,7 @@ class UsersController extends BaseController
                 $input['password'] = bcrypt($input['password']);
 
                 $spiltPhone = str_split($input['phone']);
+                
                 if($spiltPhone[0] === '8'){
                     $input['phone'] = '+62'.$input['phone'];
                 }
@@ -303,12 +304,14 @@ class UsersController extends BaseController
                 $checkPassword = Auth::attempt(['id' => $id, 'password' => $old_password]);
 
                 $spiltPhone = str_split($phone);
-                if($spiltPhone[0] === '8'){
+                // dd($spiltPhone);
+                if($spiltPhone[0] == '8'){
                     $phone = '+62'.$phone;
                 }
                 // dd($spiltPhone[0].$spiltPhone[1]);
-                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                if($spiltPhone[0].$spiltPhone[1] == '62'){
                     $phone = '+'.$phone;
+                    // dd($phone);
                 }
 
                 $checkPhone = User::where('id', $id)->where('phone', $phone)->first();
