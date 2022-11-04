@@ -47,6 +47,7 @@ class UsersController extends BaseController
 
     public function index(){
         try {
+            sleep(5);
             // dd(Auth::user());
             if (Auth::user()) {
                 // dd(Auth::user()->name);
@@ -56,7 +57,7 @@ class UsersController extends BaseController
                 }
                 return $this->sendResponse($users, 'Displaying all users data');
             } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+                return $this->sendError('Error!', ['error' => 'Silakan login terlebih dulu!']);
             }
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
@@ -72,6 +73,7 @@ class UsersController extends BaseController
 
     public function getSuperAdmin(){
         try {
+            sleep(5);
             // dd(Auth::user());
             if (Auth::user()) {
                 // dd(Auth::user()->name);
@@ -85,7 +87,7 @@ class UsersController extends BaseController
                 }
                 return $this->sendResponse($users, 'Displaying all users data');
             } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+                return $this->sendError('Error!', ['error' => 'Silakan login terlebih dulu!']);
             }
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
@@ -101,6 +103,7 @@ class UsersController extends BaseController
 
     public function trash(){
         try {
+            sleep(5);
             // dd(Auth::user());
             if (Auth::user()) {
                 // dd(Auth::user());
@@ -116,7 +119,7 @@ class UsersController extends BaseController
                 return $this->sendResponse($users, 'Displaying all trash data');
 
             } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+                return $this->sendError('Error!', ['error' => 'Silakan login terlebih dulu!']);
             }
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
@@ -133,6 +136,7 @@ class UsersController extends BaseController
     public function show(Int $id)
     {
         try {
+            sleep(5);
             if (Auth::user()) {
                 // \DB::enableQueryLog();
                 $user = User::where('id', $id)->first();
@@ -142,7 +146,7 @@ class UsersController extends BaseController
                 }
                 return $this->sendResponse($user, 'User detail by Id');
             } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+                return $this->sendError('Error!', ['error' => 'Silakan login terlebih dulu!']);
             }
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
@@ -161,8 +165,9 @@ class UsersController extends BaseController
 
     public function login(Request $request){
         try {
+            sleep(5);
             if (Auth::user()) {
-                return $this->sendError('Account is already login.', ['error' => 'Akun anda sedang aktif!']);
+                return $this->sendError('Error!', ['error' => 'Akun anda sedang aktif!']);
             }
             // $checkUserDeleted = User::where('email', $request->email)->where('deleted_at', NULL)->first();
             // if (!$checkUserDeleted) {
@@ -184,7 +189,7 @@ class UsersController extends BaseController
     
                 // return Route::resource('user', UserController::class);
             } else {
-                return $this->sendError('Unauthorised.', ['error'=> 'Email atau Password salah!']);
+                return $this->sendError('Unauthorised!', ['error'=> 'Email atau Password salah!']);
             }
         } catch (\Throwable $th) {
             return $this->sendError('Error!'.$th, ['error' => $th]);
@@ -200,6 +205,7 @@ class UsersController extends BaseController
      */
     public function logout(Request $request)
     {
+        sleep(5);
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -220,6 +226,7 @@ class UsersController extends BaseController
 
     public function register(Request $request){
         try {
+            sleep(5);
             if (!Auth::user()) {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
@@ -235,7 +242,7 @@ class UsersController extends BaseController
                 $checkEmail = User::where('email', $input['email'])->first();
                 // dd(\DB::getQueryLog());
                 if($checkEmail){
-                    return $this->sendError('Data sudah ada!', ['error'=>'Email sudah terdaftar, silakan login!']);
+                    return $this->sendError('Error!', ['error'=>'Email sudah terdaftar, silakan login!']);
                 }
                 
                 // $input['otp'] = rand(1000, 9999);
@@ -253,20 +260,24 @@ class UsersController extends BaseController
 
                 $checkPhone = User::where('phone', $input['phone'])->first();
                 if($checkPhone){
-                    return $this->sendError('Data sudah ada!', ['error'=>'Nomor sudah terdaftar, silakan login!']);
+                    return $this->sendError('Error!', ['error'=>'Nomor sudah terdaftar, silakan login!']);
                 }
 
                 if ($validator->fails()){
-                    return $this->sendError('Validator Error.', $validator->errors());
+                    return $this->sendError('Error!', $validator->errors());
                 }
 
                 $user = User::create($input);
                 $success['token'] = $user->createToken('MyApp')->plainTextToken;
                 $success['name'] = $user->name;
+
+                // $stringId = $user->id;
+
+                // $this->generate("$stringId");
         
                 return $this->sendResponse($success, 'User ditambahkan!');
             } else {
-                return $this->sendError('Account is already login.', ['error' => 'Akun anda sedang aktif!']);
+                return $this->sendError('Error!', ['error' => 'Akun anda sedang aktif!']);
             }    
         } catch (\Throwable $th) {
             return $this->sendError('Error!'.$th, ['error'=>$th]);
@@ -283,6 +294,7 @@ class UsersController extends BaseController
     public function update(Request $request)
     {
         try {
+            sleep(5);
             if (Auth::user()) {
                 // dd(Auth::user()->name);
                 $id = $request->id;
@@ -399,6 +411,7 @@ class UsersController extends BaseController
     public function delete(Int $id)
     {
         try {
+            sleep(5);
             if (Auth::user()) {
                 // \DB::enableQueryLog();
                 $checkUser = User::where('id', $id)->first();
@@ -435,6 +448,7 @@ class UsersController extends BaseController
     public function deleteMultiple(Request $request)
     {
         try {
+            sleep(5);
             if (Auth::user()) {
                 $ids = $request->ids;
                 // \DB::enableQueryLog();
@@ -480,6 +494,7 @@ class UsersController extends BaseController
     {
         // return "Cek";exit();
         try {
+            sleep(5);
             if (Auth::user()) {
                 // \DB::enableQueryLog();
                 $checkUser = User::onlyTrashed()->where('id', $id)->get();
@@ -516,6 +531,7 @@ class UsersController extends BaseController
     {
         // return "Cek";exit();
         try {
+            sleep(5);
             if (Auth::user()) {
                 $ids = $request->ids;
                 // \DB::enableQueryLog();
@@ -554,9 +570,46 @@ class UsersController extends BaseController
 
     /** GENERATE OTP AND SEND OTP TO NUMBER ACCOUNT */
 
+    protected function generate(String $user_id){
+        try {
+            sleep(5);
+            $checkValidate = VerificationCodes::where('user_id', $user_id)->where('status', '1')->first();
+            // print($checkValidate);exit();
+            if ($checkValidate) {
+                return $this->sendError('Error!', ['error'=>'Akun sudah divalidasi!']);
+            }
+            if(VerificationCodes::where('user_id', $user_id)->first()){
+                return $this->sendError('Kode OTP sudah terkirim!', ['error'=>'OTP untuk user ini sudah dikirim, silakan masukkan!']);
+            }
+            $otp = rand(100000, 999999);
+            $verificationCode = VerificationCodes::create([
+                'otp' => $otp,
+                'user_id' => $user_id,
+                'expired_at' => Carbon::now()->addMinutes(10),
+                'status' => '0',
+            ]);
+            $phone = VerificationCodes::join('users', 'users.id', '=', 'verification_codes.user_id')
+                    ->where('users.id', $user_id)
+                    ->where('verification_codes.user_id', $user_id)
+                    ->get(['users.phone'])
+            ;
+            $strPhone = implode(',', collect($phone)->map(fn($item) => $item['phone'])->all());
+            $strOtp = "$otp";
+            // return var_dump($strOtp);
+            $this->sendWhatsappNotification($strOtp, $strPhone);
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Kode OTP telah dikirim. Silakan buka pesan di What's App anda!";
+            return $this->sendResponse($success, 'Kode OTP Terkirim.');    
+        } catch (\Throwable $e) {
+            return $this->sendError('Error!', ['error' => $e]);
+        }
+    }
+
     /** Generate OTP Update Phone Number*/ 
     protected function updatePhone(String $user_id, String $phone){
         try {
+            sleep(5);
             if (Auth::user()) {
                 $check = VerificationCodes::where('user_id', $user_id)->first();
                 if(!$check){
@@ -590,6 +643,7 @@ class UsersController extends BaseController
     /** Sending OTP via Whats App */
     private function sendWhatsappNotification(String $otp, String $recipient){
         try {
+            sleep(5);
             $tokenMsg = Str::random(15);
             $sid    = getenv("TWILIO_SID"); 
             $token  = getenv("TWILIO_AUTH_TOKEN"); 
