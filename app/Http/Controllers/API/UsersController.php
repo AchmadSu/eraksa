@@ -183,7 +183,7 @@ class UsersController extends BaseController
             if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
                 $user = Auth::user();
                 $success['token'] = $user->createToken('MyApp')->plainTextToken;
-                $success['name'] = $user->name;
+                $success['user'] = $user;
                 
                 return $this->sendResponse($success, 'Anda berhasil masuk!');
     
@@ -246,6 +246,7 @@ class UsersController extends BaseController
                 }
                 
                 // $input['otp'] = rand(1000, 9999);
+                $input['name'] = ucwords($input['name']);
                 $input['password'] = bcrypt($input['password']);
 
                 $spiltPhone = str_split($input['phone']);
@@ -383,7 +384,7 @@ class UsersController extends BaseController
                     return $this->sendError('Error!', $validator->errors());
                 }
 
-                $updateDataUser->name = $name;
+                $updateDataUser->name = ucwords($name);
 
                 // dd($data);exit();
 
