@@ -37,7 +37,7 @@ class PlacementsController extends BaseController
                 if ($placements->isEmpty()) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
                 }
-                return $this->sendResponse($placements, 'Displaying all assets data');
+                return $this->sendResponse($placements, 'Displaying all placements data');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
             }
@@ -90,7 +90,7 @@ class PlacementsController extends BaseController
                 if (!$placements) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
                 }
-                return $this->sendResponse($placements, 'Asset detail by Id');
+                return $this->sendResponse($placements, 'Placement detail');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
             }
@@ -171,7 +171,7 @@ class PlacementsController extends BaseController
     }
 
     /**
-     * Put Category Asset into trash
+     * Put Placements into trash
      * 
      * @param int $id
      * @return \Illuminate\Http\Response
@@ -202,7 +202,7 @@ class PlacementsController extends BaseController
     }
 
     /**
-     * Put Multiple Category Asset into trash
+     * Put Multiple Placements into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -236,7 +236,7 @@ class PlacementsController extends BaseController
     }
 
     /**
-     * Restore Category Asset from trash
+     * Restore Placements from trash
      * 
      * @param int $id
      * @return \Illuminate\Http\Response
@@ -248,18 +248,18 @@ class PlacementsController extends BaseController
         try {
             if (Auth::user()) {
                 // \DB::enableQueryLog();
-                $checkCatgeoryAsset = Placements::onlyTrashed()->where('id', $id)->get();
+                $checkPlacement = Placements::onlyTrashed()->where('id', $id)->get();
                 // dd(\DB::getQueryLog());
                 
-                if($checkCatgeoryAsset->isEmpty()){
+                if($checkPlacement->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
                 }
-                $restoreCategoryAsset = Placements::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
+                $restorePlacement = Placements::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
-                $success['message'] = "Restore placement data";
-                $success['data'] = $restoreCategoryAsset;
-                return $this->sendResponse($success, 'Data dipulihkan');
+                $success['message'] = "Restore data";
+                $success['data'] = $restorePlacement;
+                return $this->sendResponse($success, 'Data berhasil dipulihkan');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
             }
@@ -269,7 +269,7 @@ class PlacementsController extends BaseController
     }
 
     /**
-     * Restore Multiple Category Asset from trash
+     * Restore Multiple Placements from trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -288,12 +288,12 @@ class PlacementsController extends BaseController
                 if($checkPlacements->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
                 }
-                $restoreCategoryAsset = Placements::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
+                $restorePlacements = Placements::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
-                $success['message'] = "Restore placement data";
-                $success['data'] = $restoreCategoryAsset;
-                return $this->sendResponse($success, 'Data dipulihkan');
+                $success['message'] = "Restore selected data";
+                $success['data'] = $restorePlacements;
+                return $this->sendResponse($success, 'Data terpilih berhasil dipulihkan');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
             }

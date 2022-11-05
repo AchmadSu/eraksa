@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use Carbon\Carbon;
-use App\Models\Workshops;
-// use App\Models\Workshops;
+use App\Models\Assets;
+use App\Models\CategoryAssets;
+use App\Models\StudyPrograms;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -14,12 +15,12 @@ use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\API\BaseController;
 
-class WorkshopsController extends BaseController
+class StudyProgramsController extends BaseController
 {
-    /** ATTRIVE WORKSHOPS DATA */
+    /** ATTRIVE STUDY PROGRAMS */
 
     /** 
-     * Get All Workshops
+     * Get All Study Programs
      * 
      * @return \Illuminate\Http\Response
     */
@@ -30,13 +31,13 @@ class WorkshopsController extends BaseController
             if (Auth::user()) {
                 // dd(Auth::user()->name);
                 // \DB::enableQueryLog();
-                $workshops = Workshops::all();
+                $studyPrograms = StudyPrograms::all();
                 // dd(\DB::getQueryLog());
-                // dd($workshops);
-                if ($workshops->isEmpty()) {
+                // dd($studyPrograms);
+                if ($studyPrograms->isEmpty()) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
                 }
-                return $this->sendResponse($workshops, 'Displaying all workshops data');
+                return $this->sendResponse($studyPrograms, 'Displaying all assets data');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
             }
@@ -46,7 +47,7 @@ class WorkshopsController extends BaseController
     }
 
     /** 
-     * Get All Workshops in Trash
+     * Get All Study Programs in Trash
      * 
      * @return \Illuminate\Http\Response
     */
@@ -57,12 +58,12 @@ class WorkshopsController extends BaseController
             if (Auth::user()) {
                 // dd(Auth::user());
                 // \DB::enableQueryLog();
-                $workshops = Workshops::onlyTrashed()->get();
+                $studyPrograms =StudyPrograms::onlyTrashed()->get();
                 // dd(\DB::getQueryLog());
-                if ($workshops->isEmpty()) {
+                if ($studyPrograms->isEmpty()) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
                 }
-                return $this->sendResponse($workshops, 'Displaying all trash data');
+                return $this->sendResponse($studyPrograms, 'Displaying all trash data');
 
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -73,7 +74,7 @@ class WorkshopsController extends BaseController
     }
 
     /** 
-     * Get Workshop By Id
+     * Get Study Programs By Id
      * 
      * @param Int $id
      * @return \Illuminate\Http\Response
@@ -84,12 +85,12 @@ class WorkshopsController extends BaseController
         try {
             if (Auth::user()) {
                 // \DB::enableQueryLog();
-                $workshop = Workshops::where('id', $id)->first();
+                $studyPrograms = StudyPrograms::where('id', $id)->first();
                 // dd(\DB::getQueryLog());
-                if (!$workshop) {
+                if (!$studyPrograms) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
                 }
-                return $this->sendResponse($workshop, 'Workshop detail by Id');
+                return $this->sendResponse($studyPrograms, 'Program Studi detail');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
             }
@@ -99,10 +100,10 @@ class WorkshopsController extends BaseController
         
     }
 
-    /** CRUD WORKSHOPS */
+    /** CRUD STUDY PROGRAMS */
     
     /**
-     * Create Workshops
+     * Create Study Programs
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -112,8 +113,7 @@ class WorkshopsController extends BaseController
         try {
             if (Auth::user()) {
                 $validator = Validator::make($request->all(),[
-                    'name' => 'required|unique:workshops,name|min:3',
-                    'phone' => 'required|numeric|unique:workshops,phone'
+                    'name' => 'required|unique:study_programs,name|min:3',
                 ]);
         
                 if ($validator->fails()){
@@ -121,10 +121,10 @@ class WorkshopsController extends BaseController
                 }
         
                 $input = $request->all();
-                $createWorkshop = Workshops::create($input);
+                $createStudyPrograms = StudyPrograms::create($input);
                 $success['token'] = Str::random(15);
-        
-                return $this->sendResponse($success, 'Workshop ditambahkan!');
+                return $this->sendResponse($success, 'Program Studi ditambahkan!');
+
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Anda harus masuk terlebih dulu!']);
             }    
@@ -134,7 +134,7 @@ class WorkshopsController extends BaseController
     }
 
     /**
-     * Update Category Asset
+     * Update Study Programs
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -145,50 +145,23 @@ class WorkshopsController extends BaseController
         try {
             if (Auth::user()) {
                 $id = $request->id;
-                $new_name = $request->new_name;
-                $new_phone = $request->new_phone;
-                
-                if ($new_name == NULL) {
-                    $validator = Validator::make($request->all(), [
-                        'new_phone' => 'required|numeric|unique:workshops,phone',
-                    ]);
-                                
-                    $data = array(
-                        'phone' => $new_phone
-                    );
+                $name = $request->name;
+                $validator = Validator::make($request->all(),[
+                    'name' => 'required|unique:study_programs,name|min:3'
+                ]);
                     
-                } elseif ($new_name != NULL) {
-                    $validator = Validator::make($request->all(),[
-                        'new_name' => 'required|unique:workshops,name|min:3'
-                    ]);
-                                
-                    $data = array(
-                        'name' => $new_name
-                    );
-                } elseif ($new_name AND $new_phone != NULL) {
-                    $validator = Validator::make($request->all(),[
-                        'new_name' => 'required|unique:workshops,name|min:3',
-                        'new_phone' => 'required|numeric|unique:workshops,phone'
-                    ]);
-                                
-                    $data = array(
-                        'name' => $new_name,
-                        'phone' => $new_phone
-                    );
-                }
-
                 if ($validator->fails()) {
                     return $this->sendError('Error!', $validator->errors());
                 }
 
                 // dd($data);exit();
 
-                $updateDataWorkshops = Workshops::where('id', $id)->update($data);
+                $updateDataStudyProgram = StudyPrograms::where('id', $id)->update(['name' => $name]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
-                $success['message'] = "Workshop berhasil diupdate!";
-                $success['data'] = $updateDataWorkshops;
-                return $this->sendResponse($success, 'Update data');
+                $success['message'] = "Update data";
+                $success['data'] = $updateDataStudyProgram;
+                return $this->sendResponse($success, 'Program Studi berhasil diupdate!');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
             }
@@ -198,7 +171,7 @@ class WorkshopsController extends BaseController
     }
 
     /**
-     * Put Workshops into trash
+     * Put Study Programs into trash
      * 
      * @param int $id
      * @return \Illuminate\Http\Response
@@ -209,16 +182,16 @@ class WorkshopsController extends BaseController
         try {
             if (Auth::user()) {
                 // \DB::enableQueryLog();
-                $checkWorkshops = Workshops::where('id', $id)->first();
+                $checkStudyPrograms = StudyPrograms::where('id', $id)->first();
                 // dd(\DB::getQueryLog());
-                if(!$checkWorkshops){
+                if(!$checkStudyPrograms){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
                 }
-                $deleteWorkshops = Workshops::where('id', $id)->update(['deleted_at' => Carbon::now()]);
+                $deleteStudyPrograms = StudyPrograms::where('id', $id)->update(['deleted_at' => Carbon::now()]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Delete data";
-                $success['data'] = $deleteWorkshops;
+                $success['data'] = $deleteStudyPrograms;
                 return $this->sendResponse($success, 'Data berhasil dihapus');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -229,7 +202,7 @@ class WorkshopsController extends BaseController
     }
 
     /**
-     * Put Multiple Workshops into trash
+     * Put Multiple Study Programs into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -242,17 +215,17 @@ class WorkshopsController extends BaseController
                 $ids = $request->ids;
                 // dd($ids);
                 // \DB::enableQueryLog();
-                $checkWorkshops = Workshops::whereIn('id', $ids)->get();
+                $checkStudyPrograms = StudyPrograms::whereIn('id', $ids)->get();
                 // dd(\DB::getQueryLog());
-                // dd($checkWorkshops);
-                if($checkWorkshops->isEmpty()){
+                // dd($checkStudyPrograms);
+                if($checkStudyPrograms->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
                 }
-                $deleteWorkshops = Workshops::whereIn('id', $ids)->update(['deleted_at' => Carbon::now()]);
+                $deleteStudyPrograms = StudyPrograms::whereIn('id', $ids)->update(['deleted_at' => Carbon::now()]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Delete selected data";
-                $success['data'] = $deleteWorkshops;
+                $success['data'] = $deleteStudyPrograms;
                 return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -263,7 +236,7 @@ class WorkshopsController extends BaseController
     }
 
     /**
-     * Restore Workshops from trash
+     * Restore Program Study from trash
      * 
      * @param int $id
      * @return \Illuminate\Http\Response
@@ -275,17 +248,17 @@ class WorkshopsController extends BaseController
         try {
             if (Auth::user()) {
                 // \DB::enableQueryLog();
-                $checkWorkshops = Workshops::onlyTrashed()->where('id', $id)->get();
+                $checkStudyPrograms =StudyPrograms::onlyTrashed()->where('id', $id)->get();
                 // dd(\DB::getQueryLog());
                 
-                if($checkWorkshops->isEmpty()){
+                if($checkStudyPrograms->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
                 }
-                $restoreWorkshops = Workshops::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
+                $restoreCategoryAsset =StudyPrograms::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Restore data";
-                $success['data'] = $restoreWorkshops;
+                $success['data'] = $restoreCategoryAsset;
                 return $this->sendResponse($success, 'Data berhasil dipulihkan');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
@@ -296,7 +269,7 @@ class WorkshopsController extends BaseController
     }
 
     /**
-     * Restore Multiple Workshops from trash
+     * Restore Multiple Study Programs from trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -309,17 +282,17 @@ class WorkshopsController extends BaseController
             if (Auth::user()) {
                 $ids = $request->ids;
                 // \DB::enableQueryLog();
-                $checkWorkshops = Workshops::onlyTrashed()->whereIn('id', $ids)->get();
+                $checkStudyPrograms =StudyPrograms::onlyTrashed()->whereIn('id', $ids)->get();
                 // dd(\DB::getQueryLog());
                 
-                if($checkWorkshops->isEmpty()){
+                if($checkStudyPrograms->isEmpty()){
                     return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
                 }
-                $restoreWorkshops = Workshops::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
+                $restoreCategoryAsset = StudyPrograms::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
                 $tokenMsg = Str::random(15);
                 $success['token'] = $tokenMsg;
                 $success['message'] = "Restore selected data";
-                $success['data'] = $restoreWorkshops;
+                $success['data'] = $restoreCategoryAsset;
                 return $this->sendResponse($success, 'Data terpilih berhasil dipulihkan');
             } else {
                 return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
