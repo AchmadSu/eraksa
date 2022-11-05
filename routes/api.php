@@ -1,11 +1,16 @@
 <?php
 
-use App\Http\Controllers\API\AssetsController;
 use Illuminate\Http\Request;
+use App\Models\VerificationCodes;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UsersController;
+use App\Http\Controllers\API\AssetsController;
+use App\Http\Controllers\API\WorkshopsController;
+use App\Http\Controllers\API\PlacementsController;
+use App\Http\Controllers\API\CategoryAssetsController;
+use App\Http\Controllers\API\StudyProgramsController;
 use App\Http\Controllers\API\VerificationCodesController;
-use App\Models\VerificationCodes;
+use App\Models\StudyPrograms;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,6 +55,66 @@ Route::controller(AssetsController::class)->group(function(){
     Route::get('assets/trash', 'trash');
     Route::put('assets/restore/{id}', 'restore');
     Route::put('assets/restoreMultiple', 'restoreMultiple');
+});
+
+/**--- Category Assets --- */
+Route::controller(CategoryAssetsController::class)->group(function(){
+    Route::get('categoryAssets/getAll', 'index');
+    Route::get('categoryAssets/detail/{id}', 'show');
+    
+    Route::post('categoryAssets/create', 'create'); 
+    Route::put('categoryAssets/update', 'update');
+    Route::delete('categoryAssets/delete/{id}', 'delete');
+    Route::delete('categoryAssets/deleteMultiple', 'deleteMultiple');
+
+    Route::get('categoryAssets/trash', 'trash');
+    Route::put('categoryAssets/restore/{id}', 'restore');
+    Route::put('categoryAssets/restoreMultiple', 'restoreMultiple');
+});
+
+/**--- Placement --- */
+Route::controller(PlacementsController::class)->group(function(){
+    Route::get('placements/getAll', 'index');
+    Route::get('placements/detail/{id}', 'show');
+    
+    Route::post('placements/create', 'create'); 
+    Route::put('placements/update', 'update');
+    Route::delete('placements/delete/{id}', 'delete');
+    Route::delete('placements/deleteMultiple', 'deleteMultiple');
+
+    Route::get('placements/trash', 'trash');
+    Route::put('placements/restore/{id}', 'restore');
+    Route::put('placements/restoreMultiple', 'restoreMultiple');
+});
+
+/**--- Workshops --- */
+Route::controller(WorkshopsController::class)->group(function(){
+    Route::get('workshops/getAll', 'index');
+    Route::get('workshops/detail/{id}', 'show');
+    
+    Route::post('workshops/create', 'create'); 
+    Route::put('workshops/update', 'update');
+    Route::delete('workshops/delete/{id}', 'delete');
+    Route::delete('workshops/deleteMultiple', 'deleteMultiple');
+
+    Route::get('workshops/trash', 'trash');
+    Route::put('workshops/restore/{id}', 'restore');
+    Route::put('workshops/restoreMultiple', 'restoreMultiple');
+});
+
+/**--- Programs Study --- */
+Route::controller(StudyProgramsController::class)->group(function(){
+    Route::get('studyPrograms/getAll', 'index');
+    Route::get('studyPrograms/detail/{id}', 'show');
+    
+    Route::post('studyPrograms/create', 'create'); 
+    Route::put('studyPrograms/update', 'update');
+    Route::delete('studyPrograms/delete/{id}', 'delete');
+    Route::delete('studyPrograms/deleteMultiple', 'deleteMultiple');
+
+    Route::get('studyPrograms/trash', 'trash');
+    Route::put('studyPrograms/restore/{id}', 'restore');
+    Route::put('studyPrograms/restoreMultiple', 'restoreMultiple');
 });
 
 /** --- Verification Codes --- */
