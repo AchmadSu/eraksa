@@ -267,6 +267,7 @@ class UsersController extends BaseController
                 if ($validator->fails()){
                     return $this->sendError('Error!', $validator->errors());
                 }
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
                 $user = User::create($input);
                 $success['token'] = $user->createToken('MyApp')->plainTextToken;
@@ -308,6 +309,7 @@ class UsersController extends BaseController
                 $confirm_new_password = $request->confirm_new_password;
                 $phone = $request->phone;
                 $new_phone = $request->new_phone;
+                $new_studyPrograms_id = $request->new_studyPrograms_id;
                 
                 $checkUser = User::where('id', $id)->first();
                 if (!$checkUser) {
@@ -320,12 +322,10 @@ class UsersController extends BaseController
                 // dd($spiltPhone);
                 if($spiltPhone[0] == '8'){
                     $phone = '+62'.$phone;
-                }
-                // dd($spiltPhone[0].$spiltPhone[1]);
-                if($spiltPhone[0].$spiltPhone[1] == '62'){
+                } elseif($spiltPhone[0].$spiltPhone[1] == '62'){
                     $phone = '+'.$phone;
-                    // dd($phone);
                 }
+                // dd($phone);
 
                 $checkPhone = User::where('id', $id)->where('phone', $phone)->first();
                 // dd($checkPhone);
@@ -366,9 +366,7 @@ class UsersController extends BaseController
                         $spiltPhone = str_split($new_phone);
                         if($spiltPhone[0] === '8'){
                             $new_phone = '+62'.$new_phone;
-                        }
-                        // dd($spiltPhone[0].$spiltPhone[1]);
-                        if($spiltPhone[0].$spiltPhone[1] === '62'){
+                        }elseif($spiltPhone[0].$spiltPhone[1] === '62'){
                             $new_phone = '+'.$new_phone;
                         }
 
@@ -385,6 +383,8 @@ class UsersController extends BaseController
                 }
 
                 $updateDataUser->name = ucwords($name);
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+                $updateDataUser->study_programs_id = $new_studyPrograms_id;
 
                 // dd($data);exit();
 

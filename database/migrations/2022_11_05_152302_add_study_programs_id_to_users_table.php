@@ -13,12 +13,14 @@ return new class extends Migration
      */
     public function up()
     {
+        Schema::disableForeignKeyConstraints();
         Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('study_programs_id');
-            $table->foreign('study_programs_id')->references('id')->on('study_programs');
+            $table->unsignedBigInteger('study_programs_id')->nullable();
+            
+            // $table->;
         });
     }
-
+    
     /**
      * Reverse the migrations.
      *

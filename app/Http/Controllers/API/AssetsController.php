@@ -113,10 +113,14 @@ class AssetsController extends BaseController
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
                     'code' => 'required|unique:assets,code',
-                    'user_id' => 'required',
+                    'user_id' => 'required|numeric',
                     'date' => 'required',
                     'condition' => 'required',
                     'status' => 'required',
+                    'study_program_id' => 'required|numeric',
+                    'category_id' => 'required|numeric',
+                    'placement_id' => 'required|numeric',
+                    'study_program_id' => 'required|numeric'
                 ]);
         
                 if ($validator->fails()){
@@ -124,6 +128,7 @@ class AssetsController extends BaseController
                 }
         
                 $input = $request->all();
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
                 $createAsset = Assets::create($input);
                 $success['token'] = Str::random(15);
         
@@ -162,18 +167,14 @@ class AssetsController extends BaseController
                 if ($new_code == NULL) {
                     $validator = Validator::make($request->all(), [
                         'name' => 'required',
-                        'user_id' => 'required',
+                        'user_id' => 'required|numeric',
                         'date' => 'required',
                         'condition' => 'required',
                         'status' => 'required',
+                        'category_id' => 'required|numeric',
+                        'placement_id' => 'required|numeric',
+                        'study_program_id' => 'required|numeric',
                     ]);
-                                
-                    $updateDataAsset->name = $name;
-                    $updateDataAsset->user_id = $user_id;
-                    $updateDataAsset->date = $date;
-                    $updateDataAsset->placement_id = $placement_id;
-                    $updateDataAsset->condition = $condition;
-                    $updateDataAsset->status = $status;
                     
                 } elseif ($new_code != NULL) {
                     $validator = Validator::make($request->all(),[
@@ -183,21 +184,24 @@ class AssetsController extends BaseController
                         'date' => 'required',
                         'condition' => 'required',
                         'status' => 'required',
+                        'category_id' => 'required|numeric',
+                        'placement_id' => 'required|numeric',
+                        'study_program_id' => 'required|numeric',
                     ]);
-                                
-                    $updateDataAsset->name = $name;
                     $updateDataAsset->code = $new_code;
-                    $updateDataAsset->user_id = $user_id;
-                    $updateDataAsset->date = $date;
-                    $updateDataAsset->placement_id = $placement_id;
-                    $updateDataAsset->condition = $condition;
-                    $updateDataAsset->status = $status;
                 }
 
                 if ($validator->fails()) {
                     return $this->sendError('Error!', $validator->errors());
                 }
 
+                $updateDataAsset->name = $name;
+                $updateDataAsset->user_id = $user_id;
+                $updateDataAsset->date = $date;
+                $updateDataAsset->placement_id = $placement_id;
+                $updateDataAsset->condition = $condition;
+                $updateDataAsset->status = $status;
+                $updateDataAsset->status = $status;
                 // dd($data);exit();
 
                 $updateDataAsset->save();

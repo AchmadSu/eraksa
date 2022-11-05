@@ -14,8 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('study_programs_id');
-            $table->foreign('study_programs_id')->references('id')->on('study_programs');
+            $table->renameColumn('study_programs_id', 'study_program_id');
         });
     }
 
@@ -27,7 +26,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('study_programs_id');
+            //
         });
     }
 };
