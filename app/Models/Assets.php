@@ -26,6 +26,7 @@ class Assets extends Model implements Auditable
         'status',
         'date',
         'placement_id',
+        'study_program_id',
         'deleted_at'
     ];
     protected $guarded = [];

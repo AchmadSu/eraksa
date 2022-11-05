@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use DB;
 use Carbon\Carbon;
 use App\Models\Assets;
 use Illuminate\Support\Str;
@@ -120,7 +121,6 @@ class AssetsController extends BaseController
                     'study_program_id' => 'required|numeric',
                     'category_id' => 'required|numeric',
                     'placement_id' => 'required|numeric',
-                    'study_program_id' => 'required|numeric'
                 ]);
         
                 if ($validator->fails()){
@@ -128,6 +128,7 @@ class AssetsController extends BaseController
                 }
         
                 $input = $request->all();
+                // dd($input);
                 DB::statement('SET FOREIGN_KEY_CHECKS=0;');
                 $createAsset = Assets::create($input);
                 $success['token'] = Str::random(15);
@@ -163,6 +164,7 @@ class AssetsController extends BaseController
                 $date = $request->date;
                 $condition = $request->condition;
                 $status = $request->status;
+                $study_program_id = $request->study_program_id;
                 
                 if ($new_code == NULL) {
                     $validator = Validator::make($request->all(), [
@@ -201,7 +203,8 @@ class AssetsController extends BaseController
                 $updateDataAsset->placement_id = $placement_id;
                 $updateDataAsset->condition = $condition;
                 $updateDataAsset->status = $status;
-                $updateDataAsset->status = $status;
+                $updateDataAsset->category_id = $category_id;
+                $updateDataAsset->study_program_id = $study_program_id;
                 // dd($data);exit();
 
                 $updateDataAsset->save();
