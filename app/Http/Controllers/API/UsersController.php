@@ -23,20 +23,6 @@ use Illuminate\Support\Facades\Session;
 
 class UsersController extends BaseController
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    function __construct()
-    {
-        //  $this->middleware('role:role-list|role-create|role-edit|role-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:get all user', ['only' => ['index']]);
-         $this->middleware('permission:get all user trash', ['only' => ['trash']]);
-         $this->middleware('permission:get user by id', ['only' => ['show']]);
-         $this->middleware('permission:delete user', ['only' => ['delete']]);
-         $this->middleware('permission:restore user', ['only' => ['restore']]);
-    }
 
     /** ATTRIVE USER DATA */
     /** 
@@ -50,7 +36,7 @@ class UsersController extends BaseController
             sleep(5);
             // dd(Auth::user());
             if (Auth::user()) {
-                // dd(Auth::user()->name);
+                // dd(Auth::user()->id);
                 $users = User::all();
                 if (!$users) {
                     return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -182,7 +168,8 @@ class UsersController extends BaseController
 
             if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
                 $user = Auth::user();
-                $success['token'] = $user->createToken('MyApp')->plainTextToken;
+                $success['token'] = $user->createToken('token-name', ['server:update'])->plainTextToken;
+                // $success['token'] = 'laravel_session='.Session::getId();
                 $success['user'] = $user;
                 
                 return $this->sendResponse($success, 'Anda berhasil masuk!');
@@ -206,9 +193,7 @@ class UsersController extends BaseController
     public function logout(Request $request)
     {
         sleep(5);
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        Auth::user()->tokens()->where('id', $request->id)->delete();
         
         $success['msg'] = "Logged out!";
         $success['token'] = Str::random(15);
@@ -230,7 +215,7 @@ class UsersController extends BaseController
             if (!Auth::user()) {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
-                    'email' => 'required|email|unique:users,phone',
+                    'email' => 'required|email|unique:users,email',
                     'password' => 'required',
                     'confirm_pass' => 'required|same:password',
                     'phone' => 'required|numeric|unique:users,phone',
