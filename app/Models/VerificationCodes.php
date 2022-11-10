@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 // use OwenIt\Auditing\Contracts\Auditable;
 
 class VerificationCodes extends Model implements JWTSubject

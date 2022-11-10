@@ -17,6 +17,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Enum;
 use App\Providers\RouteServiceProvider;
+use App\Services\VerificationCodesService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
 // use Illuminate\Support\Facades\Validator;
@@ -25,9 +26,19 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 
 class VerificationCodesController extends BaseController
 {
+
+    public $verificationCodesService;
+
+    public function __construct(VerificationCodesService $verificationCodesService)
+    {
+        $this->verificationCodesService = $verificationCodesService;
+    }
+
     /** Generate New OTP */ 
-    protected function generate(String $user_id){
+    protected function generate(String $user_id)
+    {
         try {
+            sleep(5);
             $checkValidate = VerificationCodes::where('user_id', $user_id)->where('status', '1')->first();
             // print($checkValidate);exit();
             if ($checkValidate) {
@@ -51,7 +62,7 @@ class VerificationCodesController extends BaseController
             $strPhone = implode(',', collect($phone)->map(fn($item) => $item['phone'])->all());
             $strOtp = "$otp";
             // return var_dump($strOtp);
-            $this->sendWhatsappNotification($strOtp, $strPhone);
+            $this->verificationCodesService->sendWhatsappNotification($strOtp, $strPhone);
             $tokenMsg = Str::random(15);
             $success['token'] = $tokenMsg;
             $success['message'] = "Kode OTP telah dikirim. Silakan buka pesan di What's App anda!";
@@ -64,13 +75,13 @@ class VerificationCodesController extends BaseController
     /** Generate Update OTP */ 
     protected function regenerate(String $user_id){
         try {
+            // VerificationCodes::where('user_id', $user_id)->first();
             if(!VerificationCodes::where('user_id', $user_id)->first()){
                 return $this->sendError('Error!', ['error'=>'Tidak ada data user!']);
             }
-            // \DB::enableQueryLog(); 
+            
             $checkValidate = VerificationCodes::where('user_id', $user_id)->where('status', '1')->first();
-            // dd(\DB::getQueryLog());
-
+            
             if ($checkValidate) {
                 return $this->sendError('Error!', ['error'=>'Akun sudah divalidasi!']);
             }
@@ -79,15 +90,20 @@ class VerificationCodesController extends BaseController
                 'otp' => $otp,
                 'expired_at' => Carbon::now()->addMinutes(10),
             ]);
-            $phone = VerificationCodes::join('users', 'users.id', '=', 'verification_codes.user_id')
-                    ->where('users.id', $user_id)
-                    ->where('verification_codes.user_id', $user_id)
-                    ->get(['users.phone'])
-            ;
-            $strPhone = implode(',', collect($phone)->map(fn($item) => $item['phone'])->all());
+            // \DB::enableQueryLog(); 
+            $phone = DB::table('verification_codes')
+                ->select('users.id', 'users.phone', 'verification_codes.user_id')
+                ->join('users', 'users.id', '=', 'verification_codes.user_id')
+                ->where('verification_codes.user_id', $user_id)
+                ->pluck('users.phone');
+            // dd(\DB::getQueryLog());
+            // var_dump((array) $phone[0]);exit();
+            $strPhone = implode('|', (array) $phone[0]);
+            // dd($strPhone);
             $strOtp = "$otp";
             // return var_dump($strOtp);
-            $this->sendWhatsappNotification($strOtp, $strPhone);
+            $this->verificationCodesService->sendWhatsappNotification($strOtp, $strPhone);
+            // dd($this->verificationCodesService);
             $tokenMsg = Str::random(15);
             $success['token'] = $tokenMsg;
             $success['message'] = "Kode OTP telah dikirim. Silakan buka pesan di What's App anda!";
@@ -103,8 +119,12 @@ class VerificationCodesController extends BaseController
             $validator = Validator::make($request->all(),[
                 'otp' => 'required',
             ]);
-    
+
+            // dd($user_id);
+            // \DB::enableQueryLog();
             $verificationCode = VerificationCodes::where('user_id', $user_id)->where('otp', $request->otp)->first();
+            // dd(\DB::getQueryLog());
+            // dd($verificationCode);
             $now = Carbon::now();
             if (!$verificationCode) {
                 return $this->sendError('OTP Salah.', ['error'=>'Masukkan ulang otp dengan benar!']);
@@ -143,27 +163,6 @@ class VerificationCodesController extends BaseController
             // $updateStatus->save();
             return $updateStatus->save();
         } catch (Exception $e) {
-            return $this->sendError('Error!', ['error' => $e]);
-        }
-        
-    }
-
-    /** Sending OTP via Whats App */
-    private function sendWhatsappNotification(String $otp, String $recipient){
-        try {
-            $tokenMsg = Str::random(15);
-            $sid    = getenv("TWILIO_SID"); 
-            $token  = getenv("TWILIO_AUTH_TOKEN"); 
-            $twilio = new Client($sid, $token);
-            $text   = "ERAKSA\nAssets Management System\n\nKode OTP anda: *$otp*.\n\nKode ini hanya akan berlaku dalam 10 menit ke depan. Jangan bagikan kode ini kepada siapapun!$tokenMsg"; 
-            $message = $twilio->messages 
-                        ->create("whatsapp:$recipient",
-                                    array( 
-                                        "from" => "whatsapp:".getenv("TWILIO_NUMBER"),       
-                                        "body" => "$text",
-                                    ) 
-                            );
-        } catch (\Throwable $e) {
             return $this->sendError('Error!', ['error' => $e]);
         }
         

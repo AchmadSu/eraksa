@@ -15,14 +15,22 @@ use Spatie\Permission\Model\Roles;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
+use App\Services\VerificationCodesService;
 use Symfony\Component\Console\Input\Input;
 use App\Http\Controllers\API\BaseController;
 use App\Http\Controllers\API\AuthOtpController as AuthOtpController;
-use Illuminate\Support\Facades\Session;
 
 class UsersController extends BaseController
 {
+    public $verificationCodesService;
+
+    public function __construct(VerificationCodesService $verificationCodesService)
+    {
+        $this->verificationCodesService = $verificationCodesService;
+    }
 
     /** ATTRIVE USER DATA */
     /** 
@@ -35,16 +43,12 @@ class UsersController extends BaseController
         try {
             sleep(5);
             // dd(Auth::user());
-            if (Auth::user()) {
-                // dd(Auth::user()->id);
-                $users = User::all();
-                if (!$users) {
-                    return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-                }
-                return $this->sendResponse($users, 'Displaying all users data');
-            } else {
-                return $this->sendError('Error!', ['error' => 'Silakan login terlebih dulu!']);
+            // dd(Auth::user()->id);
+            $users = User::all();
+            if (!$users) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
+            return $this->sendResponse($users, 'Displaying all users data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
         }
@@ -61,20 +65,16 @@ class UsersController extends BaseController
         try {
             sleep(5);
             // dd(Auth::user());
-            if (Auth::user()) {
-                // dd(Auth::user()->name);
-                $users = User::whereHas(
-                    'roles', function($q){
-                        $q->where('name', 'Super-Admin');
-                    }
-                )->get();
-                if (!$users) {
-                    return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            // dd(Auth::user()->name);
+            $users = User::whereHas(
+                'roles', function($q){
+                    $q->where('name', 'Super-Admin');
                 }
-                return $this->sendResponse($users, 'Displaying all users data');
-            } else {
-                return $this->sendError('Error!', ['error' => 'Silakan login terlebih dulu!']);
+            )->get();
+            if (!$users) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
+            return $this->sendResponse($users, 'Displaying all users data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
         }
@@ -91,22 +91,15 @@ class UsersController extends BaseController
         try {
             sleep(5);
             // dd(Auth::user());
-            if (Auth::user()) {
-                // dd(Auth::user());
-                // \DB::enableQueryLog();
-                $users = User::onlyTrashed()->get();
-                // var_dump($users);exit();
-                // $users = DB::table('users')->whereNotNull('deleted_at')->get();
-                // dd(\DB::getQueryLog());
-                // var_dump($users->isEmpty());exit();
-                if ($users->isEmpty()) {
-                    return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-                }
-                return $this->sendResponse($users, 'Displaying all trash data');
-
-            } else {
-                return $this->sendError('Error!', ['error' => 'Silakan login terlebih dulu!']);
+            // dd(Auth::user());
+            // \DB::enableQueryLog();
+            $users = User::onlyTrashed()->get();
+            // var_dump($users);exit();
+            // var_dump($users->isEmpty());exit();
+            if ($users->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
+            return $this->sendResponse($users, 'Displaying all trash data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
         }
@@ -123,17 +116,12 @@ class UsersController extends BaseController
     {
         try {
             sleep(5);
-            if (Auth::user()) {
-                // \DB::enableQueryLog();
-                $user = User::where('id', $id)->first();
-                // dd(\DB::getQueryLog());
-                if (!$user) {
-                    return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-                }
-                return $this->sendResponse($user, 'User detail by Id');
-            } else {
-                return $this->sendError('Error!', ['error' => 'Silakan login terlebih dulu!']);
+            $user = User::where('id', $id)->first();
+            // dd(\DB::getQueryLog());
+            if (!$user) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
+            return $this->sendResponse($user, 'User detail by Id');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
         }
@@ -152,20 +140,6 @@ class UsersController extends BaseController
     public function login(Request $request){
         try {
             sleep(5);
-            if (Auth::user()) {
-                return $this->sendError('Error!', ['error' => 'Akun anda sedang aktif!']);
-            }
-            // $checkUserDeleted = User::where('email', $request->email)->where('deleted_at', NULL)->first();
-            // if (!$checkUserDeleted) {
-            //     return $this->sendError('Account deleted.', ['error' => 'Akun anda sudah dihapus, silakan hubungi admin!']);
-            // }
-
-            // $checkUserStatus = User::where('email', $request->email)->where('status', '0')->first();
-            // // dd($checkUserStatus);exit();
-            // if ($checkUserStatus) {
-            //     return $this->sendError('Invalid OTP', ['error' => 'OTP anda belum tervalidasi, silakan masukkan kode OTP dengan benar!']);
-            // }
-
             if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
                 $user = Auth::user();
                 $success['token'] = $user->createToken('token-name', ['server:update'])->plainTextToken;
@@ -212,60 +186,56 @@ class UsersController extends BaseController
     public function register(Request $request){
         try {
             sleep(5);
-            if (!Auth::user()) {
-                $validator = Validator::make($request->all(),[
-                    'name' => 'required',
-                    'email' => 'required|email|unique:users,email',
-                    'password' => 'required',
-                    'confirm_pass' => 'required|same:password',
-                    'phone' => 'required|numeric|unique:users,phone',
-                ]);
-        
-                
-                $input = $request->all();
-                // \DB::enableQueryLog();
-                $checkEmail = User::where('email', $input['email'])->first();
-                // dd(\DB::getQueryLog());
-                if($checkEmail){
-                    return $this->sendError('Error!', ['error'=>'Email sudah terdaftar, silakan login!']);
-                }
-                
-                // $input['otp'] = rand(1000, 9999);
-                $input['name'] = ucwords($input['name']);
-                $input['password'] = bcrypt($input['password']);
+            $validator = Validator::make($request->all(),[
+                'name' => 'required',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required',
+                'confirm_pass' => 'required|same:password',
+                'phone' => 'required|numeric|unique:users,phone',
+            ]);
+    
+            
+            $input = $request->all();
+            // \DB::enableQueryLog();
+            $checkEmail = User::where('email', $input['email'])->first();
+            // dd(\DB::getQueryLog());
+            if($checkEmail){
+                return $this->sendError('Error!', ['error'=>'Email sudah terdaftar, silakan login!']);
+            }
+            
+            // $input['otp'] = rand(1000, 9999);
+            $input['name'] = ucwords($input['name']);
+            $input['password'] = bcrypt($input['password']);
 
-                $spiltPhone = str_split($input['phone']);
-                
-                if($spiltPhone[0] === '8'){
-                    $input['phone'] = '+62'.$input['phone'];
-                }
-                // dd($spiltPhone[0].$spiltPhone[1]);
-                if($spiltPhone[0].$spiltPhone[1] === '62'){
-                    $input['phone'] = '+'.$input['phone'];
-                }
+            $spiltPhone = str_split($input['phone']);
+            
+            if($spiltPhone[0] === '8'){
+                $input['phone'] = '+62'.$input['phone'];
+            }
+            // dd($spiltPhone[0].$spiltPhone[1]);
+            if($spiltPhone[0].$spiltPhone[1] === '62'){
+                $input['phone'] = '+'.$input['phone'];
+            }
 
-                $checkPhone = User::where('phone', $input['phone'])->first();
-                if($checkPhone){
-                    return $this->sendError('Error!', ['error'=>'Nomor sudah terdaftar, silakan login!']);
-                }
+            $checkPhone = User::where('phone', $input['phone'])->first();
+            if($checkPhone){
+                return $this->sendError('Error!', ['error'=>'Nomor sudah terdaftar, silakan login!']);
+            }
 
-                if ($validator->fails()){
-                    return $this->sendError('Error!', $validator->errors());
-                }
-                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            if ($validator->fails()){
+                return $this->sendError('Error!', $validator->errors());
+            }
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-                $user = User::create($input);
-                $success['token'] = $user->createToken('MyApp')->plainTextToken;
-                $success['name'] = $user->name;
+            $user = User::create($input);
+            $success['token'] = $user->createToken('MyApp')->plainTextToken;
+            $success['name'] = $user->name;
 
-                // $stringId = $user->id;
+            // $stringId = $user->id;
 
-                // $this->generate("$stringId");
-        
-                return $this->sendResponse($success, 'User ditambahkan!');
-            } else {
-                return $this->sendError('Error!', ['error' => 'Akun anda sedang aktif!']);
-            }    
+            // $this->generate("$stringId");
+    
+            return $this->sendResponse($success, 'User ditambahkan!'); 
         } catch (\Throwable $th) {
             return $this->sendError('Error!'.$th, ['error'=>$th]);
         } 
@@ -282,106 +252,100 @@ class UsersController extends BaseController
     {
         try {
             sleep(5);
-            if (Auth::user()) {
-                // dd(Auth::user()->name);
-                $id = $request->id;
-                $updateDataUser = User::find($id);
-                
-                $name = $request->name;
-                $new_email = $request->new_email;
-                $old_password = $request->old_password;
-                $new_password = $request->new_password;
-                $confirm_new_password = $request->confirm_new_password;
-                $phone = $request->phone;
-                $new_phone = $request->new_phone;
-                $new_studyPrograms_id = $request->new_studyPrograms_id;
-                
-                $checkUser = User::where('id', $id)->first();
-                if (!$checkUser) {
-                    return $this->sendError('Error!', ['error' => 'Data user tidak ditemukan!']);
-                }
-                
-                $checkPassword = Auth::attempt(['id' => $id, 'password' => $old_password]);
-
-                $spiltPhone = str_split($phone);
-                // dd($spiltPhone);
-                if($spiltPhone[0] == '8'){
-                    $phone = '+62'.$phone;
-                } elseif($spiltPhone[0].$spiltPhone[1] == '62'){
-                    $phone = '+'.$phone;
-                }
-                // dd($phone);
-
-                $checkPhone = User::where('id', $id)->where('phone', $phone)->first();
-                // dd($checkPhone);
-
-                if (!$checkPassword) {
-                    return $this->sendError('Error!', $credentials = ['Password lama yang anda masukkan salah!']);
-                }
-
-                if ($new_password == NULL) {
-                    $validator = Validator::make($request->all(),[
-                        'name' => 'required',
-                        'new_email' => 'email|unique:users,email',
-                        'new_phone' => 'numeric|unique:users,phone',
-                    ]);
-                    
-                    if ($new_email != NULL) {
-                        $updateDataUser->email = $new_email;
-                    }
-
-                } elseif ($new_password != NULL) {
-                    $validator = Validator::make($request->all(),[
-                        'name' => 'required',
-                        'new_email' => 'email|unique:users,email',
-                        'new_password' => 'required',
-                        'confirm_new_password' => 'required|same:new_password',
-                        'new_phone' => 'numeric|unique:users,phone',
-                    ]);
-
-                    if ($new_email != NULL) {
-                        $updateDataUser->email = $new_email;
-                    }
-
-                    $updateDataUser->password = bcrypt($new_password);
-                }
-
-                if ($checkPhone) {
-                    if($new_phone != NULL) {
-                        $spiltPhone = str_split($new_phone);
-                        if($spiltPhone[0] === '8'){
-                            $new_phone = '+62'.$new_phone;
-                        }elseif($spiltPhone[0].$spiltPhone[1] === '62'){
-                            $new_phone = '+'.$new_phone;
-                        }
-
-                        $this->updatePhone("$id", $new_phone);
-                        $updateDataUser->phone = $new_phone;
-                        $updateDataUser->status = "0";
-                    }
-                } else {
-                    return $this->sendError('Error!', ['error' => 'Nomor lama yang anda masukkan salah!']);
-                }   
-
-                if ($validator->fails()) {
-                    return $this->sendError('Error!', $validator->errors());
-                }
-
-                $updateDataUser->name = ucwords($name);
-                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-                $updateDataUser->study_programs_id = $new_studyPrograms_id;
-
-                // dd($data);exit();
-
-                $updateDataUser->save();
-                $tokenMsg = Str::random(15);
-                $success['token'] = $tokenMsg;
-                $success['message'] = "Data berhasil diupdate!";
-                $success['data'] = $updateDataUser;
-                return $this->sendResponse($success, 'Update data');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            // dd(Auth::user()->name);
+            $id = $request->id;
+            $updateDataUser = User::find($id);
+            
+            $name = $request->name;
+            $new_email = $request->new_email;
+            $old_password = $request->old_password;
+            $new_password = $request->new_password;
+            $confirm_new_password = $request->confirm_new_password;
+            $phone = $request->phone;
+            $new_phone = $request->new_phone;
+            $new_studyProgram_id = $request->new_studyProgram_id;
+            
+            $checkUser = User::where('id', $id)->first();
+            if (!$checkUser) {
+                return $this->sendError('Error!', ['error' => 'Data user tidak ditemukan!']);
             }
+            // \DB::enableQueryLog();
+            // $checkPassword = User::where('id', $id)->where('password', bcrypt($old_password))->first();
+            // dd(\DB::getQueryLog());
+            $checkPassword = Hash::check($old_password, $updateDataUser->password);
+            // dd($checkPassword);
+
+            $spiltPhone = str_split($phone);
+            // dd($spiltPhone);
+            if($spiltPhone[0] == '8'){
+                $phone = '+62'.$phone;
+            } elseif($spiltPhone[0].$spiltPhone[1] == '62'){
+                $phone = '+'.$phone;
+            }
+            // dd($phone);
+
+            $checkPhone = User::where('id', $id)->where('phone', $phone)->first();
+            // dd($checkPhone);
+
+            if (!$checkPassword) {
+                return $this->sendError('Error!', $credentials = ['Password lama yang anda masukkan salah!']);
+            }
+
+            if ($new_password == NULL) {
+                $validator = Validator::make($request->all(),[
+                    'name' => 'required',
+                    'new_email' => 'email|unique:users,email',
+                    'new_phone' => 'numeric|unique:users,phone',
+                ]);
+
+            } elseif ($new_password != NULL) {
+                $validator = Validator::make($request->all(),[
+                    'name' => 'required',
+                    'new_email' => 'email|unique:users,email',
+                    'new_password' => 'required',
+                    'confirm_new_password' => 'required|same:new_password',
+                    'new_phone' => 'numeric|unique:users,phone',
+                ]);
+                $updateDataUser->password = bcrypt($new_password);
+            }   
+
+            if ($validator->fails()) {
+                return $this->sendError('Error!', $validator->errors());
+            }
+
+            if ($new_email != NULL) {
+                $updateDataUser->email = $new_email;
+            }
+
+            if ($checkPhone) {
+                if($new_phone != NULL) {
+                    $spiltPhone = str_split($new_phone);
+                    if($spiltPhone[0] === '8'){
+                        $new_phone = '+62'.$new_phone;
+                    }elseif($spiltPhone[0].$spiltPhone[1] === '62'){
+                        $new_phone = '+'.$new_phone;
+                    }
+                    $this->updatePhone("$id", $new_phone);
+                    $updateDataUser->phone = $new_phone;
+                    $updateDataUser->status = "0";
+                    $success['updatePhone'] = "Nomor berhasi di-update. Silakan masukkan kode otp yang kami kirim ke nomor baru anda!";
+                }
+            } else {
+                return $this->sendError('Error!', ['error' => 'Nomor lama yang anda masukkan salah!']);
+            }
+
+            $updateDataUser->name = ucwords($name);
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            $updateDataUser->study_program_id = $new_studyProgram_id;
+
+            // dd($data);exit();
+
+            $updateDataUser->save();
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Data berhasil diupdate!";
+            $success['data'] = $updateDataUser;
+            return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
@@ -398,27 +362,23 @@ class UsersController extends BaseController
     {
         try {
             sleep(5);
-            if (Auth::user()) {
-                // \DB::enableQueryLog();
-                $checkUser = User::where('id', $id)->first();
-                // dd(\DB::getQueryLog());
-                // dd($checkUser);exit();
-                if(!$checkUser){
-                    return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
-                }
-
-                $deleteUser = User::find($id);
-                $deleteUser->deleted_at = Carbon::now();
-                $deleteUser->delete();
-
-                $tokenMsg = Str::random(15);
-                $success['token'] = $tokenMsg;
-                $success['message'] = "Delete data";
-                $success['data'] = $deleteUser;
-                return $this->sendResponse($success, 'Data berhasil dihapus');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            // \DB::enableQueryLog();
+            $checkUser = User::where('id', $id)->first();
+            // dd(\DB::getQueryLog());
+            // dd($checkUser);exit();
+            if(!$checkUser){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
             }
+
+            $deleteUser = User::find($id);
+            $deleteUser->deleted_at = Carbon::now();
+            $deleteUser->delete();
+
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Delete data";
+            $success['data'] = $deleteUser;
+            return $this->sendResponse($success, 'Data berhasil dihapus');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
@@ -435,35 +395,31 @@ class UsersController extends BaseController
     {
         try {
             sleep(5);
-            if (Auth::user()) {
-                $ids = $request->ids;
-                // \DB::enableQueryLog();
-                $checkUser = User::whereIn('id', $ids)->first();
-                // dd(\DB::getQueryLog());
-                // dd($checkUser);exit();
-                if(!$checkUser){
-                    return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
-                }
-
-                // \DB::enableQueryLog();
-                $deleteUser = User::findMany($ids);
-                // dd(\DB::getQueryLog());
-                $counter = 0;
-                foreach ($deleteUser as $rowUsers) {
-                    $deleteUser = User::find($rowUsers->id);
-                    $deleteUser->deleted_at = Carbon::now();
-                    $deleteUser->delete();
-                    $counter++;
-                }
-
-                $tokenMsg = Str::random(15);
-                $success['token'] = $tokenMsg;
-                $success['message'] = "Delete selected data";
-                $success['total_data'] = $counter;
-                return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            $ids = $request->ids;
+            // \DB::enableQueryLog();
+            $checkUser = User::whereIn('id', $ids)->first();
+            // dd(\DB::getQueryLog());
+            // dd($checkUser);exit();
+            if(!$checkUser){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
             }
+
+            // \DB::enableQueryLog();
+            $deleteUser = User::findMany($ids);
+            // dd(\DB::getQueryLog());
+            $counter = 0;
+            foreach ($deleteUser as $rowUsers) {
+                $deleteUser = User::find($rowUsers->id);
+                $deleteUser->deleted_at = Carbon::now();
+                $deleteUser->delete();
+                $counter++;
+            }
+
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Delete selected data";
+            $success['total_data'] = $counter;
+            return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
@@ -481,26 +437,22 @@ class UsersController extends BaseController
         // return "Cek";exit();
         try {
             sleep(5);
-            if (Auth::user()) {
-                // \DB::enableQueryLog();
-                $checkUser = User::onlyTrashed()->where('id', $id)->get();
-                // dd(\DB::getQueryLog());
-                
-                if($checkUser->isEmpty()){
-                    return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-                }
-                $restoreUser = User::onlyTrashed()->find($id);
-                $restoreUser->deleted_at = null;
-                $restoreUser->restore();
-                
-                $tokenMsg = Str::random(15);
-                $success['token'] = $tokenMsg;
-                $success['message'] = "Restore user data";
-                $success['data'] = $restoreUser;
-                return $this->sendResponse($success, 'Data dipulihkan');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            // \DB::enableQueryLog();
+            $checkUser = User::onlyTrashed()->where('id', $id)->get();
+            // dd(\DB::getQueryLog());
+            
+            if($checkUser->isEmpty()){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
             }
+            $restoreUser = User::onlyTrashed()->find($id);
+            $restoreUser->deleted_at = null;
+            $restoreUser->restore();
+            
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Restore user data";
+            $success['data'] = $restoreUser;
+            return $this->sendResponse($success, 'Data dipulihkan');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
@@ -518,37 +470,33 @@ class UsersController extends BaseController
         // return "Cek";exit();
         try {
             sleep(5);
-            if (Auth::user()) {
-                $ids = $request->ids;
-                // \DB::enableQueryLog();
-                $checkUser = User::onlyTrashed()->whereIn('id', $ids)->get();
-                // dd(\DB::getQueryLog());
-                
-                if($checkUser->isEmpty()){
-                    return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-                }
-
-                // \DB::enableQueryLog();
-                $deleteUser = User::onlyTrashed()->findMany($ids);
-                // dd(\DB::getQueryLog());
-                $counter = 0;
-                
-                foreach ($deleteUser as $rowUsers) {
-                    // dd($deleteUser);
-                    $restoreUser = User::onlyTrashed()->find($rowUsers->id);
-                    $restoreUser->deleted_at = null;
-                    $restoreUser->restore();
-                    $counter++;
-                }                
-                
-                $tokenMsg = Str::random(15);
-                $success['token'] = $tokenMsg;
-                $success['message'] = "Restore multiple user data";
-                $success['total_data'] = $counter;
-                return $this->sendResponse($success, 'Data terpilih dipulihkan');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            $ids = $request->ids;
+            // \DB::enableQueryLog();
+            $checkUser = User::onlyTrashed()->whereIn('id', $ids)->get();
+            // dd(\DB::getQueryLog());
+            
+            if($checkUser->isEmpty()){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
             }
+
+            // \DB::enableQueryLog();
+            $deleteUser = User::onlyTrashed()->findMany($ids);
+            // dd(\DB::getQueryLog());
+            $counter = 0;
+            
+            foreach ($deleteUser as $rowUsers) {
+                // dd($deleteUser);
+                $restoreUser = User::onlyTrashed()->find($rowUsers->id);
+                $restoreUser->deleted_at = null;
+                $restoreUser->restore();
+                $counter++;
+            }                
+            
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Restore multiple user data";
+            $success['total_data'] = $counter;
+            return $this->sendResponse($success, 'Data terpilih dipulihkan');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
@@ -593,58 +541,30 @@ class UsersController extends BaseController
     }
 
     /** Generate OTP Update Phone Number*/ 
-    protected function updatePhone(String $user_id, String $phone){
-        try {
+    protected function updatePhone(String $user_id, String $phone)
+        {
+            try {
             sleep(5);
-            if (Auth::user()) {
-                $check = VerificationCodes::where('user_id', $user_id)->first();
-                if(!$check){
-                    return $this->sendError('Error!', ['error'=>'Tidak ada data user!']);
-                }
-                // dd($check->id);
-                $setStatusOtp = VerificationCodes::where('user_id', $user_id)->update(['status' => '0']);
-                $otp = rand(100000, 999999);
-                $updateVerificationCode = VerificationCodes::where('user_id', $user_id)->update([
-                    'otp' => $otp,
-                    'expired_at' => Carbon::now()->addMinutes(10),
-                    'status' => '0',
-                ]);
-                
-                $strPhone = "$phone";
-                $strOtp = "$otp";
-                // return var_dump($strOtp);
-                $this->sendWhatsappNotification($strOtp, $strPhone);
-                // $tokenMsg = Str::random(15);
-                // $success['token'] = $tokenMsg;
-                // $success['message'] = "Kode OTP telah dikirim. Silakan buka pesan di What's App anda!";
-                // return $this->sendResponse($success, 'Kode OTP Terkirim.');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
-            }   
+            $check = VerificationCodes::where('user_id', $user_id)->first();
+            if(!$check){
+                return $this->sendError('Error!', ['error'=>'Tidak ada data user!']);
+            }
+            // sleep(5);
+            $setStatusOtp = VerificationCodes::where('user_id', $user_id)->update(['status' => '0']);
+            $otp = rand(100000, 999999);
+            $updateVerificationCode = VerificationCodes::where('user_id', $user_id)->update([
+                'otp' => $otp,
+                'expired_at' => Carbon::now()->addMinutes(10),
+                'status' => '0',
+            ]);
+            
+            $strPhone = "$phone";
+            $strOtp = "$otp";
+
+            $this->verificationCodesService->sendWhatsappNotification($strOtp, $strPhone);
         } catch (\Throwable $e) {
             return $this->sendError('Error!', ['error' => $e]);
         }
     }
 
-    /** Sending OTP via Whats App */
-    private function sendWhatsappNotification(String $otp, String $recipient){
-        try {
-            sleep(5);
-            $tokenMsg = Str::random(15);
-            $sid    = getenv("TWILIO_SID"); 
-            $token  = getenv("TWILIO_AUTH_TOKEN"); 
-            $twilio = new Client($sid, $token);
-            $text   = "ERAKSA\nAssets Management System\n\nKode OTP anda: *$otp*.\n\nKode ini hanya akan berlaku dalam 10 menit ke depan. Jangan bagikan kode ini kepada siapapun!$tokenMsg"; 
-            $message = $twilio->messages 
-                            ->create("whatsapp:$recipient", // to 
-                                    array( 
-                                        "from" => "whatsapp:".getenv("TWILIO_NUMBER"),       
-                                        "body" => "$text",
-                                    ) 
-                            );
-        } catch (\Throwable $e) {
-            return $this->sendError('Error!', ['error' => $e]);
-        }
-        
-    }
 }
