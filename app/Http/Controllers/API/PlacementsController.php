@@ -27,20 +27,17 @@ class PlacementsController extends BaseController
 
     public function index(){
         try {
+            sleep(5);
             // dd(Auth::user());
-            if (Auth::user()) {
-                // dd(Auth::user()->name);
-                // \DB::enableQueryLog();
-                $placements = Placements::all();
-                // dd(\DB::getQueryLog());
-                // dd($placements);
-                if ($placements->isEmpty()) {
-                    return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-                }
-                return $this->sendResponse($placements, 'Displaying all placements data');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            // dd(Auth::user()->name);
+            // \DB::enableQueryLog();
+            $placements = Placements::all();
+            // dd(\DB::getQueryLog());
+            // dd($placements);
+            if ($placements->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
+            return $this->sendResponse($placements, 'Displaying all placements data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
         }
@@ -54,20 +51,16 @@ class PlacementsController extends BaseController
 
     public function trash(){
         try {
+            sleep(5);
             // dd(Auth::user());
-            if (Auth::user()) {
-                // dd(Auth::user());
-                // \DB::enableQueryLog();
-                $placements = Placements::onlyTrashed()->get();
-                // dd(\DB::getQueryLog());
-                if ($placements->isEmpty()) {
-                    return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-                }
-                return $this->sendResponse($placements, 'Displaying all trash data');
-
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            // dd(Auth::user());
+            // \DB::enableQueryLog();
+            $placements = Placements::onlyTrashed()->get();
+            // dd(\DB::getQueryLog());
+            if ($placements->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
+            return $this->sendResponse($placements, 'Displaying all trash data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
         }
@@ -83,17 +76,14 @@ class PlacementsController extends BaseController
     public function show(Int $id)
     {
         try {
-            if (Auth::user()) {
-                // \DB::enableQueryLog();
-                $placements = Placements::where('id', $id)->first();
-                // dd(\DB::getQueryLog());
-                if (!$placements) {
-                    return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-                }
-                return $this->sendResponse($placements, 'Placement detail');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            sleep(5);
+            // \DB::enableQueryLog();
+            $placements = Placements::where('id', $id)->first();
+            // dd(\DB::getQueryLog());
+            if (!$placements) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
+            return $this->sendResponse($placements, 'Placement detail');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => $th]);
         }
@@ -111,23 +101,19 @@ class PlacementsController extends BaseController
 
     public function create(Request $request){
         try {
-            if (Auth::user()) {
-                $validator = Validator::make($request->all(),[
-                    'name' => 'required|unique:placements,name|min:3',
-                ]);
-        
-                if ($validator->fails()){
-                    return $this->sendError('Validator Error.', $validator->errors());
-                }
-        
-                $input = $request->all();
-                $createCategory = Placements::create($input);
-                $success['token'] = Str::random(15);
-        
-                return $this->sendResponse($success, 'Placement ditambahkan!');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Anda harus masuk terlebih dulu!']);
-            }    
+            sleep(5);
+            $validator = Validator::make($request->all(),[
+                'name' => 'required|unique:placements,name|min:3',
+            ]);
+    
+            if ($validator->fails()){
+                return $this->sendError('Validator Error.', $validator->errors());
+            }
+    
+            $input = $request->all();
+            $createCategory = Placements::create($input);
+            $success['token'] = Str::random(15);
+            return $this->sendResponse($success, 'Placement ditambahkan!');    
         } catch (\Throwable $th) {
             return $this->sendError('Error!'.$th, ['error'=>$th]);
         } 
@@ -143,28 +129,25 @@ class PlacementsController extends BaseController
     public function update(Request $request)
     {
         try {
-            if (Auth::user()) {
-                $id = $request->id;
-                $name = $request->name;
-                $validator = Validator::make($request->all(),[
-                    'name' => 'required|unique:placements,name|min:3'
-                ]);
-                    
-                if ($validator->fails()) {
-                    return $this->sendError('Error!', $validator->errors());
-                }
-
-                // dd($data);exit();
-
-                $updateDataPlacements = Placements::where('id', $id)->update(['name' => $name]);
-                $tokenMsg = Str::random(15);
-                $success['token'] = $tokenMsg;
-                $success['message'] = "Placement berhasil diupdate!";
-                $success['data'] = $updateDataPlacements;
-                return $this->sendResponse($success, 'Update data');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            sleep(5);
+            $id = $request->id;
+            $name = $request->name;
+            $validator = Validator::make($request->all(),[
+                'name' => 'required|unique:placements,name|min:3'
+            ]);
+                
+            if ($validator->fails()) {
+                return $this->sendError('Error!', $validator->errors());
             }
+
+            // dd($data);exit();
+
+            $updateDataPlacements = Placements::where('id', $id)->update(['name' => $name]);
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Placement berhasil diupdate!";
+            $success['data'] = $updateDataPlacements;
+            return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
@@ -180,22 +163,19 @@ class PlacementsController extends BaseController
     public function delete(Int $id)
     {
         try {
-            if (Auth::user()) {
-                // \DB::enableQueryLog();
-                $checkCategoryAsset = Placements::where('id', $id)->first();
-                // dd(\DB::getQueryLog());
-                if(!$checkCategoryAsset){
-                    return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
-                }
-                $deleteCategoryAsset = Placements::where('id', $id)->update(['deleted_at' => Carbon::now()]);
-                $tokenMsg = Str::random(15);
-                $success['token'] = $tokenMsg;
-                $success['message'] = "Delete data";
-                $success['data'] = $deleteCategoryAsset;
-                return $this->sendResponse($success, 'Data berhasil dihapus');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            sleep(5);
+            // \DB::enableQueryLog();
+            $checkCategoryAsset = Placements::where('id', $id)->first();
+            // dd(\DB::getQueryLog());
+            if(!$checkCategoryAsset){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
             }
+            $deleteCategoryAsset = Placements::where('id', $id)->update(['deleted_at' => Carbon::now()]);
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Delete data";
+            $success['data'] = $deleteCategoryAsset;
+            return $this->sendResponse($success, 'Data berhasil dihapus');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
@@ -211,25 +191,22 @@ class PlacementsController extends BaseController
     public function deleteMultiple(Request $request)
     {
         try {
-            if (Auth::user()) {
-                $ids = $request->ids;
-                // dd($ids);
-                // \DB::enableQueryLog();
-                $checkPlacements = Placements::whereIn('id', $ids)->get();
-                // dd(\DB::getQueryLog());
-                // dd($checkPlacements);
-                if($checkPlacements->isEmpty()){
-                    return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
-                }
-                $deletePlacements = Placements::whereIn('id', $ids)->update(['deleted_at' => Carbon::now()]);
-                $tokenMsg = Str::random(15);
-                $success['token'] = $tokenMsg;
-                $success['message'] = "Delete selected data";
-                $success['data'] = $deletePlacements;
-                return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            sleep(5);
+            $ids = $request->ids;
+            // dd($ids);
+            // \DB::enableQueryLog();
+            $checkPlacements = Placements::whereIn('id', $ids)->get();
+            // dd(\DB::getQueryLog());
+            // dd($checkPlacements);
+            if($checkPlacements->isEmpty()){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
             }
+            $deletePlacements = Placements::whereIn('id', $ids)->update(['deleted_at' => Carbon::now()]);
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Delete selected data";
+            $success['data'] = $deletePlacements;
+            return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
@@ -246,23 +223,20 @@ class PlacementsController extends BaseController
     {
         // return "Cek";exit();
         try {
-            if (Auth::user()) {
-                // \DB::enableQueryLog();
-                $checkPlacement = Placements::onlyTrashed()->where('id', $id)->get();
-                // dd(\DB::getQueryLog());
-                
-                if($checkPlacement->isEmpty()){
-                    return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-                }
-                $restorePlacement = Placements::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
-                $tokenMsg = Str::random(15);
-                $success['token'] = $tokenMsg;
-                $success['message'] = "Restore data";
-                $success['data'] = $restorePlacement;
-                return $this->sendResponse($success, 'Data berhasil dipulihkan');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            sleep(5);
+            // \DB::enableQueryLog();
+            $checkPlacement = Placements::onlyTrashed()->where('id', $id)->get();
+            // dd(\DB::getQueryLog());
+            
+            if($checkPlacement->isEmpty()){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
             }
+            $restorePlacement = Placements::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Restore data";
+            $success['data'] = $restorePlacement;
+            return $this->sendResponse($success, 'Data berhasil dipulihkan');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
@@ -279,24 +253,21 @@ class PlacementsController extends BaseController
     {
         // return "Cek";exit();
         try {
-            if (Auth::user()) {
-                $ids = $request->ids;
-                // \DB::enableQueryLog();
-                $checkPlacements = Placements::onlyTrashed()->whereIn('id', $ids)->get();
-                // dd(\DB::getQueryLog());
-                
-                if($checkPlacements->isEmpty()){
-                    return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-                }
-                $restorePlacements = Placements::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
-                $tokenMsg = Str::random(15);
-                $success['token'] = $tokenMsg;
-                $success['message'] = "Restore selected data";
-                $success['data'] = $restorePlacements;
-                return $this->sendResponse($success, 'Data terpilih berhasil dipulihkan');
-            } else {
-                return $this->sendError('Account is not login.', ['error' => 'Silakan login terlebih dulu!']);
+            sleep(5);
+            $ids = $request->ids;
+            // \DB::enableQueryLog();
+            $checkPlacements = Placements::onlyTrashed()->whereIn('id', $ids)->get();
+            // dd(\DB::getQueryLog());
+            
+            if($checkPlacements->isEmpty()){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
             }
+            $restorePlacements = Placements::onlyTrashed()->whereIn('id', $ids)->update(['deleted_at' => null]);
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Restore selected data";
+            $success['data'] = $restorePlacements;
+            return $this->sendResponse($success, 'Data terpilih berhasil dipulihkan');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }

@@ -75,6 +75,7 @@ class VerificationCodesController extends BaseController
     /** Generate Update OTP */ 
     protected function regenerate(String $user_id){
         try {
+            sleep(5);
             // VerificationCodes::where('user_id', $user_id)->first();
             if(!VerificationCodes::where('user_id', $user_id)->first()){
                 return $this->sendError('Error!', ['error'=>'Tidak ada data user!']);
@@ -116,6 +117,7 @@ class VerificationCodesController extends BaseController
     /** Check OTP */
     public function checkOtp(String $user_id, Request $request){
         try {
+            sleep(5);
             $validator = Validator::make($request->all(),[
                 'otp' => 'required',
             ]);
@@ -147,6 +149,7 @@ class VerificationCodesController extends BaseController
 
     private function setValidate(String $user_id){
         try {
+            sleep(5);
             $updateValidate = VerificationCodes::where('user_id', $user_id)->update(array('status' => "1"));
             return $updateValidate;
         } catch (Exception $e) {
@@ -158,6 +161,7 @@ class VerificationCodesController extends BaseController
     /** Set User Status to validate */
     private function setUserStatus(String $user_id){
         try {
+            sleep(5);
             $updateStatus = User::find($user_id);
             $updateStatus->status = '1';
             // $updateStatus->save();

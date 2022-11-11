@@ -263,7 +263,7 @@ class UsersController extends BaseController
             $confirm_new_password = $request->confirm_new_password;
             $phone = $request->phone;
             $new_phone = $request->new_phone;
-            $new_studyProgram_id = $request->new_studyProgram_id;
+            // $new_studyProgram_id = $request->new_studyProgram_id;
             
             $checkUser = User::where('id', $id)->first();
             if (!$checkUser) {
@@ -335,8 +335,8 @@ class UsersController extends BaseController
             }
 
             $updateDataUser->name = ucwords($name);
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-            $updateDataUser->study_program_id = $new_studyProgram_id;
+            // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            // $updateDataUser->study_program_id = $new_studyProgram_id;
 
             // dd($data);exit();
 
@@ -504,46 +504,10 @@ class UsersController extends BaseController
 
     /** GENERATE OTP AND SEND OTP TO NUMBER ACCOUNT */
 
-    protected function generate(String $user_id){
-        try {
-            sleep(5);
-            $checkValidate = VerificationCodes::where('user_id', $user_id)->where('status', '1')->first();
-            // print($checkValidate);exit();
-            if ($checkValidate) {
-                return $this->sendError('Error!', ['error'=>'Akun sudah divalidasi!']);
-            }
-            if(VerificationCodes::where('user_id', $user_id)->first()){
-                return $this->sendError('Kode OTP sudah terkirim!', ['error'=>'OTP untuk user ini sudah dikirim, silakan masukkan!']);
-            }
-            $otp = rand(100000, 999999);
-            $verificationCode = VerificationCodes::create([
-                'otp' => $otp,
-                'user_id' => $user_id,
-                'expired_at' => Carbon::now()->addMinutes(10),
-                'status' => '0',
-            ]);
-            $phone = VerificationCodes::join('users', 'users.id', '=', 'verification_codes.user_id')
-                    ->where('users.id', $user_id)
-                    ->where('verification_codes.user_id', $user_id)
-                    ->get(['users.phone'])
-            ;
-            $strPhone = implode(',', collect($phone)->map(fn($item) => $item['phone'])->all());
-            $strOtp = "$otp";
-            // return var_dump($strOtp);
-            $this->sendWhatsappNotification($strOtp, $strPhone);
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Kode OTP telah dikirim. Silakan buka pesan di What's App anda!";
-            return $this->sendResponse($success, 'Kode OTP Terkirim.');    
-        } catch (\Throwable $e) {
-            return $this->sendError('Error!', ['error' => $e]);
-        }
-    }
-
     /** Generate OTP Update Phone Number*/ 
     protected function updatePhone(String $user_id, String $phone)
-        {
-            try {
+    {
+        try {
             sleep(5);
             $check = VerificationCodes::where('user_id', $user_id)->first();
             if(!$check){
