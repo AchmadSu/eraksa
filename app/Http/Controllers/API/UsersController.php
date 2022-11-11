@@ -143,7 +143,9 @@ class UsersController extends BaseController
             if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
                 $user = Auth::user();
                 $success['token'] = $user->createToken('token-name', ['server:update'])->plainTextToken;
-                // $success['token'] = 'laravel_session='.Session::getId();
+                if($user->hasRole('Super-Admin')){
+                    $success['roles'] = 'Super-Admin';
+                }
                 $success['user'] = $user;
                 
                 return $this->sendResponse($success, 'Anda berhasil masuk!');
