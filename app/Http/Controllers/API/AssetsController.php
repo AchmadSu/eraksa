@@ -31,6 +31,9 @@ class AssetsController extends BaseController
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
             $assets = Assets::all();
+            if(Auth::user()->hasRole('Admin')){
+                $assets = Assets::where('study_program_id', Auth::user()->study_program_id)->get();
+            }
             // dd(\DB::getQueryLog());
             // dd($assets);
             if ($assets->isEmpty()) {
@@ -55,6 +58,9 @@ class AssetsController extends BaseController
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
             $assets = Assets::onlyTrashed()->get();
+            if(Auth::user()->hasRole('Admin')){
+                $assets = Assets::onlyTrashed()->where('study_program_id', Auth::user()->study_program_id)->get();
+            }
             // dd(\DB::getQueryLog());
             if ($assets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);

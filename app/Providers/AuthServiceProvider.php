@@ -34,6 +34,10 @@ class AuthServiceProvider extends ServiceProvider
             }
         });
 
+        Gate::after(function ($user, $ability) {
+            return $user->hasRole('Super-Admin'); // note this returns boolean
+        });
+
         // if(!$this->app->routesAreCached()){
         //     Passport::routes();
         // }

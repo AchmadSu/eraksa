@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use App\Models\VerificationCodes;
 use Spatie\Permission\Model\Roles;
+use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +31,7 @@ class UsersController extends BaseController
     public function __construct(VerificationCodesService $verificationCodesService)
     {
         $this->verificationCodesService = $verificationCodesService;
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
     }
 
     /** ATTRIVE USER DATA */
@@ -42,36 +44,15 @@ class UsersController extends BaseController
     public function index(){
         try {
             sleep(5);
+            // dd(Auth::guest());
             // dd(Auth::user());
-            // dd(Auth::user()->id);
+            // dd(Auth::user()->study_program_id);
             $users = User::all();
-            if (!$users) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            if(Auth::user()->hasRole('Admin')){
+                $users = User::role('Member')->where('study_program_id', Auth::user()->study_program_id)->get();
             }
-            return $this->sendResponse($users, 'Displaying all users data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
-        }
-        
-    }
-
-    /** 
-     * Get All Users
-     * 
-     * @return \Illuminate\Http\Response
-    */
-
-    public function getSuperAdmin(){
-        try {
-            sleep(5);
-            // dd(Auth::user());
-            // dd(Auth::user()->name);
-            $users = User::whereHas(
-                'roles', function($q){
-                    $q->where('name', 'Super-Admin');
-                }
-            )->get();
-            if (!$users) {
+            // dd($users);
+            if ($users->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             return $this->sendResponse($users, 'Displaying all users data');
@@ -91,9 +72,16 @@ class UsersController extends BaseController
         try {
             sleep(5);
             // dd(Auth::user());
-            // dd(Auth::user());
+            // dd(Auth::user()->hasRole('Admin'));
             // \DB::enableQueryLog();
             $users = User::onlyTrashed()->get();
+            if(Auth::user()->hasRole('Admin')){
+                $users = User::onlyTrashed()
+                ->role('Member')
+                ->where(
+                    'study_program_id', Auth::user()->study_program_id
+                    )->get();
+            }
             // var_dump($users);exit();
             // var_dump($users->isEmpty());exit();
             if ($users->isEmpty()) {
@@ -145,6 +133,14 @@ class UsersController extends BaseController
                 $success['token'] = $user->createToken('token-name', ['server:update'])->plainTextToken;
                 if($user->hasRole('Super-Admin')){
                     $success['roles'] = 'Super-Admin';
+                } elseif ($user->hasRole('Super-Admin') && ($user->hasRole('Admin') || $user->hasRole('Member'))) {
+                    $success['roles'] = 'Super-Admin';
+                } elseif ($user->hasRole('Admin')) {
+                    $success['roles'] = 'Admin';
+                } elseif ($user->hasRole('Admin') && $user->hasRole('Member')) {
+                    $success['roles'] = 'Admin';
+                } else {
+                    $success['roles'] = 'Member';
                 }
                 $success['user'] = $user;
                 
@@ -169,9 +165,12 @@ class UsersController extends BaseController
     public function logout(Request $request)
     {
         sleep(5);
-        Auth::user()->tokens()->where('id', $request->id)->delete();
-        
-        $success['msg'] = "Logged out!";
+        // $user->tokens()->delete();
+        // $header = $request->header('Authorization');
+        // dd($header);
+        // Auth::user()->tokens()->where('id', $request->id)->delete();
+        $request->user()->currentAccessToken()->delete();
+        $success['message'] = "Logged out!";
         $success['token'] = Str::random(15);
         return $this->sendResponse($success, 'Anda berhasil keluar!');
     }
@@ -193,7 +192,7 @@ class UsersController extends BaseController
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required',
                 'confirm_pass' => 'required|same:password',
-                'phone' => 'required|numeric|unique:users,phone',
+                'phone' => 'required|numeric|unique:users,phone'
             ]);
     
             
@@ -228,9 +227,10 @@ class UsersController extends BaseController
                 return $this->sendError('Error!', $validator->errors());
             }
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-
             $user = User::create($input);
-            $success['token'] = $user->createToken('MyApp')->plainTextToken;
+            $role1 = Role::find(3);
+            $user->assignRole($role1);
+            // $success['token'] = $user->createToken('MyApp')->plainTextToken;
             $success['name'] = $user->name;
 
             // $stringId = $user->id;
