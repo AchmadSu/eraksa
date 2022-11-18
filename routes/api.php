@@ -1,10 +1,13 @@
 <?php
 
 // use Request;
+use Illuminate\Support\Str;
 use Illuminate\Http\Response;
+use App\Mail\ResetPasswordLink;
 use Illuminate\Support\Facades\App;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UsersController;
 use App\Http\Controllers\API\AssetsController;
@@ -27,9 +30,8 @@ use App\Http\Controllers\API\VerificationCodesController;
 
 /**--- Users --- */
 Route::controller(UsersController::class)->group(function(){
-    // dd(Auth::guest());
-    Route::middleware('auth:sanctum')->group(function(){
-        Route::middleware('role:Super-Admin')->group(function(){
+    Route::middleware(['auth:sanctum'])->group(function(){
+        Route::middleware(['role:Super-Admin|Admin'])->group(function(){
             Route::get('users/getAll', 'index')->name('all users');
             Route::get('users/getAllSuperAdmin', 'getSuperAdmin');
             Route::delete('users/delete/{id}', 'delete');
@@ -42,14 +44,17 @@ Route::controller(UsersController::class)->group(function(){
         Route::put('users/update', 'update');
         Route::post('logout', 'logout');
     });
-    Route::post('register', 'register'); 
+    Route::post('register', 'register');
+    Route::post('requestResetPassword', 'requestResetPassword');
+    Route::post('resetPassword', 'resetPassword'); 
     Route::post('login', 'login');
 });
 
 /**--- Assets --- */
 Route::controller(AssetsController::class)->group(function(){
+    // dd(Auth::guest());
     Route::middleware('auth:sanctum')->group(function(){
-        Route::middleware('role:Super-Admin')->group(function(){
+        Route::middleware('role:Super-Admin|Admin')->group(function(){
             Route::post('assets/create', 'create'); 
             Route::put('assets/update', 'update');
             Route::delete('assets/delete/{id}', 'delete');
@@ -66,7 +71,7 @@ Route::controller(AssetsController::class)->group(function(){
 /**--- Category Assets --- */
 Route::controller(CategoryAssetsController::class)->group(function(){
     Route::middleware('auth:sanctum')->group(function(){
-        Route::middleware('role:Super-Admin')->group(function(){
+        Route::middleware('role:Super-Admin|Admin')->group(function(){
             Route::post('categoryAssets/create', 'create'); 
             Route::put('categoryAssets/update', 'update');
             Route::delete('categoryAssets/delete/{id}', 'delete');
@@ -83,7 +88,7 @@ Route::controller(CategoryAssetsController::class)->group(function(){
 /**--- Placement --- */
 Route::controller(PlacementsController::class)->group(function(){
     Route::middleware('auth:sanctum')->group(function(){
-        Route::middleware('role:Super-Admin')->group(function(){
+        Route::middleware('role:Super-Admin|Admin')->group(function(){
             Route::post('placements/create', 'create'); 
             Route::put('placements/update', 'update');
             Route::delete('placements/delete/{id}', 'delete');
@@ -100,7 +105,7 @@ Route::controller(PlacementsController::class)->group(function(){
 /**--- Workshops --- */
 Route::controller(WorkshopsController::class)->group(function(){
     Route::middleware('auth:sanctum')->group(function(){
-        Route::middleware('role:Super-Admin')->group(function(){
+        Route::middleware('role:Super-Admin|Admin')->group(function(){
             Route::get('workshops/getAll', 'index');
             Route::get('workshops/detail/{id}', 'show');
             Route::post('workshops/create', 'create'); 
@@ -117,7 +122,7 @@ Route::controller(WorkshopsController::class)->group(function(){
 /**--- Programs Study --- */
 Route::controller(StudyProgramsController::class)->group(function(){
     Route::middleware('auth:sanctum')->group(function(){
-        Route::middleware('role:Super-Admin')->group(function(){
+        Route::middleware('role:Super-Admin|Admin')->group(function(){
             Route::post('studyPrograms/create', 'create'); 
             Route::put('studyPrograms/update', 'update');
             Route::delete('studyPrograms/delete/{id}', 'delete');
@@ -150,6 +155,6 @@ Route::middleware('auth:sanctum')->group(function(){
 });
 
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
