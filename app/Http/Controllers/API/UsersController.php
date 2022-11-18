@@ -248,7 +248,8 @@ class UsersController extends BaseController
             $role1 = Role::find(3);
             $user->assignRole($role1);
             // $success['token'] = $user->createToken('MyApp')->plainTextToken;
-            $success['name'] = $user->name;
+            
+            $success['message'] = "Hai, $user->name! Silakan login untuk melanjutkan!";
 
             // $stringId = $user->id;
 
@@ -524,7 +525,7 @@ class UsersController extends BaseController
     /**
      * Request Reset User password
      * 
-     * @param int $id
+     * @param \Illuminate\Http\Request
      * @return \Illuminate\Http\Response
      */
 
@@ -567,7 +568,7 @@ class UsersController extends BaseController
     /**
      * Reset User password
      * 
-     * @param int $id
+     * @param \Illuminate\Http\Request
      * @return \Illuminate\Http\Response
      */
 
