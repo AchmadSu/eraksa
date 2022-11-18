@@ -10,6 +10,7 @@ use Twilio\Rest\Client;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
+use App\Mail\ResetPasswordLink;
 use App\Models\VerificationCodes;
 use Spatie\Permission\Model\Roles;
 use Spatie\Permission\Models\Role;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use App\Services\VerificationCodesService;
@@ -128,6 +130,14 @@ class UsersController extends BaseController
     public function login(Request $request){
         try {
             sleep(5);
+            // \DB::enableQueryLog();
+            $checkDeletedUser = User::onlyTrashed()->where('email', $request->email)->first();
+            // dd(\DB::getQueryLog());
+            // dd($checkUser);
+            if($checkDeletedUser) {
+                return $this->sendError('Error!', ['error'=> 'Akun anda telah dihapus. Silakan hubungi admin untuk mengaktifkan kembali!']);
+            }
+
             if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
                 $user = Auth::user();
                 $success['token'] = $user->createToken('token-name', ['server:update'])->plainTextToken;
@@ -198,6 +208,13 @@ class UsersController extends BaseController
             
             $input = $request->all();
             // \DB::enableQueryLog();
+            $checkDeletedUser = User::onlyTrashed()->where('email', $input['email'])->first();
+            // dd(\DB::getQueryLog());
+            // dd($checkUser);
+            if($checkDeletedUser) {
+                return $this->sendError('Error!', ['error'=> 'Akun anda sudah terdaftar. Namun telah dihapus. Silakan hubungi admin untuk mengaktifkan kembali!']);
+            }
+
             $checkEmail = User::where('email', $input['email'])->first();
             // dd(\DB::getQueryLog());
             if($checkEmail){
@@ -499,6 +516,103 @@ class UsersController extends BaseController
             $success['message'] = "Restore multiple user data";
             $success['total_data'] = $counter;
             return $this->sendResponse($success, 'Data terpilih dipulihkan');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', $th);
+        }
+    }
+
+    /**
+     * Request Reset User password
+     * 
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
+
+    public function requestResetPassword(Request $request)
+    {
+        try {
+            sleep(5);
+            $email = $request->email;
+            
+            $checkDeletedUser = User::onlyTrashed()->where('email', $email)->first();
+            // dd(\DB::getQueryLog());
+            // dd($checkUser);
+            if($checkDeletedUser) {
+                return $this->sendError('Error!', ['error'=> 'Akun anda telah dihapus. Silakan hubungi admin untuk mengaktifkan kembali!']);
+            }
+            // \DB::enableQueryLog();
+            $checkUser = User::where('email', $email)->first();
+            // dd(\DB::getQueryLog());
+            // dd($checkUser);exit();
+            if($checkUser){
+                $token = Str::random(60);
+                $checkUser->remember_token = $token;
+                $checkUser->save();
+                $mailData = [
+                    "name" => "Reset Password",
+                    "link" => config('app.url').':3000/resetPassword/'.'data?token='.$token.'&email='.urlencode($email),
+                ];
+                Mail::to($email)->send(new ResetPasswordLink($mailData));
+                $success['message'] = "Link reset password berhasil dikirim kepada $email. Silakan cek pesan masuk anda!";
+                return $this->sendResponse($success, 'Pesan berhasil dikirim!');
+            } else {
+                return $this->sendError('Error!', ['error'=> 'Email tidak terdaftar!']);
+            }
+            
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', $th);
+        }
+    }
+
+    /**
+     * Reset User password
+     * 
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
+
+    public function resetPassword(Request $request)
+    {
+        try {
+            sleep(5);
+            $email = $request->email;
+            $token = $request->token;
+            $password = $request->password;
+
+            $validator = Validator::make($request->all(),[
+                'token' => 'required',
+                'email' => 'required|email',
+                'password' => 'required',
+                'confirm_pass' => 'required|same:password'
+            ]);
+
+            if ($validator->fails()){
+                return $this->sendError('Error!', $validator->errors());
+            }
+
+            $checkDeletedUser = User::onlyTrashed()->where('email', $email)->first();
+            // dd(\DB::getQueryLog());
+            // dd($checkUser);
+            if($checkDeletedUser) {
+                return $this->sendError('Error!', ['error'=> 'Akun anda telah dihapus. Silakan hubungi admin untuk mengaktifkan kembali!']);
+            }
+
+            // \DB::enableQueryLog();
+            $checkUser = User::where('email', $email)->where('remember_token', $token)->first();
+            // dd(\DB::getQueryLog());
+            // dd($checkUser);exit();
+            if($checkUser){
+                $checkUser->forceFill([
+                    'password' => bcrypt($password),
+                    'remember_token' => null,
+                ]);
+                $checkUser->save();
+                $success['message'] = "Password berhasil diubah. Silakan login!";
+                return $this->sendResponse($success, 'Password berhasil direset!');
+            } else {
+                return $this->sendError('Error!', ['error'=> 'Email atau Token tidak sesuai!']);
+            }
+            
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
