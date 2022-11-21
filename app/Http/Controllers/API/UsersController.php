@@ -245,7 +245,7 @@ class UsersController extends BaseController
             }
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             $user = User::create($input);
-            $role1 = Role::find(3);
+            $role1 = Role::find(2);
             $user->assignRole($role1);
             // $success['token'] = $user->createToken('MyApp')->plainTextToken;
             
@@ -551,7 +551,7 @@ class UsersController extends BaseController
                 $checkUser->save();
                 $mailData = [
                     "name" => "Reset Password",
-                    "link" => config('app.url').':3000/resetPassword/'.'data?token='.$token.'&email='.urlencode($email),
+                    "link" => config('app.url').':3000/resetPassword/'.'data?token='.$token.'&email='.urlencode($email).'&expired_at='.Carbon::now()->addMinutes(10),
                 ];
                 Mail::to($email)->send(new ResetPasswordLink($mailData));
                 $success['message'] = "Link reset password berhasil dikirim kepada $email. Silakan cek pesan masuk anda!";
@@ -601,15 +601,28 @@ class UsersController extends BaseController
             // \DB::enableQueryLog();
             $checkUser = User::where('email', $email)->where('remember_token', $token)->first();
             // dd(\DB::getQueryLog());
-            // dd($checkUser);exit();
+            // dd($checkUser->isEmpty());exit();
+            // var_dump($now < $addMinutes);exit();
             if($checkUser){
-                $checkUser->forceFill([
-                    'password' => bcrypt($password),
-                    'remember_token' => null,
-                ]);
-                $checkUser->save();
-                $success['message'] = "Password berhasil diubah. Silakan login!";
-                return $this->sendResponse($success, 'Password berhasil direset!');
+                $updateTime = strtotime($checkUser->updated_at);
+                $addMinutes = strtotime('+ 10 minutes', $updateTime);
+                $now = strtotime(Carbon::now());
+                if ($now <= $addMinutes) {
+                    $checkUser->forceFill([
+                        'password' => bcrypt($password),
+                        'remember_token' => null,
+                    ]);
+                    $checkUser->save();
+                    $success['message'] = "Password berhasil diubah. Silakan login!";
+                    return $this->sendResponse($success, 'Password berhasil direset!');
+                }
+                else {
+                    $checkUser->forceFill([
+                        'remember_token' => null,
+                    ]);
+                    $checkUser->save();
+                    return $this->sendError('Error!', ['error'=> 'Waktu reset password telah habis. Silakan ulangi reset password!']);
+                }
             } else {
                 return $this->sendError('Error!', ['error'=> 'Email atau Token tidak sesuai!']);
             }

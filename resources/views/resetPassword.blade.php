@@ -251,7 +251,7 @@
         <div class="text-justify">
             <p>
                 Halo! <br> Seseorang berusaha untuk mengatur ulang kata sandi akun Eraksa Assets Management System anda.
-                Apakah itu anda? <b>Jika YA.</b> Silakan klik tombol berikut untuk pengaturan kata sandi anda.
+                Apakah itu anda? <b>Jika YA.</b> Silakan klik tombol berikut untuk pengaturan kata sandi anda. Tombol link berikut ini hanya <b>berlaku dalam waktu 10 menit</b> saja. 
             </p>
             <a href="{{ $mailData['link'] }}">
                 <button class="btn btn-primary my-2">Link Reset Password</button>
