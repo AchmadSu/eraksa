@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class UserRoles extends Seeder
 {
@@ -17,7 +18,19 @@ class UserRoles extends Seeder
     {
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
         
-        $role1 = Role::create(['name' => 'Member']);
-        $role2 = Role::create(['name' => 'Admin']);
+        $role1 = Role::create(['name' => 'Super-Admin']);
+        Role::create(['name' => 'Admin']);
+        Role::create(['name' => 'Member']);
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        $user = \App\Models\User::factory()->create([
+            'name' => 'Super-Admin',
+            'email' => 'eraksasuperadmin@gmail.com',
+            'password' => bcrypt('eraksasuperadmin'),
+            'status' => '1',
+            'phone' => '+12223993',
+            'study_program_id' => 0,
+        ]);
+        $user->assignRole($role1);
     }
 }
