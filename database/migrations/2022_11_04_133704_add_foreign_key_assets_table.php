@@ -13,6 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
+        Schema::disableForeignKeyConstraints();
         Schema::table('assets', function (Blueprint $table) {
             // $table->dropForeign('study_programs_id');
             $table->unsignedBigInteger('study_programs_id');
