@@ -123,16 +123,18 @@ Route::controller(WorkshopsController::class)->group(function(){
 Route::controller(StudyProgramsController::class)->group(function(){
     Route::middleware('auth:sanctum')->group(function(){
         Route::middleware('role:Super-Admin|Admin')->group(function(){
-            Route::post('studyPrograms/create', 'create'); 
-            Route::put('studyPrograms/update', 'update');
-            Route::delete('studyPrograms/delete/{id}', 'delete');
-            Route::delete('studyPrograms/deleteMultiple', 'deleteMultiple');
-            Route::get('studyPrograms/trash', 'trash');
-            Route::put('studyPrograms/restore/{id}', 'restore');
-            Route::put('studyPrograms/restoreMultiple', 'restoreMultiple');
+            Route::middleware('role:Super-Admin')->group(function(){
+                Route::post('studyPrograms/create', 'create'); 
+                Route::put('studyPrograms/update', 'update');
+                Route::delete('studyPrograms/delete/{id}', 'delete');
+                Route::delete('studyPrograms/deleteMultiple', 'deleteMultiple');
+                Route::get('studyPrograms/trash', 'trash');
+                Route::put('studyPrograms/restore/{id}', 'restore');
+                Route::put('studyPrograms/restoreMultiple', 'restoreMultiple');
+            });
+            Route::get('studyPrograms/getAll', 'index');
+            Route::get('studyPrograms/detail/{id}', 'show');
         });
-        Route::get('studyPrograms/getAll', 'index');
-        Route::get('studyPrograms/detail/{id}', 'show');
     });
 });
 
