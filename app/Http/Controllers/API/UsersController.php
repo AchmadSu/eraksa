@@ -21,18 +21,24 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
-use App\Services\VerificationCodesService;
+use App\Services\VerificationCodes\VerificationCodesService;
 use Symfony\Component\Console\Input\Input;
 use App\Http\Controllers\API\BaseController;
 use App\Http\Controllers\API\AuthOtpController as AuthOtpController;
+use App\Services\Users\UserService;
 
 class UsersController extends BaseController
 {
     public $verificationCodesService;
+    // public $userService;
 
-    public function __construct(VerificationCodesService $verificationCodesService)
+    public function __construct(
+        VerificationCodesService $verificationCodesService,
+        // UserService $userService,
+    )
     {
         $this->verificationCodesService = $verificationCodesService;
+        // $this->userService = $userService;
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
     }
 
@@ -46,9 +52,6 @@ class UsersController extends BaseController
     public function index(){
         try {
             sleep(5);
-            // dd(Auth::guest());
-            // dd(Auth::user());
-            // dd(Auth::user()->study_program_id);
             $users = User::all();
             if(Auth::user()->hasRole('Admin')){
                 $users = User::role('Member')->where('study_program_id', Auth::user()->study_program_id)->get();
@@ -140,6 +143,7 @@ class UsersController extends BaseController
 
             if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
                 $user = Auth::user();
+                // dd(Role::find(3));
                 $success['token'] = $user->createToken('token-name', ['server:update'])->plainTextToken;
                 if($user->hasRole('Super-Admin')){
                     $success['roles'] = 'Super-Admin';
@@ -153,6 +157,7 @@ class UsersController extends BaseController
                     $success['roles'] = 'Member';
                 }
                 $success['user'] = $user;
+                $checkOTP = VerificationCodes::where('user_id', $user->id)->first();
                 
                 return $this->sendResponse($success, 'Anda berhasil masuk!');
     
@@ -221,10 +226,9 @@ class UsersController extends BaseController
                 return $this->sendError('Error!', ['error'=>'Email sudah terdaftar, silakan login!']);
             }
             
-            // $input['otp'] = rand(1000, 9999);
             $input['name'] = ucwords($input['name']);
             $input['password'] = bcrypt($input['password']);
-
+            
             $spiltPhone = str_split($input['phone']);
             
             if($spiltPhone[0] === '8'){
@@ -234,22 +238,32 @@ class UsersController extends BaseController
             if($spiltPhone[0].$spiltPhone[1] === '62'){
                 $input['phone'] = '+'.$input['phone'];
             }
-
+            
             $checkPhone = User::where('phone', $input['phone'])->first();
             if($checkPhone){
                 return $this->sendError('Error!', ['error'=>'Nomor sudah terdaftar, silakan login!']);
             }
-
+            
             if ($validator->fails()){
                 return $this->sendError('Error!', $validator->errors());
             }
+            
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             $user = User::create($input);
-            $role1 = Role::find(2);
+            $role1 = Role::find(3);
             $user->assignRole($role1);
+
+            $otp = rand(100000, 999999);
+            VerificationCodes::create([
+                'otp' => $otp,
+                'user_id' => $user->id,
+                'expired_at' => Carbon::now()->addMinutes(10),
+                'status' => '0',
+            ]);
+            $this->verificationCodesService->sendWhatsappNotification("$otp", $input['phone']);
             // $success['token'] = $user->createToken('MyApp')->plainTextToken;
             
-            $success['message'] = "Hai, $user->name! Silakan login untuk melanjutkan!";
+            $success['message'] = "Hai, $user->name! Kami telah mengirimkan OTP ke nomor WhatsApp anda. Silakan login untuk melanjutkan!";
 
             // $stringId = $user->id;
 

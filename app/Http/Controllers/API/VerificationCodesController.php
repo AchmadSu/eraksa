@@ -17,7 +17,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Enum;
 use App\Providers\RouteServiceProvider;
-use App\Services\VerificationCodesService;
+use App\Services\VerificationCodes\VerificationCodesService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
 // use Illuminate\Support\Facades\Validator;
@@ -35,17 +35,20 @@ class VerificationCodesController extends BaseController
     }
 
     /** Generate New OTP */ 
-    protected function generate(String $user_id)
+    public function generate(String $user_id)
     {
         try {
             sleep(5);
             $checkValidate = VerificationCodes::where('user_id', $user_id)->where('status', '1')->first();
+            // dd($checkValidate);
             // print($checkValidate);exit();
             if ($checkValidate) {
                 return $this->sendError('Error!', ['error'=>'Akun sudah divalidasi!']);
             }
-            if(VerificationCodes::where('user_id', $user_id)->first()){
-                return $this->sendError('Kode OTP sudah terkirim!', ['error'=>'OTP untuk user ini sudah dikirim, silakan masukkan!']);
+            $checkUser = VerificationCodes::where('user_id', $user_id)->first();
+            // dd($checkUser);
+            if($checkUser){
+                return $this->sendError('Error!', ['error' => 'OTP anda sudah dikirim, silakan masukkan!']);
             }
             $otp = rand(100000, 999999);
             $verificationCode = VerificationCodes::create([
@@ -73,12 +76,19 @@ class VerificationCodesController extends BaseController
     }
 
     /** Generate Update OTP */ 
-    protected function regenerate(String $user_id){
+    public function regenerate(String $user_id){
         try {
             sleep(5);
-            // VerificationCodes::where('user_id', $user_id)->first();
-            if(!VerificationCodes::where('user_id', $user_id)->first()){
+            $checkUser = VerificationCodes::where('user_id', $user_id)->first();
+            // dd($checkUser);
+            if(!$checkUser){
                 return $this->sendError('Error!', ['error'=>'Tidak ada data user!']);
+            }
+
+            $checkUser = User::where('id', $user_id)->where('status', '1')->first();
+            
+            if($checkUser){
+                return $this->sendError('Error!', ['error'=>'Akun sudah tervalidasi!']);
             }
             
             $checkValidate = VerificationCodes::where('user_id', $user_id)->where('status', '1')->first();
@@ -87,7 +97,7 @@ class VerificationCodesController extends BaseController
                 return $this->sendError('Error!', ['error'=>'Akun sudah divalidasi!']);
             }
             $otp = rand(100000, 999999);
-            $updateVerificationCode = VerificationCodes::where('user_id', $user_id)->update([
+            VerificationCodes::where('user_id', $user_id)->update([
                 'otp' => $otp,
                 'expired_at' => Carbon::now()->addMinutes(10),
             ]);
@@ -104,7 +114,7 @@ class VerificationCodesController extends BaseController
             $strOtp = "$otp";
             // return var_dump($strOtp);
             $this->verificationCodesService->sendWhatsappNotification($strOtp, $strPhone);
-            // dd($this->verificationCodesService);
+            // dd("test");
             $tokenMsg = Str::random(15);
             $success['token'] = $tokenMsg;
             $success['message'] = "Kode OTP telah dikirim. Silakan buka pesan di What's App anda!";
@@ -129,14 +139,16 @@ class VerificationCodesController extends BaseController
             // dd($verificationCode);
             $now = Carbon::now();
             if (!$verificationCode) {
-                return $this->sendError('OTP Salah.', ['error'=>'Masukkan ulang otp dengan benar!']);
+                return $this->sendError('Error!', ['error'=>'OTP Salah. Masukkan ulang otp dengan benar!']);
             } elseif ($verificationCode && $now->isAfter($verificationCode->expired_at)) {
-                return $this->sendError('OTP Kadaluarsa.', ['error'=>'Otp sudah melewati batas waktu penginputan!']);
+                return $this->sendError('Error!', ['error'=>'OTP kedaluarsa. Kode OTP sudah melewati batas waktu penginputan!']);
+            } if($verificationCode->status == '1'){
+                return $this->sendError('Error!', ['error'=>'Akun telah tervalidasi!']);
             } else {
                 $this->setValidate($user_id);
                 $this->setUserStatus($user_id);
                 $success['status'] = "Nomor tervalidasi";
-                $success['token'] = $verificationCode->createToken('MyApp')->plainTextToken;
+                // $success['token'] = $verificationCode->createToken('MyApp')->plainTextToken;
                 return $this->sendResponse($success, 'Kode OTP Benar.');
             }
         } catch (Exception $e) {
