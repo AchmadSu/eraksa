@@ -646,6 +646,56 @@ class UsersController extends BaseController
         }
     }
 
+    /**
+     * Reset User password
+     * 
+     * @param \Illuminate\Http\Request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function resetPhone(String $id, Request $request)
+    {
+        try {
+            sleep(5);
+            $phone = $request->phone;
+            
+            $spiltPhone = str_split($phone);
+            // dd($spiltPhone);
+            if($spiltPhone[0] == '8'){
+                $phone = '+62'.$phone;
+            } elseif($spiltPhone[0].$spiltPhone[1] == '62'){
+                $phone = '+'.$phone;
+            }
+
+            // dd($phone);
+
+            $checkPhone = User::where('phone', $phone)->first();
+
+            if ($checkPhone){
+                return $this->sendError('Error!', 'Nomor sudah terdaftar pada user lain. Silakan ganti dengan nomor yang lain!');
+            }
+
+            // \DB::enableQueryLog();
+            $checkUser = User::where('id', $id)->first();
+            // dd(\DB::getQueryLog());
+            // dd($checkUser->isEmpty());exit();
+            // var_dump($now < $addMinutes);exit();
+            if($checkUser){
+                $checkUser->forceFill([
+                    'phone' => $phone,
+                ]);
+                $checkUser->save();
+                $success['message'] = "Nomor berhasil diubah. Silakan kirim ulang kode OTP anda!";
+                return $this->sendResponse($success, 'Nomor berhasil direset!');                    
+            } else {
+                return $this->sendError('Error!', ['error'=> 'Data user tidak sesuai!']);
+            }
+            
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', $th);
+        }
+    }
+
     /** GENERATE OTP AND SEND OTP TO NUMBER ACCOUNT */
 
     /** Generate OTP Update Phone Number*/ 

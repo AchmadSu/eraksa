@@ -42,6 +42,7 @@ Route::controller(UsersController::class)->group(function(){
         });
         Route::get('users/detail/{id}', 'show');
         Route::put('users/update', 'update');
+        Route::post('resetPhone/{id}', 'resetPhone');
         Route::post('logout', 'logout');
     });
     Route::post('register', 'register');
