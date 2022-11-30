@@ -157,7 +157,6 @@ class UsersController extends BaseController
                     $success['roles'] = 'Member';
                 }
                 $success['user'] = $user;
-                $checkOTP = VerificationCodes::where('user_id', $user->id)->first();
                 
                 return $this->sendResponse($success, 'Anda berhasil masuk!');
     
@@ -672,7 +671,7 @@ class UsersController extends BaseController
             $checkPhone = User::where('phone', $phone)->first();
 
             if ($checkPhone){
-                return $this->sendError('Error!', 'Nomor sudah terdaftar pada user lain. Silakan ganti dengan nomor yang lain!');
+                return $this->sendError('Error!', ['error' => 'Nomor sudah terdaftar pada user lain. Silakan ganti dengan nomor yang lain!']);
             }
 
             // \DB::enableQueryLog();
@@ -685,6 +684,10 @@ class UsersController extends BaseController
                     'phone' => $phone,
                 ]);
                 $checkUser->save();
+                $this->updatePhone("$id", $phone);
+                $user = Auth::user();
+                $success['user'] = $user;
+                $success['new_phone'] = $phone;
                 $success['message'] = "Nomor berhasil diubah. Silakan kirim ulang kode OTP anda!";
                 return $this->sendResponse($success, 'Nomor berhasil direset!');                    
             } else {
