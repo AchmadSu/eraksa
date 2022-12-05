@@ -147,11 +147,7 @@ class UsersController extends BaseController
                 $success['token'] = $user->createToken('token-name', ['server:update'])->plainTextToken;
                 if($user->hasRole('Super-Admin')){
                     $success['roles'] = 'Super-Admin';
-                } elseif ($user->hasRole('Super-Admin') && ($user->hasRole('Admin') || $user->hasRole('Member'))) {
-                    $success['roles'] = 'Super-Admin';
                 } elseif ($user->hasRole('Admin')) {
-                    $success['roles'] = 'Admin';
-                } elseif ($user->hasRole('Admin') && $user->hasRole('Member')) {
                     $success['roles'] = 'Admin';
                 } else {
                     $success['roles'] = 'Member';
