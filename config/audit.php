@@ -24,13 +24,14 @@ return [
     |
     */
 
-    'user'      => [
+    'user' => [
         'morph_prefix' => 'user',
         'guards'       => [
             'web',
-            'api'
+            'sanctum',
+            'api',
         ],
-        'resolver'     => OwenIt\Auditing\Resolvers\UserResolver::class,
+        'resolver' => OwenIt\Auditing\Resolvers\UserResolver::class,
     ],
 
     /*
@@ -42,7 +43,7 @@ return [
     |
     */
     'resolvers' => [
-        // 'user' => OwenIt\Auditing\Resolvers\UserResolver::class,
+        // 'user' => Auth::user()->id,
         'ip_address' => OwenIt\Auditing\Resolvers\IpAddressResolver::class,
         'user_agent' => OwenIt\Auditing\Resolvers\UserAgentResolver::class,
         'url'        => OwenIt\Auditing\Resolvers\UrlResolver::class,
