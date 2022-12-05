@@ -685,8 +685,7 @@ class UsersController extends BaseController
                 ]);
                 $checkUser->save();
                 $this->updatePhone("$id", $phone);
-                $user = Auth::user();
-                $success['user'] = $user;
+                
                 $success['new_phone'] = $phone;
                 $success['message'] = "Nomor berhasil diubah. Silakan kirim ulang kode OTP anda!";
                 return $this->sendResponse($success, 'Nomor berhasil direset!');                    
