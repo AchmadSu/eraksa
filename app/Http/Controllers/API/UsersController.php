@@ -278,8 +278,8 @@ class UsersController extends BaseController
     {
         try {
             sleep(5);
-            // dd(Auth::user()->name);
-            $id = $request->id;
+            // dd(Auth::user()->id);
+            $id = Auth::user()->id;
             $updateDataUser = User::find($id);
             $name = $request->name;
             $code = $request->code;
