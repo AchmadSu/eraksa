@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\LoansController;
 use App\Http\Controllers\API\UsersController;
 use App\Http\Controllers\API\AssetsController;
 use App\Http\Controllers\API\WorkshopsController;
@@ -145,6 +146,29 @@ Route::controller(VerificationCodesController::class)->group(function(){
         Route::post('verification/check/{user_id}', 'checkOtp');
         Route::post('verification/generate/{user_id}', 'generate')->name('generateNewOtp');
         Route::post('verification/regenerate/{user_id}', 'regenerate')->name('regenerateOtp');
+    });
+});
+
+/**--- Loans --- */
+Route::controller(LoansController::class)->group(function(){
+    // dd(Auth::guest());
+    Route::middleware('auth:sanctum')->group(function(){
+        Route::middleware('role:Super-Admin|Admin')->group(function(){
+            Route::get('loans/getAll', 'index');
+            Route::put('loans/update', 'update');
+            Route::delete('loans/delete/{id}', 'delete');
+            Route::delete('loans/deleteMultiple', 'deleteMultiple');
+            Route::get('loans/trash', 'trash');
+            Route::put('loans/restore/{id}', 'restore');
+            Route::put('loans/restoreMultiple', 'restoreMultiple');
+            Route::get('loans/getAllLoansByDate', 'getLoansByDate');
+            Route::get('loans/getAllLoansByCode/{code}', 'getLoansByCode');
+            Route::get('loans/getAllLoansByStatus/{status}', 'getLoansByStatus');
+            Route::get('loans/getAllLoansByLender/{lender_id}', 'getLoansByLenderId');
+        });
+        Route::get('loans/getAllLoansByLoaner/{loaner_id}', 'getLoansByLoanerId');
+        Route::post('loans/create', 'create'); 
+        Route::get('loans/detail/{id}', 'show');
     });
 });
 
