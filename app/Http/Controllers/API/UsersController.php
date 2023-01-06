@@ -145,13 +145,7 @@ class UsersController extends BaseController
                 $user = Auth::user();
                 // dd(Role::find(3));
                 $success['token'] = $user->createToken('token-name', ['server:update'])->plainTextToken;
-                if($user->hasRole('Super-Admin')){
-                    $success['roles'] = 'Super-Admin';
-                } elseif ($user->hasRole('Admin')) {
-                    $success['roles'] = 'Admin';
-                } else {
-                    $success['roles'] = 'Member';
-                }
+                $success['roles'] = $user['roles'][0]['name'];
                 $success['user'] = $user;
                 
                 return $this->sendResponse($success, 'Anda berhasil masuk!');
@@ -199,6 +193,8 @@ class UsersController extends BaseController
             sleep(5);
             $validator = Validator::make($request->all(),[
                 'name' => 'required',
+                'code' => 'required|unique:users,code',
+                'code_type' => 'required',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required',
                 'confirm_pass' => 'required|same:password',
@@ -207,6 +203,7 @@ class UsersController extends BaseController
     
             
             $input = $request->all();
+            // dd($input);
             // \DB::enableQueryLog();
             $checkDeletedUser = User::onlyTrashed()->where('email', $input['email'])->first();
             // dd(\DB::getQueryLog());
@@ -245,8 +242,8 @@ class UsersController extends BaseController
             
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             $user = User::create($input);
-            $role1 = Role::find(3);
-            $user->assignRole($role1);
+            $role3 = Role::find(3); // Member
+            $user->assignRole($role3);
 
             $otp = rand(100000, 999999);
             VerificationCodes::create([
@@ -284,8 +281,9 @@ class UsersController extends BaseController
             // dd(Auth::user()->name);
             $id = $request->id;
             $updateDataUser = User::find($id);
-            
             $name = $request->name;
+            $code = $request->code;
+            $code_type = $request->code_type;
             $new_email = $request->new_email;
             $old_password = $request->old_password;
             $new_password = $request->new_password;
@@ -320,9 +318,25 @@ class UsersController extends BaseController
                 return $this->sendError('Error!', $credentials = ['Password lama yang anda masukkan salah!']);
             }
 
+            // \DB::enableQueryLog();
+            $checkCode = User::where('id', $id)->where('code', $code)->first();
+            //dd($checkCode);
+
+            if(!$checkCode){
+                // dd(!$checkCode);
+                $validator = Validator::make($request->code, [
+                    'code' => 'required|unique:users,code',
+                ]);
+                if ($validator->fails()) {
+                    return $this->sendError('Error!', 'NIM atau NIDN sudah digunakan oleh pengguna lain');
+                }
+            }
+
             if ($new_password == NULL) {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
+                    'code' => 'required',
+                    'code_type' => 'required',
                     'new_email' => 'email|unique:users,email',
                     'new_phone' => 'numeric|unique:users,phone',
                 ]);
@@ -330,6 +344,8 @@ class UsersController extends BaseController
             } elseif ($new_password != NULL) {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
+                    'code' => 'required',
+                    'code_type' => 'required',
                     'new_email' => 'email|unique:users,email',
                     'new_password' => 'required',
                     'confirm_new_password' => 'required|same:new_password',
@@ -364,14 +380,14 @@ class UsersController extends BaseController
             }
 
             $updateDataUser->name = ucwords($name);
+            $updateDataUser->code = Str::upper($code);
+            $updateDataUser->code_type = $code_type;
             // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             // $updateDataUser->study_program_id = $new_studyProgram_id;
 
             // dd($data);exit();
 
             $updateDataUser->save();
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
             $success['message'] = "Data berhasil diupdate!";
             $success['data'] = $updateDataUser;
             return $this->sendResponse($success, 'Update data');
