@@ -161,12 +161,8 @@ Route::controller(LoansController::class)->group(function(){
             Route::get('loans/trash', 'trash');
             Route::put('loans/restore/{id}', 'restore');
             Route::put('loans/restoreMultiple', 'restoreMultiple');
-            Route::get('loans/getAllLoansByDate', 'getLoansByDate');
-            Route::get('loans/getAllLoansByCode/{code}', 'getLoansByCode');
-            Route::get('loans/getAllLoansByStatus/{status}', 'getLoansByStatus');
-            Route::get('loans/getAllLoansByLender/{lender_id}', 'getLoansByLenderId');
         });
-        Route::get('loans/getAllLoansByLoaner/{loaner_id}', 'getLoansByLoanerId');
+        Route::get('loans/filterLoans', 'filterLoans');
         Route::post('loans/create', 'create'); 
         Route::get('loans/detail/{id}', 'show');
     });
