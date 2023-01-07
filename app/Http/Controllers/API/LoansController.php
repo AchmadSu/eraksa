@@ -12,6 +12,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\API\BaseController;
+use App\Models\Returns;
+use App\Models\User;
 use Illuminate\Support\Facades\Date;
 
 class LoansController extends BaseController
@@ -43,129 +45,79 @@ class LoansController extends BaseController
     }
 
     /** 
-     * Get All loans by loaner
+     * Get All loans by filter
      * 
      * @return \Illuminate\Http\Response
     */
 
-    public function getLoansByLoanerId(Int $loaner_id){
+    public function filterLoans(Request $request){
         try {
             // dd(Loans::all());
             sleep(5);
-            // dd(Auth::user());
-            // var_dump(Loans::all());exit();
-            // \DB::enableQueryLog();
-            $loans = Loans::where('loaner_id', $loaner_id)->get();
-            // dd(\DB::getQueryLog());
-            if ($loans->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($loans, 'Displaying all Loans data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
-        }
-    }
-
-    /** 
-     * Get All loans by lender
-     * 
-     * @return \Illuminate\Http\Response
-    */
-
-    public function getLoansByLenderId(Int $lender_id){
-        try {
-            // dd(Loans::all());
-            sleep(5);
-            // dd(Auth::user());
-            // var_dump(Loans::all());exit();
-            // \DB::enableQueryLog();
-            $loans = Loans::where('lender_id', $lender_id)->get();
-            // dd(\DB::getQueryLog());
-            if ($loans->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($loans, 'Displaying all Loans data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
-        }
-    }
-
-    /** 
-     * Get All loans Code
-     * 
-     * @return \Illuminate\Http\Response
-    */
-
-    public function getLoansByCode(String $code){
-        try {
-            // dd(Loans::all());
-            sleep(5);
-            // dd(Auth::user());
-            // var_dump(Loans::all());exit();
-            // \DB::enableQueryLog();
-            $loans = Loans::where('code', $code)->first();
-            // dd(\DB::getQueryLog());
-            if (!$loans) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($loans, 'Displaying all Loans data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
-        }
-    }
-
-    /** 
-     * Get All loans date
-     * 
-     * @return \Illuminate\Http\Response
-    */
-
-    public function getLoansByDate(Request $request){
-        try {
-            // dd(Loans::all());
-            sleep(5);
+            $code = $request->code;
+            
+            $loaner_name = $request->loaner_name;
+            $lender_id = $request->lender_id;
             $dateOne = $request->dateOne;
             $dateTwo = $request->dateTwo;
+            $status = $request->status;
+            $return_code = $request->return_code;
+            $dueDateOne = $request->dueDateOne;
+            $dueDateTwo = $request->dueDateTwo;
+
+            
             $from = date($dateOne);
             $to = date($dateTwo);
-            if($to != NULL){
-                // dd("test");
-                $loans = Loans::whereBetween('date', [$from, $to])->get();
+            
+            $dueFrom = date($dueDateOne);
+            $dueTo = date($dueDateTwo);
+            // dd($request->loaner_ids);
+            // \DB::enableQueryLog();
+            if($request->loaner_ids == NULL){
+                if($loaner_name != NULL) {
+                    $loaner = User::where('name', 'like', '%'.$loaner_name.'%')->get();
+                    // dd(\DB::getQueryLog());
+                    $loaner_ids = array();
+                    foreach ($loaner as $rowLoaner) {
+                        $loaner_ids[] = $rowLoaner->id;
+                    }
+                }
             } else {
-                // dd("test2");
-                $loans = Loans::where('date', $from)->get();
+                $loaner_ids = $request->loaner_ids;
             }
+            // dd($loaner_ids);
+            $return = Returns::where('code', 'like', '%'.$return_code.'%')->get();
+            // $loans = Loans::whereIn('loaner_id', $loaner_ids)->get();
+            $return_ids = array();
+            foreach ($return as $rowReturn) {
+                $return_ids[] = $rowReturn->id;
+            }
+            // \DB::enableQueryLog();
+            // dd($loaner_ids);
+            $loans = Loans::
+                    when(isset($code))
+                    ->where('code', 'like', '%'.$code.'%')
+                    ->when(isset($loaner_ids))
+                    ->whereIn('loaner_id', ($loaner_ids))
+                    ->when(isset($lender_id))
+                    ->where('lender_id', $lender_id)
+                    ->when(isset($dateOne) && !isset($dateTwo))
+                    ->where('date', $from)
+                    ->when(isset($dateOne) && isset($dateTwo))
+                    ->whereBetween('date', [$from, $to])
+                    ->when(isset($dueDateOne) && !isset($dueDateTwo))
+                    ->where('due_date', $dueFrom)
+                    ->when(isset($dueDateOne) && isset($dueDateTwo))
+                    ->whereBetween('due_date', [$dueFrom, $dueTo])
+                    ->when(isset($status))
+                    ->where('status', $status)
+                    ->when(isset($return_code))
+                    ->whereIn('return_id', $return_ids)
+                    ->get();
+            // dd(Auth::user());
             // dd(\DB::getQueryLog());
-            if (!$loans) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($loans, 'Displaying all Loans data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
-        }
-    }
-
-    /** 
-     * Get All loans due date
-     * 
-     * @return \Illuminate\Http\Response
-    */
-
-    public function getLoansByDueDate(Request $request){
-        try {
-            // dd(Loans::all());
-            sleep(5);
-            $dateOne = $request->dateOne;
-            $dateTwo = $request->dateTwo;
-            $from = date($dateOne);
-            $to = date($dateTwo);
-            if($to != NULL){
-                $loans = Loans::whereBetween('due_date', [$from, $to])->get();
-            } else {
-                $loans = Loans::where('due_date', $from)->get();
-            }
-            // dd(\DB::getQueryLog());
-            if (!$loans) {
+            // var_dump(Loans::all());exit();
+            if ($loans->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             return $this->sendResponse($loans, 'Displaying all Loans data');
