@@ -21,16 +21,36 @@ class WorkshopsController extends BaseController
     /** 
      * Get All Workshops
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function index(){
+    public function index(Request $request){
         try {
             sleep(5);
             // dd(Auth::user());
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
-            $workshops = Workshops::all();
+            $name = $request->name;
+            $phone = $request->phone;
+            
+            if(isset($phone)) {
+                $spiltPhone = str_split($phone);
+                // dd($spiltPhone);
+                if($spiltPhone[0] === '8'){
+                    $phone = '+62'.$phone;
+                }
+                // dd($spiltPhone[0].$spiltPhone[1]);
+                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                    $phone = '+'.$phone;
+                }
+            }
+
+            $workshops = Workshops::when(isset($name))
+            ->where('name', 'like', '%'.$name.'%')
+            ->when(isset($phone))
+            ->where('phone', 'like', '%'.$phone.'%')
+            ->get();
             // dd(\DB::getQueryLog());
             // dd($workshops);
             if ($workshops->isEmpty()) {
@@ -45,16 +65,37 @@ class WorkshopsController extends BaseController
     /** 
      * Get All Workshops in Trash
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function trash(){
+    public function trash(Request $request){
         try {
             sleep(5);
             // dd(Auth::user());
             // dd(Auth::user());
             // \DB::enableQueryLog();
-            $workshops = Workshops::onlyTrashed()->get();
+            $name = $request->name;
+            $phone = $request->phone;
+            
+            if(isset($phone)) {
+                $spiltPhone = str_split($phone);
+                // dd($spiltPhone);
+                if($spiltPhone[0] === '8'){
+                    $phone = '+62'.$phone;
+                }
+                // dd($spiltPhone[0].$spiltPhone[1]);
+                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                    $phone = '+'.$phone;
+                }
+            }
+
+            $workshops = Workshops::onlyTrashed()
+            ->when(isset($name))
+            ->where('name', 'like', '%'.$name.'%')
+            ->when(isset($phone))
+            ->where('phone', 'like', '%'.$phone.'%')
+            ->get();
             // dd(\DB::getQueryLog());
             if ($workshops->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -182,41 +223,13 @@ class WorkshopsController extends BaseController
     }
 
     /**
-     * Put Workshops into trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function delete(Int $id)
-    {
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkWorkshops = Workshops::where('id', $id)->first();
-            // dd(\DB::getQueryLog());
-            if(!$checkWorkshops){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
-            }
-            $deleteWorkshops = Workshops::where('id', $id)->update(['deleted_at' => Carbon::now()]);
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Delete data";
-            $success['data'] = $deleteWorkshops;
-            return $this->sendResponse($success, 'Data berhasil dihapus');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Put Multiple Workshops into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function deleteMultiple(Request $request)
+    public function delete(Request $request)
     {
         try {
             sleep(5);
@@ -241,43 +254,13 @@ class WorkshopsController extends BaseController
     }
 
     /**
-     * Restore Workshops from trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function restore(Int $id)
-    {
-        // return "Cek";exit();
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkWorkshops = Workshops::onlyTrashed()->where('id', $id)->get();
-            // dd(\DB::getQueryLog());
-            
-            if($checkWorkshops->isEmpty()){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-            }
-            $restoreWorkshops = Workshops::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Restore data";
-            $success['data'] = $restoreWorkshops;
-            return $this->sendResponse($success, 'Data berhasil dipulihkan');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Restore Multiple Workshops from trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function restoreMultiple(Request $request)
+    public function restore(Request $request)
     {
         // return "Cek";exit();
         try {

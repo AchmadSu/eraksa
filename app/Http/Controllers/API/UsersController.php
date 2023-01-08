@@ -46,23 +46,58 @@ class UsersController extends BaseController
     /** 
      * Get All Users
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function index(){
+    public function index(Request $request){
         try {
             sleep(5);
-            $users = User::all();
-            if(Auth::user()->hasRole('Admin')){
-                $users = User::role('Member')->where('study_program_id', Auth::user()->study_program_id)->get();
+            //$users = User::all();
+            $keyWords = $request->keyWords;
+            $code = $request->code;
+            $code_type = $request->code_type;
+            $status = $request->status;
+            $phone = $request->phone;
+
+            // dd(Auth::user()->hasRole('Super-Admin'));
+            $study_program_id = $request->study_program_id;
+
+            if(isset($phone)) {
+                $spiltPhone = str_split($phone);
+                // dd($spiltPhone);
+                if($spiltPhone[0] === '8'){
+                    $phone = '+62'.$phone;
+                }
+                // dd($spiltPhone[0].$spiltPhone[1]);
+                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                    $phone = '+'.$phone;
+                }
             }
+            
+            $users = User::when(isset($keyWords))
+            ->where('name', 'like', '%'.$keyWords.'%')
+            ->orWhere('email', 'like', '%'.$keyWords.'%')
+            ->when(isset($code))
+            ->where('code', 'like', '%'.$code.'%')
+            ->when(isset($code_type))
+            ->where('code_type', $code_type)
+            ->when(isset($status))
+            ->where('status', $status)
+            ->when(isset($phone))
+            ->where('phone', 'like', '%'.$phone.'%')
+            ->when(isset($study_program_id))
+            ->where('study_program_id', $study_program_id)
+            ->when(Auth::user()->hasRole('Admin'))
+            ->role('Member')
+            ->get();
             // dd($users);
             if ($users->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             return $this->sendResponse($users, 'Displaying all users data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan!"]);
         }
         
     }
@@ -70,23 +105,53 @@ class UsersController extends BaseController
     /** 
      * Get All Users in Trash
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function trash(){
+    public function trash(Request $request){
         try {
             sleep(5);
+            $keyWords = $request->keyWords;
+            $code = $request->code;
+            $code_type = $request->code_type;
+            $status = $request->status;
+            $phone = $request->phone;
+
+            // dd(Auth::user()->hasRole('Super-Admin'));
+            $study_program_id = $request->study_program_id;
+
+            if(isset($phone)) {
+                $spiltPhone = str_split($phone);
+                // dd($spiltPhone);
+                if($spiltPhone[0] === '8'){
+                    $phone = '+62'.$phone;
+                }
+                // dd($spiltPhone[0].$spiltPhone[1]);
+                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                    $phone = '+'.$phone;
+                }
+            }
             // dd(Auth::user());
             // dd(Auth::user()->hasRole('Admin'));
             // \DB::enableQueryLog();
-            $users = User::onlyTrashed()->get();
-            if(Auth::user()->hasRole('Admin')){
-                $users = User::onlyTrashed()
-                ->role('Member')
-                ->where(
-                    'study_program_id', Auth::user()->study_program_id
-                    )->get();
-            }
+            $users = User::when(isset($keyWords))
+            ->where('name', 'like', '%'.$keyWords.'%')
+            ->orWhere('email', 'like', '%'.$keyWords.'%')
+            ->when(isset($code))
+            ->where('code', 'like', '%'.$code.'%')
+            ->when(isset($code_type))
+            ->where('code_type', $code_type)
+            ->when(isset($status))
+            ->where('status', $status)
+            ->when(isset($phone))
+            ->where('phone', 'like', '%'.$phone.'%')
+            ->when(isset($study_program_id))
+            ->where('study_program_id', $study_program_id)
+            ->when(Auth::user()->hasRole('Admin'))
+            ->role('Member')
+            ->onlyTrashed()
+            ->get();
             // var_dump($users);exit();
             // var_dump($users->isEmpty());exit();
             if ($users->isEmpty()) {
@@ -397,46 +462,13 @@ class UsersController extends BaseController
     }
 
     /**
-     * Put User into trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function delete(Int $id)
-    {
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkUser = User::where('id', $id)->first();
-            // dd(\DB::getQueryLog());
-            // dd($checkUser);exit();
-            if(!$checkUser){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
-            }
-
-            $deleteUser = User::find($id);
-            $deleteUser->deleted_at = Carbon::now();
-            $deleteUser->delete();
-
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Delete data";
-            $success['data'] = $deleteUser;
-            return $this->sendResponse($success, 'Data berhasil dihapus');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Put Multiple User into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function deleteMultiple(Request $request)
+    public function delete(Request $request)
     {
         try {
             sleep(5);
@@ -471,46 +503,13 @@ class UsersController extends BaseController
     }
 
     /**
-     * Restore User from trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function restore(Int $id)
-    {
-        // return "Cek";exit();
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkUser = User::onlyTrashed()->where('id', $id)->get();
-            // dd(\DB::getQueryLog());
-            
-            if($checkUser->isEmpty()){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-            }
-            $restoreUser = User::onlyTrashed()->find($id);
-            $restoreUser->deleted_at = null;
-            $restoreUser->restore();
-            
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Restore user data";
-            $success['data'] = $restoreUser;
-            return $this->sendResponse($success, 'Data dipulihkan');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Restore Multiple User from trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function restoreMultiple(Request $request)
+    public function restore(Request $request)
     {
         // return "Cek";exit();
         try {
@@ -658,7 +657,7 @@ class UsersController extends BaseController
     }
 
     /**
-     * Reset User password
+     * Reset User phone
      * 
      * @param \Illuminate\Http\Request
      * @return \Illuminate\Http\Response

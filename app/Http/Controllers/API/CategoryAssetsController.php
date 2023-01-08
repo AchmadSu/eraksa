@@ -21,16 +21,19 @@ class CategoryAssetsController extends BaseController
     /** 
      * Get All Category Assets
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function index(){
+    public function index(Request $request){
         try {
             sleep(5);
-            // dd(Auth::user());
-            // dd(Auth::user()->name);
-            // \DB::enableQueryLog();
-            $categoryAssets = CategoryAssets::all();
+            $keyWords = $request->keyWords;
+
+            $categoryAssets = CategoryAssets::when(isset($keyWords))
+            ->where('name', 'like', '%'.$keyWords.'%')
+            ->orWhere('description', 'like', '%'.$keyWords.'%')
+            ->get();
             // dd(\DB::getQueryLog());
             // dd($categoryAssets);
             if ($categoryAssets->isEmpty()) {
@@ -45,16 +48,22 @@ class CategoryAssetsController extends BaseController
     /** 
      * Get All Category Assets in Trash
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function trash(){
+    public function trash(Request $request){
         try {
             sleep(5);
+            $keyWords = $request->keyWords;
             // dd(Auth::user());
             // dd(Auth::user());
             // \DB::enableQueryLog();
-            $categoryAssets = CategoryAssets::onlyTrashed()->get();
+            $categoryAssets = CategoryAssets::onlyTrashed()
+            ->when(isset($keyWords))
+            ->where('name', 'like', '%'.$keyWords.'%')
+            ->orWhere('description', 'like', '%'.$keyWords.'%')
+            ->get();
             // dd(\DB::getQueryLog());
             if ($categoryAssets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -174,41 +183,13 @@ class CategoryAssetsController extends BaseController
     }
 
     /**
-     * Put Category Asset into trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function delete(Int $id)
-    {
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkCategoryAsset = CategoryAssets::where('id', $id)->first();
-            // dd(\DB::getQueryLog());
-            if(!$checkCategoryAsset){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
-            }
-            $deleteCategoryAsset = CategoryAssets::where('id', $id)->update(['deleted_at' => Carbon::now()]);
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Delete data";
-            $success['data'] = $deleteCategoryAsset;
-            return $this->sendResponse($success, 'Data berhasil dihapus');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Put Multiple Category Asset into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function deleteMultiple(Request $request)
+    public function delete(Request $request)
     {
         try {
             sleep(5);
@@ -233,43 +214,13 @@ class CategoryAssetsController extends BaseController
     }
 
     /**
-     * Restore Category Asset from trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function restore(Int $id)
-    {
-        // return "Cek";exit();
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkCatgeoryAsset = CategoryAssets::onlyTrashed()->where('id', $id)->get();
-            // dd(\DB::getQueryLog());
-            
-            if($checkCatgeoryAsset->isEmpty()){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-            }
-            $restoreCategoryAsset = CategoryAssets::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Restore category asset data";
-            $success['data'] = $restoreCategoryAsset;
-            return $this->sendResponse($success, 'Data dipulihkan');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Restore Multiple Category Asset from trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function restoreMultiple(Request $request)
+    public function restore(Request $request)
     {
         // return "Cek";exit();
         try {

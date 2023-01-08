@@ -22,16 +22,20 @@ class PlacementsController extends BaseController
     /** 
      * Get All Placement Assets
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function index(){
+    public function index(Request $request){
         try {
             sleep(5);
             // dd(Auth::user());
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
-            $placements = Placements::all();
+            $name = $request->name;
+            $placements = Placements::when(isset($name))
+            ->where('name', 'like', '%'.$name.'%')
+            ->get();
             // dd(\DB::getQueryLog());
             // dd($placements);
             if ($placements->isEmpty()) {
@@ -46,16 +50,21 @@ class PlacementsController extends BaseController
     /** 
      * Get All Placement Assets in Trash
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function trash(){
+    public function trash(Request $request){
         try {
             sleep(5);
             // dd(Auth::user());
             // dd(Auth::user());
             // \DB::enableQueryLog();
-            $placements = Placements::onlyTrashed()->get();
+            $name = $request->name;
+            $placements = Placements::onlyTrashed()
+            ->when(isset($name))
+            ->where('name', 'like', '%'.$name.'%')
+            ->get();
             // dd(\DB::getQueryLog());
             if ($placements->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -154,41 +163,13 @@ class PlacementsController extends BaseController
     }
 
     /**
-     * Put Placements into trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function delete(Int $id)
-    {
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkCategoryAsset = Placements::where('id', $id)->first();
-            // dd(\DB::getQueryLog());
-            if(!$checkCategoryAsset){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
-            }
-            $deleteCategoryAsset = Placements::where('id', $id)->update(['deleted_at' => Carbon::now()]);
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Delete data";
-            $success['data'] = $deleteCategoryAsset;
-            return $this->sendResponse($success, 'Data berhasil dihapus');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Put Multiple Placements into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function deleteMultiple(Request $request)
+    public function delete(Request $request)
     {
         try {
             sleep(5);
@@ -213,43 +194,13 @@ class PlacementsController extends BaseController
     }
 
     /**
-     * Restore Placements from trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function restore(Int $id)
-    {
-        // return "Cek";exit();
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkPlacement = Placements::onlyTrashed()->where('id', $id)->get();
-            // dd(\DB::getQueryLog());
-            
-            if($checkPlacement->isEmpty()){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-            }
-            $restorePlacement = Placements::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Restore data";
-            $success['data'] = $restorePlacement;
-            return $this->sendResponse($success, 'Data berhasil dipulihkan');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Restore Multiple Placements from trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function restoreMultiple(Request $request)
+    public function restore(Request $request)
     {
         // return "Cek";exit();
         try {

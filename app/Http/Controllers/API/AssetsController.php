@@ -4,11 +4,12 @@ namespace App\Http\Controllers\API;
 
 use DB;
 use Carbon\Carbon;
+use App\Models\User;
 use App\Models\Assets;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
@@ -21,19 +22,56 @@ class AssetsController extends BaseController
     /** 
      * Get All Assets
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function index(){
+    public function index(Request $request){
         try {
             sleep(5);
-            // dd(Auth::user());
-            // dd(Auth::user()->name);
-            // \DB::enableQueryLog();
-            $assets = Assets::all();
-            if(Auth::user()->hasRole('Admin')){
-                $assets = Assets::where('study_program_id', Auth::user()->study_program_id)->get();
+
+            $keyWords = $request->keyWords;
+            $category_id = $request->category_id;
+            $user_keyWords = $request->user_keyWords;
+            $dateOne = $request->dateOne;
+            $dateTwo = $request->dateTwo;
+            $condition = $request->condition;
+            $status = $request->status;
+            $placement_id = $request->placement_id;
+            $study_program_id = $request->study_program_id;
+
+            $from = date($dateOne);
+            $to = date($dateTwo);
+
+            $user = User::where('name', 'like', '%'.$user_keyWords.'%')
+            ->orWhere('email', 'like', '%'.$user_keyWords.'%')
+            ->get();
+            $user_ids = array();
+            foreach ($user as $rowUser) {
+                $user_ids[] = $rowUser->id;
             }
+
+            $assets = Assets::when(isset($keyWords))
+            ->where('code', 'like', '%'.$keyWords.'%')
+            ->orWhere('name', 'like', '%'.$keyWords.'%')
+            ->when(isset($user_ids))
+            ->whereIn('user_id', $user_ids)
+            ->when(isset($category_id))
+            ->where('category_id', $category_id)
+            ->when(isset($study_program_id))
+            ->where('study_program_id', $study_program_id)
+            ->when(isset($placement_id))
+            ->where('placement_id', $placement_id)
+            ->when(isset($dateOne) && !isset($dateTwo))
+            ->where('date', $from)
+            ->when(isset($dateOne) && isset($dateTwo))
+            ->whereBetween('date', [$from, $to])
+            ->when(isset($dueDateOne) && !isset($dueDateTwo))
+            ->when(isset($status))
+            ->where('status', $status)
+            ->when(isset($condition))
+            ->where('condition', $condition)
+            ->get();
             // dd(\DB::getQueryLog());
             // dd($assets);
             if ($assets->isEmpty()) {
@@ -51,16 +89,55 @@ class AssetsController extends BaseController
      * @return \Illuminate\Http\Response
     */
 
-    public function trash(){
+    public function trash(Request $request){
         try {
             sleep(5);
-            // dd(Auth::user());
-            // dd(Auth::user()->name);
-            // \DB::enableQueryLog();
-            $assets = Assets::onlyTrashed()->get();
-            if(Auth::user()->hasRole('Admin')){
-                $assets = Assets::onlyTrashed()->where('study_program_id', Auth::user()->study_program_id)->get();
+            $keyWords = $request->keyWords;
+            $category_id = $request->category_id;
+            $user_keyWords = $request->user_keyWords;
+            $dateOne = $request->dateOne;
+            $dateTwo = $request->dateTwo;
+            $condition = $request->condition;
+            $status = $request->status;
+            $placement_id = $request->placement_id;
+            $study_program_id = $request->study_program_id;
+
+            $from = date($dateOne);
+            $to = date($dateTwo);
+
+            $user = User::where('name', 'like', '%'.$user_keyWords.'%')
+            ->orWhere('email', 'like', '%'.$user_keyWords.'%')
+            ->get();
+            $user_ids = array();
+            foreach ($user as $rowUser) {
+                $user_ids[] = $rowUser->id;
             }
+
+            $auth = Auth::user();
+
+            $assets = Assets::onlyTrashed()->when(isset($keyWords))
+            ->where('code', 'like', '%'.$keyWords.'%')
+            ->orWhere('name', 'like', '%'.$keyWords.'%')
+            ->when(isset($user_ids))
+            ->whereIn('user_id', $user_ids)
+            ->when(isset($category_id))
+            ->where('category_id', $category_id)
+            ->when($auth->hasRole('Admin'))
+            ->where('study_program_id', $auth->study_program_id)
+            ->when(isset($study_program_id))
+            ->where('study_program_id', $study_program_id)
+            ->when(isset($placement_id))
+            ->where('placement_id', $placement_id)
+            ->when(isset($dateOne) && !isset($dateTwo))
+            ->where('date', $from)
+            ->when(isset($dateOne) && isset($dateTwo))
+            ->whereBetween('date', [$from, $to])
+            ->when(isset($dueDateOne) && !isset($dueDateTwo))
+            ->when(isset($status))
+            ->where('status', $status)
+            ->when(isset($condition))
+            ->where('condition', $condition)
+            ->get();
             // dd(\DB::getQueryLog());
             if ($assets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -213,44 +290,13 @@ class AssetsController extends BaseController
     }
 
     /**
-     * Put Asset into trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function delete(Int $id)
-    {
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkAsset = Assets::where('id', $id)->first();
-            // dd(\DB::getQueryLog());
-            if(!$checkAsset){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
-            }
-            $deleteAsset = Assets::find($id);
-            $deleteAsset->deleted_at = Carbon::now();
-            $deleteAsset->delete();
-            
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Delete data";
-            $success['data'] = $deleteAsset;
-            return $this->sendResponse($success, 'Data berhasil dihapus');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Put Multiple Assets into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function deleteMultiple(Request $request)
+    public function delete(Request $request)
     {
         try {
             sleep(5);
@@ -289,47 +335,13 @@ class AssetsController extends BaseController
     }
 
     /**
-     * Restore Asset from trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function restore(Int $id)
-    {
-        // return "Cek";exit();
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkAsset = Assets::onlyTrashed()->where('id', $id)->get();
-            // dd(\DB::getQueryLog());
-            
-            if($checkAsset->isEmpty()){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-            }
-
-            $restoreAsset = Assets::onlyTrashed()->find($id);
-            $restoreAsset->deleted_at = null;
-            $restoreAsset->restore();
-
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Restore asset data";
-            $success['data'] = $restoreAsset;
-            return $this->sendResponse($success, 'Data dipulihkan');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
-     * Restore Multiple Assetsx from trash
+     * Restore Multiple Assets from trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function restoreMultiple(Request $request)
+    public function restore(Request $request)
     {
         // return "Cek";exit();
         try {

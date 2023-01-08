@@ -22,16 +22,20 @@ class StudyProgramsController extends BaseController
     /** 
      * Get All Study Programs
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function index(){
+    public function index(Request $request){
         try {
             sleep(5);
             // dd(Auth::user());
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
-            $studyPrograms = StudyPrograms::all();
+            $name = $request->name;
+            $studyPrograms = StudyPrograms::when(isset($name))
+            ->where('name', 'like', '%'.$name.'%')
+            ->get();
             // dd(\DB::getQueryLog());
             // dd($studyPrograms);
             if ($studyPrograms->isEmpty()) {
@@ -46,16 +50,21 @@ class StudyProgramsController extends BaseController
     /** 
      * Get All Study Programs in Trash
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
-    public function trash(){
+    public function trash(Request $request){
         try {
             sleep(5);
             // dd(Auth::user());
             // dd(Auth::user());
             // \DB::enableQueryLog();
-            $studyPrograms =StudyPrograms::onlyTrashed()->get();
+            $name = $request->name;
+            $studyPrograms =StudyPrograms::onlyTrashed()
+            ->when(isset($name))
+            ->where('name', 'like', '%'.$name.'%')
+            ->get();
             // dd(\DB::getQueryLog());
             if ($studyPrograms->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -154,41 +163,13 @@ class StudyProgramsController extends BaseController
     }
 
     /**
-     * Put Study Programs into trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function delete(Int $id)
-    {
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkStudyPrograms = StudyPrograms::where('id', $id)->first();
-            // dd(\DB::getQueryLog());
-            if(!$checkStudyPrograms){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
-            }
-            $deleteStudyPrograms = StudyPrograms::where('id', $id)->update(['deleted_at' => Carbon::now()]);
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Delete data";
-            $success['data'] = $deleteStudyPrograms;
-            return $this->sendResponse($success, 'Data berhasil dihapus');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Put Multiple Study Programs into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function deleteMultiple(Request $request)
+    public function delete(Request $request)
     {
         try {
             sleep(5);
@@ -213,43 +194,13 @@ class StudyProgramsController extends BaseController
     }
 
     /**
-     * Restore Program Study from trash
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-
-    public function restore(Int $id)
-    {
-        // return "Cek";exit();
-        try {
-            sleep(5);
-            // \DB::enableQueryLog();
-            $checkStudyPrograms =StudyPrograms::onlyTrashed()->where('id', $id)->get();
-            // dd(\DB::getQueryLog());
-            
-            if($checkStudyPrograms->isEmpty()){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-            }
-            $restoreCategoryAsset =StudyPrograms::onlyTrashed()->where('id', $id)->update(['deleted_at' => null]);
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Restore data";
-            $success['data'] = $restoreCategoryAsset;
-            return $this->sendResponse($success, 'Data berhasil dipulihkan');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
-
-    /**
      * Restore Multiple Study Programs from trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function restoreMultiple(Request $request)
+    public function restore(Request $request)
     {
         // return "Cek";exit();
         try {
