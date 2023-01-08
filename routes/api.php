@@ -34,12 +34,9 @@ Route::controller(UsersController::class)->group(function(){
     Route::middleware(['auth:sanctum'])->group(function(){
         Route::middleware(['role:Super-Admin|Admin'])->group(function(){
             Route::get('users/getAll', 'index')->name('all users');
-            Route::get('users/getAllSuperAdmin', 'getSuperAdmin');
-            Route::delete('users/delete/{id}', 'delete');
-            Route::delete('users/deleteMultiple', 'deleteMultiple');
+            Route::delete('users/delete', 'delete');
             Route::get('users/trash', 'trash');
-            Route::put('users/restore/{id}', 'restore');
-            Route::put('users/restoreMultiple', 'restoreMultiple');
+            Route::put('users/restore', 'restore');
         });
         Route::get('users/detail/{id}', 'show');
         Route::put('users/update', 'update');
@@ -59,11 +56,9 @@ Route::controller(AssetsController::class)->group(function(){
         Route::middleware('role:Super-Admin|Admin')->group(function(){
             Route::post('assets/create', 'create'); 
             Route::put('assets/update', 'update');
-            Route::delete('assets/delete/{id}', 'delete');
-            Route::delete('assets/deleteMultiple', 'deleteMultiple');
+            Route::delete('assets/delete', 'delete');
             Route::get('assets/trash', 'trash');
-            Route::put('assets/restore/{id}', 'restore');
-            Route::put('assets/restoreMultiple', 'restoreMultiple');
+            Route::put('assets/restore', 'restore');
         });
         Route::get('assets/getAll', 'index');
         Route::get('assets/detail/{id}', 'show');
@@ -76,11 +71,9 @@ Route::controller(CategoryAssetsController::class)->group(function(){
         Route::middleware('role:Super-Admin|Admin')->group(function(){
             Route::post('categoryAssets/create', 'create'); 
             Route::put('categoryAssets/update', 'update');
-            Route::delete('categoryAssets/delete/{id}', 'delete');
-            Route::delete('categoryAssets/deleteMultiple', 'deleteMultiple');
+            Route::delete('categoryAssets/delete', 'delete');
             Route::get('categoryAssets/trash', 'trash');
-            Route::put('categoryAssets/restore/{id}', 'restore');
-            Route::put('categoryAssets/restoreMultiple', 'restoreMultiple');
+            Route::put('categoryAssets/restore', 'restore');
         });
         Route::get('categoryAssets/getAll', 'index');
         Route::get('categoryAssets/detail/{id}', 'show');
@@ -93,11 +86,9 @@ Route::controller(PlacementsController::class)->group(function(){
         Route::middleware('role:Super-Admin|Admin')->group(function(){
             Route::post('placements/create', 'create'); 
             Route::put('placements/update', 'update');
-            Route::delete('placements/delete/{id}', 'delete');
-            Route::delete('placements/deleteMultiple', 'deleteMultiple');
+            Route::delete('placements/delete', 'delete');
             Route::get('placements/trash', 'trash');
-            Route::put('placements/restore/{id}', 'restore');
-            Route::put('placements/restoreMultiple', 'restoreMultiple');
+            Route::put('placements/restore', 'restore');
         });
         Route::get('placements/getAll', 'index');
         Route::get('placements/detail/{id}', 'show');
@@ -112,11 +103,9 @@ Route::controller(WorkshopsController::class)->group(function(){
             Route::get('workshops/detail/{id}', 'show');
             Route::post('workshops/create', 'create'); 
             Route::put('workshops/update', 'update');
-            Route::delete('workshops/delete/{id}', 'delete');
-            Route::delete('workshops/deleteMultiple', 'deleteMultiple');
+            Route::delete('workshops/delete', 'delete');
             Route::get('workshops/trash', 'trash');
-            Route::put('workshops/restore/{id}', 'restore');
-            Route::put('workshops/restoreMultiple', 'restoreMultiple');
+            Route::put('workshops/restore', 'restore');
         });
     });
 });
@@ -128,11 +117,9 @@ Route::controller(StudyProgramsController::class)->group(function(){
             Route::middleware('role:Super-Admin')->group(function(){
                 Route::post('studyPrograms/create', 'create'); 
                 Route::put('studyPrograms/update', 'update');
-                Route::delete('studyPrograms/delete/{id}', 'delete');
-                Route::delete('studyPrograms/deleteMultiple', 'deleteMultiple');
+                Route::delete('studyPrograms/delete', 'delete');
                 Route::get('studyPrograms/trash', 'trash');
-                Route::put('studyPrograms/restore/{id}', 'restore');
-                Route::put('studyPrograms/restoreMultiple', 'restoreMultiple');
+                Route::put('studyPrograms/restore', 'restore');
             });
             Route::get('studyPrograms/getAll', 'index');
             Route::get('studyPrograms/detail/{id}', 'show');
@@ -153,16 +140,14 @@ Route::controller(VerificationCodesController::class)->group(function(){
 Route::controller(LoansController::class)->group(function(){
     // dd(Auth::guest());
     Route::middleware('auth:sanctum')->group(function(){
-        Route::middleware('role:Super-Admin|Admin')->group(function(){
-            Route::get('loans/getAll', 'index');
-            Route::put('loans/update', 'update');
-            Route::delete('loans/delete/{id}', 'delete');
-            Route::delete('loans/deleteMultiple', 'deleteMultiple');
-            Route::get('loans/trash', 'trash');
-            Route::put('loans/restore/{id}', 'restore');
-            Route::put('loans/restoreMultiple', 'restoreMultiple');
+        Route::middleware('role:Super-Admin')->group(function(){
+            // Route::get('loans/getAll', 'index');
+            Route::put('loans/update/{id}', 'update');
         });
-        Route::get('loans/filterLoans', 'filterLoans');
+        Route::delete('loans/delete', 'delete');
+        Route::get('loans/trash', 'trash');
+        Route::put('loans/restore', 'restore');
+        Route::get('loans/getAll', 'index');
         Route::post('loans/create', 'create'); 
         Route::get('loans/detail/{id}', 'show');
     });
