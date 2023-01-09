@@ -363,10 +363,10 @@ class LoansController extends BaseController
                             }
                             
                             $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
-                            $sortNumber = $studyProgramAssets[$i]['study_program_id'];
                         }
                         // dd($sortNumber);
                     }   
+                    $sortNumber = $studyProgramAssets[$i]['study_program_id'];
                 }
             }
 
