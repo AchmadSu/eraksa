@@ -211,7 +211,7 @@ class LoansController extends BaseController
 
      public function create(Request $request){
         try {
-            // dd(Auth::user()->phone);
+            // dd();
             // $this->loansRequestService->sendWhatsappNotification("Test", Auth::user()->phone);
             sleep(5);
             $loaner_id = Auth::user()->id;
@@ -347,26 +347,46 @@ class LoansController extends BaseController
                     // \DB::enableQueryLog();
                     // var_dump($studyProgramAssets[$i] == $checkAssets->study_program_id);exit();
                     $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
-                // dd($sortNumber !== $studyProgramAssets[$i]['study_program_id']);
                     if($sortNumber !== $studyProgramAssets[$i]['study_program_id']){
                         $loaner_name = Auth::user()->name;
                         $loaner_code = Auth::user()->code;
                         $loaner_code_type = Auth::user()->code_type;
                         $adminPhone = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->pluck('phone');
+                        
                         if($adminPhone->isEmpty() === FALSE) {
-                            $strPhone = implode('|', (array) $adminPhone[0]);
-                            // var_dump($adminNumber);exit();
-                            if($loaner_code_type == "0") {
-                                $message = "Anda mendapatkan permintaan peminjaman baru!\n\nRincian Permintaan\nNama: *$loaner_name*\nNIM: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
-                            } else {
-                                $message = "Anda mendapatkan permintaan peminjaman baru!\n\nRincian Permintaan\nNama: *$loaner_name*\nNIDN: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                            for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
+                                if($adminPhone[$rowPhone]) {
+                                    $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
+                                    // var_dump($adminNumber);exit();
+                                    if($loaner_code_type == "0") {
+                                        $message = "Anda mendapatkan permintaan peminjaman baru!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nNIM: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                    } else {
+                                        $message = "Anda mendapatkan permintaan peminjaman baru!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nNIDN: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                    }
+                                    $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                    // dd($adminPhone[$rowPhone]);
+                                }
                             }
-                            
-                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                         }
-                        // dd($sortNumber);
                     }   
                     $sortNumber = $studyProgramAssets[$i]['study_program_id'];
+                }
+            }
+
+            $superAdminPhone = User::role('Super-Admin')->pluck('phone');
+            if($superAdminPhone->isEmpty() === FALSE) {
+                for ($rowPhone= 0; $rowPhone < count($superAdminPhone); $rowPhone++) {
+                    if($superAdminPhone[$rowPhone]){
+                        // dd($superAdminPhone);
+                        $strPhone = implode('|', (array) $superAdminPhone[$rowPhone]);
+                        // var_dump($adminNumber);exit();
+                        if($loaner_code_type == "0") {
+                            $message = "Anda mendapatkan permintaan peminjaman baru!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nNIM: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                        } else {
+                            $message = "Anda mendapatkan permintaan peminjaman baru!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nNIDN: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                        }
+                        $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                    }
                 }
             }
 
