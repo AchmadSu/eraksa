@@ -119,7 +119,11 @@ class StudyProgramsController extends BaseController
                 return $this->sendError('Validator Error.', $validator->errors());
             }
     
-            $input = $request->all();
+            $name = ucwords(strtolower($request->name));
+
+            $input = array(
+                "name" => $name
+            );
             $createStudyPrograms = StudyPrograms::create($input);
             $success['token'] = Str::random(15);
             return $this->sendResponse($success, 'Program Studi ditambahkan!');    

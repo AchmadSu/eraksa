@@ -283,7 +283,7 @@ class UsersController extends BaseController
                 return $this->sendError('Error!', ['error'=>'Email sudah terdaftar, silakan login!']);
             }
             
-            $input['name'] = ucwords($input['name']);
+            $input['name'] = ucwords(strtolower($input['name']));
             $input['password'] = bcrypt($input['password']);
             
             $spiltPhone = str_split($input['phone']);
@@ -444,7 +444,7 @@ class UsersController extends BaseController
                 return $this->sendError('Error!', ['error' => 'Nomor lama yang anda masukkan salah!']);
             }
 
-            $updateDataUser->name = ucwords($name);
+            $updateDataUser->name = ucwords(strtolower($name));
             $updateDataUser->code = Str::upper($code);
             $updateDataUser->code_type = $code_type;
             // DB::statement('SET FOREIGN_KEY_CHECKS=0;');

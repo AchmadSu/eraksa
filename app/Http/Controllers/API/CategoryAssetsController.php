@@ -111,16 +111,23 @@ class CategoryAssetsController extends BaseController
     public function create(Request $request){
         try {
             sleep(5);
+            
             $validator = Validator::make($request->all(),[
                 'name' => 'required|unique:category_assets,name',
                 'description' => 'required|min:5'
             ]);
     
-            if ($validator->fails()){
-                return $this->sendError('Validator Error.', $validator->errors());
-            }
-    
-            $input = $request->all();
+            // if ($validator->fails()){
+            //     return $this->sendError('Validator Error.', $validator->errors());
+            // }
+            $name = ucwords(strtolower($request->name));
+            $desc = ucfirst(strtolower($request->description));
+            $input = array(
+                "name" => $name,
+                "description" => $desc 
+            );
+
+            // dd($input);
             $createCategory = CategoryAssets::create($input);
             $success['token'] = Str::random(15);
     
@@ -161,8 +168,8 @@ class CategoryAssetsController extends BaseController
                 ]);
                             
                 $data = array(
-                    'name' => $new_name,
-                    'description' => $description
+                    'name' => ucwords(strtolower($new_name)),
+                    'description' => ucwords(strtolower($description))
                 );
             }
             if ($validator->fails()) {

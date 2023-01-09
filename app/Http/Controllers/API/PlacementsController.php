@@ -119,7 +119,12 @@ class PlacementsController extends BaseController
                 return $this->sendError('Validator Error.', $validator->errors());
             }
     
-            $input = $request->all();
+            $name = $request->name;
+            $input = array(
+                "name" => ucwords(strtolower($name))
+            );
+            
+            // dd(ucwords(strtolower($name)));
             $createCategory = Placements::create($input);
             $success['token'] = Str::random(15);
             return $this->sendResponse($success, 'Placement ditambahkan!');    
@@ -140,7 +145,6 @@ class PlacementsController extends BaseController
         try {
             sleep(5);
             $id = $request->id;
-            $name = $request->name;
             $validator = Validator::make($request->all(),[
                 'name' => 'required|unique:placements,name|min:3'
             ]);
@@ -150,6 +154,7 @@ class PlacementsController extends BaseController
             }
 
             // dd($data);exit();
+            $name = ucwords(strtolower($request->name));
 
             $updateDataPlacements = Placements::where('id', $id)->update(['name' => $name]);
             $tokenMsg = Str::random(15);

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\API\BaseController;
+use App\Models\CategoryAssets;
 
 class AssetsController extends BaseController
 {
@@ -86,6 +87,7 @@ class AssetsController extends BaseController
     /** 
      * Get All Assets in Trash
      * 
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
 
@@ -187,11 +189,6 @@ class AssetsController extends BaseController
             sleep(5);
             $validator = Validator::make($request->all(),[
                 'name' => 'required',
-                'code' => 'required|unique:assets,code',
-                'user_id' => 'required|numeric',
-                'date' => 'required',
-                'condition' => 'required',
-                'status' => 'required',
                 'study_program_id' => 'required|numeric',
                 'category_id' => 'required|numeric',
                 'placement_id' => 'required|numeric',
@@ -200,9 +197,28 @@ class AssetsController extends BaseController
             if ($validator->fails()){
                 return $this->sendError('Validator Error.', $validator->errors());
             }
-    
-            $input = $request->all();
+
+            $user_id =  Auth::user()->id;
+            $date = date("d/m/Y");
+            $category_name = CategoryAssets::find($request->category_id)->pluck('name');
+            $category_name = Str::upper(str_replace(array('["','"]'), '', $category_name));
+            $inv = rand(100000, 999999);
+            $strInv = "$inv";
+            $code = "ERK-ASSETS-".$category_name."-".$date."-".$strInv;
+            
+            $input = array(
+                "user_id" => $user_id,
+                "date" => Carbon::now(),
+                "status" => "0",
+                "code" => $code,
+                "name" => ucwords(strtolower($request->name)),
+                "study_program_id" => (int)$request->study_program_id,
+                "category_id" => (int)$request->category_id,
+                "placement_id" => (int)$request->placement_id,
+            );
+
             // dd($input);
+            
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             $createAsset = Assets::create($input);
             $success['token'] = Str::random(15);
