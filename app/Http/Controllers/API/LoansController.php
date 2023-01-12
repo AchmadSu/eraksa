@@ -612,7 +612,80 @@ class LoansController extends BaseController
     }
 
     /**
-     * Put Multiple Loans Request into trash
+     * Confirmation Loans Request
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+     public function confirmation(Request $request)
+     {
+         // return "Cek";exit();
+        try {
+            sleep(5);
+            $id = $request->id;
+            $lender_id = Auth::user()->id;
+            $status = $request->status;
+            // \DB::enableQueryLog();
+            $checkLoans = Loans::find($id);
+            // dd(\DB::getQueryLog());
+            
+            if(!$checkLoans){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipilih']);
+            }
+
+            // dd(!$checkLoans->status != "0");
+
+            if($checkLoans->status != "0") {
+                return $this->sendError('Error!', ['error'=> 'Status peminjaman bukan permintaan!']);
+            }
+
+            $date = Carbon::parse($checkLoans->date);
+            $due_date = Carbon::parse($checkLoans->due_date);
+            $diff = $date->diff($due_date);
+
+            if($diff->d !== 0) {
+                $hours = $diff->d * 24;
+            } elseif($diff->h !== 0) {
+                $hours = $diff->h;
+            }
+            // dd($hours);
+            
+            $due_date = Carbon::now()->addHours($hours);
+
+            $checkLoans->lender_id = $lender_id;
+            $checkLoans->date = Carbon::now();
+            $checkLoans->due_date = $due_date;
+            $checkLoans->status = $status;
+            $checkLoans->save();
+
+            $code = $checkLoans->code;
+            $loaner = User::find($checkLoans->loaner_id);
+            $loaner_name = $loaner->name;
+            $loaner_phone = $loaner->phone;
+            
+            // dd($getLoanerPhone->phone);
+            
+            if($checkLoans->status == "1") {
+                $confirmation = "Selamat, Permintaan Anda DISETUJUI!";
+                $instruction = "\nSilakan temui Admin dari masing-masing Program Studi terkait! Terima kasih.\n";
+            } elseif($checkLoans->status == "2") {
+                $confirmation = "Mohon maaf, Permintaan Anda DITOLAK.";
+                $instruction = "";
+            }
+            $message = "Anda mendapatkan *Konfirmasi Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nKode: *$code*\nPesan Konfirmasi: \n*$confirmation*$instruction\n\nLihat detailnya melalui tautan berikut: ";
+            $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+
+            $success['message'] = "Pesan konfirmasi untuk permintaan peminjaman tersebut telah kami kirim melalui Pesan WhatsApp Peminjam!";
+                // $success['total_restored'] = $totalRestore;
+            return $this->sendResponse($success, 'Konfirmasi Peminjaman Berhasil!');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', $th);
+        }
+     }
+
+    /**
+     * Put Loan Request into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -671,56 +744,4 @@ class LoansController extends BaseController
         }
     }
 
-    /**
-     * Confirmation Loans Request
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-
-    public function confirmation(Request $request)
-    {
-        // return "Cek";exit();
-        try {
-            sleep(5);
-            $id = $request->id;
-            $lender_id = Auth::user()->id;
-            // \DB::enableQueryLog();
-            $checkLoans = Loans::where('id', $id)
-            ->where('status', "0")
-            ->first();
-            // dd(\DB::getQueryLog());
-            
-            if(!$checkLoans){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
-            }
-
-            $date = Carbon::parse($checkLoans->date);
-            $due_date = Carbon::parse($checkLoans->due_date);
-            $diff = $date->diff($due_date);
-
-            // dd($diff);
-            if($diff->d !== 0) {
-                $hours = $diff->d * 24;
-            } elseif($diff->h !== 0) {
-                $hours = $diff->h;
-            }
-            
-            $due_date = Carbon::now()->addHours($hours);
-
-            $loanArray = array(
-                "code" => $code,
-                "loaner_id" => $loaner_id,
-                "date" => Carbon::now(),
-                "due_date" => $due_date,
-                "status" => $status
-            );
-
-            $success['message'] = "Restore asset data";
-            // $success['total_restored'] = $totalRestore;
-            return $this->sendResponse($success, 'Data dipulihkan');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
-        }
-    }
 }
