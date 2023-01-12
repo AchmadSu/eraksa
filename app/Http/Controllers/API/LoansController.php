@@ -623,27 +623,36 @@ class LoansController extends BaseController
         try {
             sleep(5);
             $ids = $request->ids;
+            $loaner_id = Auth::user()->id;
             // dd($ids);
             // \DB::enableQueryLog();
-            $checkAssets = Assets::whereIn('id', $ids)->get();
+            $checkLoans = Loans::whereIn('id', $ids)->where('loaner_id', $loaner_id)->get();
             // dd(\DB::getQueryLog());
-            // dd($checkAssets);
-            if($checkAssets->isEmpty()){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
+            // dd($checkLoans);
+            if($checkLoans->isEmpty()){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data permintaan peminjaman yang dihapus!']);
             }
             // \DB::enableQueryLog();
-            $deleteAssets = Assets::findMany($ids);
+            $deleteLoans = Loans::findMany($ids);
             // dd(\DB::getQueryLog());\
             $totalDelete = 0;
-            foreach($deleteAssets as $rowAssets){
-                // dd($rowAssets->id);
-                // if($rowAssets > 0){
-                // dd($rowAssets->id);
-                $deleteAssets = Assets::find($rowAssets->id);
-                $deleteAssets->deleted_at = Carbon::now();
-                $deleteAssets->delete();
-                $totalDelete++;
-                // }
+            foreach($deleteLoans as $rowLoans){
+                $deleteLoans = Loans::find($rowLoans->id);
+                if($deleteLoans) {
+                    $getAssetFromLoanDetails = LoanDetails::
+                    where('loan_id', $rowLoans->id)->get();
+                    for($i = 0; $i < count($getAssetFromLoanDetails); $i++) {
+                        $unSetStatusAssets = Assets::find($getAssetFromLoanDetails[$i]['asset_id']);
+                        if($unSetStatusAssets->status == "1"){
+                            $unSetStatusAssets->status = "0";
+                            $unSetStatusAssets->save();
+                            $getAssetFromLoanDetails[$i]->delete();
+                        }
+                    }     
+                    $deleteLoans->deleted_at = Carbon::now();
+                    $deleteLoans->delete();
+                    $totalDelete++;
+                }
             }
 
             $tokenMsg = Str::random(15);
