@@ -209,7 +209,7 @@ class LoansController extends BaseController
      * @return \Illuminate\Http\Response
      */
 
-     public function create(Request $request){
+    public function create(Request $request){
         try {
             // dd();
             // $this->loansRequestService->sendWhatsappNotification("Test", Auth::user()->phone);
@@ -420,6 +420,7 @@ class LoansController extends BaseController
             sleep(5);
             $loan_id = $request->id;
             $loaner_id = Auth::user()->id;
+            // dd($loaner_id);
             
             $checkLoaner = Loans::
             where('id', $loan_id)
@@ -427,7 +428,7 @@ class LoansController extends BaseController
             ->first();
             // dd("test");
 
-            // dd(!$checkLoaner);
+            // dd($checkLoaner);
             
             if(!$checkLoaner){
                 return $this->sendError('Error!', [
@@ -520,92 +521,97 @@ class LoansController extends BaseController
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             $sortNumber = 0;
             // if($asset_ids)
-            for ($i=0; $i < count($getAssetFromLoanDetails) ; $i++) { 
-                $unSetStatusAssets = Assets::find($getAssetFromLoanDetails[$i]['asset_id']);
-                // if()
-                $unSetStatusAssets->status = "0";
-                $unSetStatusAssets->save();
-                $getAssetFromLoanDetails[$i]->delete();
-                // dd("test");
-                // dd($updateLoanDetails['asset_id']);
-                // dd($getAssetFromLoanDetails[$i]['asset_id']);
-                $asset_id = $asset_ids[$i];
-                // dd($asset_id);
-                $checkAssets = Assets::find($asset_id);
-                if($checkAssets->status == "0"){
-                    $createLoanDetails = array(
-                        "loan_id" => $loan_id,
-                        "asset_id" => $asset_id
-                    );
-                    $checkAssets->status = "1";
-                    $checkAssets->save();
-                    // dd($updateLoanDetails);
-                    // $getAssetFromLoanDetails->asset_id = $updateLoanDetails[0]['asset_id'];
-                    // $checkAssets->save();
-                    LoanDetails::create($createLoanDetails);
-                    // dd($message);
-                    // \DB::enableQueryLog();
-                    // var_dump($studyProgramAssets[$i] == $checkAssets->study_program_id);exit();
-                    $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
-                    if($sortNumber !== $studyProgramAssets[$i]['study_program_id']){
-                        $loaner_name = Auth::user()->name;
-                        $loaner_code = Auth::user()->code;
-                        $loaner_code_type = Auth::user()->code_type;
-                        $adminPhone = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->pluck('phone');
-                        
-                        if($adminPhone->isEmpty() === FALSE) {
-                            for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
-                                if($adminPhone[$rowPhone]) {
-                                    $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
-                                    // var_dump($adminNumber);exit();
-                                    $getCodeLoans = Loans::
-                                    where('id', $loan_id)
-                                    ->pluck('code');
-                                    if($getCodeLoans){
-                                        $code = $getCodeLoans[0];
-                                        if($loaner_code_type == "0") {
-                                            $strUserCode = 'NIM';
-                                        } else {
-                                            $strUserCode = 'NIDN';                                        
+            if($getAssetFromLoanDetails) {
+                for ($i=0; $i < count($getAssetFromLoanDetails) ; $i++) { 
+                    $unSetStatusAssets = Assets::find($getAssetFromLoanDetails[$i]['asset_id']);
+                    // if()
+                    $unSetStatusAssets->status = "0";
+                    $unSetStatusAssets->save();
+                    $getAssetFromLoanDetails[$i]->delete();
+                    // dd("test");
+                    // dd($updateLoanDetails['asset_id']);
+                    // dd($getAssetFromLoanDetails[$i]['asset_id']);
+                    $asset_id = $asset_ids[$i];
+                    // dd($asset_id);
+                    $checkAssets = Assets::find($asset_id);
+                    if($checkAssets->status == "0"){
+                        $createLoanDetails = array(
+                            "loan_id" => $loan_id,
+                            "asset_id" => $asset_id
+                        );
+                        $checkAssets->status = "1";
+                        $checkAssets->save();
+                        // dd($updateLoanDetails);
+                        // $getAssetFromLoanDetails->asset_id = $updateLoanDetails[0]['asset_id'];
+                        // $checkAssets->save();
+                        LoanDetails::create($createLoanDetails);
+                        // dd($message);
+                        // \DB::enableQueryLog();
+                        // var_dump($studyProgramAssets[$i] == $checkAssets->study_program_id);exit();
+                        $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
+                        if($sortNumber !== $studyProgramAssets[$i]['study_program_id']){
+                            $loaner_name = Auth::user()->name;
+                            $loaner_code = Auth::user()->code;
+                            $loaner_code_type = Auth::user()->code_type;
+                            $adminPhone = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->pluck('phone');
+                            
+                            if($adminPhone->isEmpty() === FALSE) {
+                                for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
+                                    if($adminPhone[$rowPhone]) {
+                                        $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
+                                        // var_dump($adminNumber);exit();
+                                        $getCodeLoans = Loans::
+                                        where('id', $loan_id)
+                                        ->pluck('code');
+                                        if($getCodeLoans){
+                                            $code = $getCodeLoans[0];
+                                            if($loaner_code_type == "0") {
+                                                $strUserCode = 'NIM';
+                                            } else {
+                                                $strUserCode = 'NIDN';                                        
+                                            }
+                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                         }
-                                        $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
-                                        $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                        // dd($adminPhone[$rowPhone]);
                                     }
-                                    // dd($adminPhone[$rowPhone]);
                                 }
                             }
-                        }
-                    }   
-                    $sortNumber = $studyProgramAssets[$i]['study_program_id'];
-                } else {
-                    return $this->sendError('Error!', [
-                        'error' =>
-                        'Seluruh aset yang dipilih dalam keadaan tidak tersedia!'
-                    ]);
-                }
-            }
-
-            $superAdminPhone = User::role('Super-Admin')->pluck('phone');
-            if($superAdminPhone->isEmpty() === FALSE) {
-                for ($rowPhone= 0; $rowPhone < count($superAdminPhone); $rowPhone++) {
-                    if($superAdminPhone[$rowPhone]){
-                        // dd($superAdminPhone);
-                        $strPhone = implode('|', (array) $superAdminPhone[$rowPhone]);
-                        // var_dump($adminNumber);exit();
-                        if($loaner_code_type == "0") {
-                            $strUserCode = 'NIM';
-                        } else {
-                            $strUserCode = 'NIDN';                                        
-                        }
-                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
-                        $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                        }   
+                        $sortNumber = $studyProgramAssets[$i]['study_program_id'];
+                    } else {
+                        return $this->sendError('Error!', [
+                            'error' =>
+                            'Seluruh aset yang dipilih dalam keadaan tidak tersedia!'
+                        ]);
                     }
                 }
+                $superAdminPhone = User::role('Super-Admin')->pluck('phone');
+                if($superAdminPhone->isEmpty() === FALSE) {
+                    for ($rowPhone= 0; $rowPhone < count($superAdminPhone); $rowPhone++) {
+                        if($superAdminPhone[$rowPhone]){
+                            // dd($superAdminPhone);
+                            $strPhone = implode('|', (array) $superAdminPhone[$rowPhone]);
+                            // var_dump($adminNumber);exit();
+                            if($loaner_code_type == "0") {
+                                $strUserCode = 'NIM';
+                            } else {
+                                $strUserCode = 'NIDN';                                        
+                            }
+                            $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                        }
+                    }
+                }
+                $success['message'] = "Permintaan peminjaman berhasil diupdate!";
+                return $this->sendResponse($success, 'Update data');
+            } else {
+                return $this->sendError('Error!', [
+                    'error' =>
+                    'Seluruh aset yang dipilih dalam keadaan tidak tersedia!'
+                ]);
             }
-            
-            $success['message'] = "Permintaan peminjaman berhasil diupdate!";
             // $success['data'] = $updateDataAsset;
-            return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
@@ -618,9 +624,8 @@ class LoansController extends BaseController
      * @return \Illuminate\Http\Response
      */
 
-     public function confirmation(Request $request)
-     {
-         // return "Cek";exit();
+    public function confirmation(Request $request)
+    {
         try {
             sleep(5);
             $id = $request->id;
@@ -640,49 +645,68 @@ class LoansController extends BaseController
                 return $this->sendError('Error!', ['error'=> 'Status peminjaman bukan permintaan!']);
             }
 
-            $date = Carbon::parse($checkLoans->date);
-            $due_date = Carbon::parse($checkLoans->due_date);
-            $diff = $date->diff($due_date);
+            if($status == "1" || $status == "2") {
+                $date = Carbon::parse($checkLoans->date);
+                $due_date = Carbon::parse($checkLoans->due_date);
+                $diff = $date->diff($due_date);
 
-            if($diff->d !== 0) {
-                $hours = $diff->d * 24;
-            } elseif($diff->h !== 0) {
-                $hours = $diff->h;
+                if($diff->d !== 0) {
+                    $hours = $diff->d * 24;
+                } elseif($diff->h !== 0) {
+                    $hours = $diff->h;
+                }
+                // dd($hours);
+                
+                $due_date = Carbon::now()->addHours($hours);
+
+                $checkLoans->lender_id = $lender_id;
+                $checkLoans->date = Carbon::now();
+                $checkLoans->due_date = $due_date;
+                $checkLoans->status = $status;
+                $checkLoans->save();
+
+                $code = $checkLoans->code;
+                $loaner = User::find($checkLoans->loaner_id);
+                $loaner_name = $loaner->name;
+                $loaner_phone = $loaner->phone;
+                
+                // dd($getLoanerPhone->phone);
+                
+                if($checkLoans->status == "1") {
+                    $confirmation = "Selamat, Permintaan Anda DISETUJUI!";
+                    $instruction = "\nSilakan temui Admin dari masing-masing Program Studi terkait! Terima kasih.\n";
+                } elseif($checkLoans->status == "2") {
+                    $getAssetFromLoanDetails = LoanDetails::
+                    where('loan_id', $id)->get();
+                    // dd(\DB::getQueryLog());
+                    // dd($getAssetFromLoanDetails[0]['asset_id']);
+                    DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+                    $sortNumber = 0;
+                    // if($asset_ids)
+                    if($getAssetFromLoanDetails) {
+                        for ($i=0; $i < count($getAssetFromLoanDetails) ; $i++) { 
+                            $unSetStatusAssets = Assets::find($getAssetFromLoanDetails[$i]['asset_id']);
+                            // if()
+                            $unSetStatusAssets->status = "0";
+                            $unSetStatusAssets->save();
+                        }
+                    }
+                    $confirmation = "Mohon maaf, Permintaan Anda DITOLAK.";
+                    $instruction = "";
+                }
+
+                $message = "Anda mendapatkan *Konfirmasi Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nKode: *$code*\nPesan Konfirmasi: \n*$confirmation*$instruction\n\nLihat detailnya melalui tautan berikut: ";
+                $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+
+                $success['message'] = "Pesan konfirmasi untuk permintaan peminjaman tersebut telah kami kirim melalui Pesan WhatsApp Peminjam!";
+                return $this->sendResponse($success, 'Konfirmasi Peminjaman Berhasil!');
+            } else {
+                return $this->sendError('Error!', ['error'=> 'Set Status Konfirmasi salah!']);
             }
-            // dd($hours);
-            
-            $due_date = Carbon::now()->addHours($hours);
-
-            $checkLoans->lender_id = $lender_id;
-            $checkLoans->date = Carbon::now();
-            $checkLoans->due_date = $due_date;
-            $checkLoans->status = $status;
-            $checkLoans->save();
-
-            $code = $checkLoans->code;
-            $loaner = User::find($checkLoans->loaner_id);
-            $loaner_name = $loaner->name;
-            $loaner_phone = $loaner->phone;
-            
-            // dd($getLoanerPhone->phone);
-            
-            if($checkLoans->status == "1") {
-                $confirmation = "Selamat, Permintaan Anda DISETUJUI!";
-                $instruction = "\nSilakan temui Admin dari masing-masing Program Studi terkait! Terima kasih.\n";
-            } elseif($checkLoans->status == "2") {
-                $confirmation = "Mohon maaf, Permintaan Anda DITOLAK.";
-                $instruction = "";
-            }
-            $message = "Anda mendapatkan *Konfirmasi Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nKode: *$code*\nPesan Konfirmasi: \n*$confirmation*$instruction\n\nLihat detailnya melalui tautan berikut: ";
-            $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
-
-            $success['message'] = "Pesan konfirmasi untuk permintaan peminjaman tersebut telah kami kirim melalui Pesan WhatsApp Peminjam!";
-                // $success['total_restored'] = $totalRestore;
-            return $this->sendResponse($success, 'Konfirmasi Peminjaman Berhasil!');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
         }
-     }
+    }
 
     /**
      * Put Loan Request into trash
