@@ -612,7 +612,7 @@ class LoansController extends BaseController
     }
 
     /**
-     * Put Multiple Assets into trash
+     * Put Multiple Loans Request into trash
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -621,39 +621,45 @@ class LoansController extends BaseController
     public function delete(Request $request)
     {
         try {
+            // dd(Auth::user()->name);
             sleep(5);
-            $ids = $request->ids;
+            $id = $request->id;
             $loaner_id = Auth::user()->id;
             // dd($ids);
             // \DB::enableQueryLog();
-            $checkLoans = Loans::whereIn('id', $ids)->where('loaner_id', $loaner_id)->get();
+            $checkLoans = Loans::where('id', $id)->where('loaner_id', $loaner_id)->first();
             // dd(\DB::getQueryLog());
             // dd($checkLoans);
-            if($checkLoans->isEmpty()){
+            if(!$checkLoans){
                 return $this->sendError('Error!', ['error'=> 'Tidak ada data permintaan peminjaman yang dihapus!']);
             }
+
+            // dd($checkLoans->status);
+
+            if($checkLoans->status != "0"){
+                return $this->sendError('Error!', ['error'=> 'Status transaksi peminjaman bukan permintaan!']);
+            }
             // \DB::enableQueryLog();
-            $deleteLoans = Loans::findMany($ids);
+            $deleteLoans = Loans::find($id);
             // dd(\DB::getQueryLog());\
             $totalDelete = 0;
-            foreach($deleteLoans as $rowLoans){
-                $deleteLoans = Loans::find($rowLoans->id);
-                if($deleteLoans) {
-                    $getAssetFromLoanDetails = LoanDetails::
-                    where('loan_id', $rowLoans->id)->get();
-                    for($i = 0; $i < count($getAssetFromLoanDetails); $i++) {
-                        $unSetStatusAssets = Assets::find($getAssetFromLoanDetails[$i]['asset_id']);
-                        if($unSetStatusAssets->status == "1"){
-                            $unSetStatusAssets->status = "0";
-                            $unSetStatusAssets->save();
-                            $getAssetFromLoanDetails[$i]->delete();
-                        }
-                    }     
-                    $deleteLoans->deleted_at = Carbon::now();
-                    $deleteLoans->delete();
-                    $totalDelete++;
-                }
+            if($deleteLoans) {
+                $getAssetFromLoanDetails = LoanDetails::
+                where('loan_id', $id)->get();
+                for($i = 0; $i < count($getAssetFromLoanDetails); $i++) {
+                    $unSetStatusAssets = Assets::find($getAssetFromLoanDetails[$i]['asset_id']);
+                    if($unSetStatusAssets->status == "1"){
+                        $unSetStatusAssets->status = "0";
+                        $unSetStatusAssets->save();
+                    }
+                    // dd($getAssetFromLoanDetails[$i]);
+                    $getAssetFromLoanDetails[$i]['deleted_at'] = Carbon::now();
+                    $getAssetFromLoanDetails[$i]->delete();
+                }     
             }
+            $deleteLoans->deleted_at = Carbon::now();
+            $deleteLoans->delete();
+            $totalDelete++;
 
             $tokenMsg = Str::random(15);
             $success['token'] = $tokenMsg;
@@ -666,42 +672,52 @@ class LoansController extends BaseController
     }
 
     /**
-     * Restore Multiple Assets from trash
+     * Confirmation Loans Request
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-    public function restore(Request $request)
+    public function confirmation(Request $request)
     {
         // return "Cek";exit();
         try {
             sleep(5);
-            $ids = $request->ids;
+            $id = $request->id;
+            $lender_id = Auth::user()->id;
             // \DB::enableQueryLog();
-            $checkAssets = Assets::onlyTrashed()->whereIn('id', $ids)->get();
+            $checkLoans = Loans::where('id', $id)
+            ->where('status', "0")
+            ->first();
             // dd(\DB::getQueryLog());
             
-            if($checkAssets->isEmpty()){
+            if(!$checkLoans){
                 return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipulihkan']);
             }
 
-            // \DB::enableQueryLog();
-            $restoreAssets = Assets::onlyTrashed()->findMany($ids);
-            // dd(\DB::getQueryLog());
-            $totalRestore = 0;
-            
-            foreach($restoreAssets as $rowAssets){
-                $restoreAssets = Assets::onlyTrashed()->find($rowAssets->id);
-                $restoreAssets->deleted_at = null;
-                $restoreAssets->restore();
-                $totalRestore++;
-            }
+            $date = Carbon::parse($checkLoans->date);
+            $due_date = Carbon::parse($checkLoans->due_date);
+            $diff = $date->diff($due_date);
 
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
+            // dd($diff);
+            if($diff->d !== 0) {
+                $hours = $diff->d * 24;
+            } elseif($diff->h !== 0) {
+                $hours = $diff->h;
+            }
+            
+            $due_date = Carbon::now()->addHours($hours);
+
+            $loanArray = array(
+                "code" => $code,
+                "loaner_id" => $loaner_id,
+                "date" => Carbon::now(),
+                "due_date" => $due_date,
+                "status" => $status
+            );
+
             $success['message'] = "Restore asset data";
-            $success['total_restored'] = $totalRestore;
+            // $success['total_restored'] = $totalRestore;
             return $this->sendResponse($success, 'Data dipulihkan');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);
