@@ -20,6 +20,7 @@ class ReturnDetails extends Model implements Auditable
     protected $fillable = [
         'asset_id',
         'return_id',
+        'deleted_at'
     ];
     protected $guarded = [];
 }

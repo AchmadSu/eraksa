@@ -250,6 +250,9 @@ class LoansController extends BaseController
 
             $hours = (int)$request->hours;
             switch ($hours) {
+                case 2:
+                    $range = "2 Jam";
+                    break;
                 case 3:
                     $range = "3 Jam";
                     break;
@@ -359,10 +362,11 @@ class LoansController extends BaseController
                                     $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
                                     // var_dump($adminNumber);exit();
                                     if($loaner_code_type == "0") {
-                                        $message = "Anda mendapatkan permintaan peminjaman baru!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nNIM: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                        $strUserCode = 'NIM';
                                     } else {
-                                        $message = "Anda mendapatkan permintaan peminjaman baru!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nNIDN: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                        $strUserCode = 'NIDN';                                        
                                     }
+                                    $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
                                     $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                     // dd($adminPhone[$rowPhone]);
                                 }
@@ -370,6 +374,11 @@ class LoansController extends BaseController
                         }
                     }   
                     $sortNumber = $studyProgramAssets[$i]['study_program_id'];
+                } else {
+                    return $this->sendError('Error!', [
+                        'error' =>
+                        'Seluruh aset yang dipilih dalam keadaan tidak tersedia!'
+                    ]);
                 }
             }
 
@@ -381,10 +390,11 @@ class LoansController extends BaseController
                         $strPhone = implode('|', (array) $superAdminPhone[$rowPhone]);
                         // var_dump($adminNumber);exit();
                         if($loaner_code_type == "0") {
-                            $message = "Anda mendapatkan permintaan peminjaman baru!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nNIM: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                            $strUserCode = 'NIM';
                         } else {
-                            $message = "Anda mendapatkan permintaan peminjaman baru!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nNIDN: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                            $strUserCode = 'NIDN';                                        
                         }
+                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
                         $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                     }
                 }
@@ -398,7 +408,7 @@ class LoansController extends BaseController
     }
 
     /**
-     * Update Asset
+     * Update Loans
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -408,65 +418,193 @@ class LoansController extends BaseController
     {
         try {
             sleep(5);
-            $id = $request->id;
-            $updateDataAsset = Loans::find($id);
+            $loan_id = $request->id;
+            $loaner_id = Auth::user()->id;
             
-            $name = $request->name;
-            $new_code = $request->new_code;
-            $category_id = $request->category_id;
-            $user_id = $request->user_id;
-            $placement_id = $request->placement_id;
-            $date = $request->date;
-            $condition = $request->condition;
-            $status = $request->status;
-            $study_program_id = $request->study_program_id;
+            $checkLoaner = Loans::
+            where('id', $loan_id)
+            ->where('loaner_id', $loaner_id)
+            ->first();
+            // dd("test");
+
+            // dd(!$checkLoaner);
             
-            if ($new_code == NULL) {
-                $validator = Validator::make($request->all(), [
-                    'name' => 'required',
-                    'user_id' => 'required|numeric',
-                    'date' => 'required',
-                    'condition' => 'required',
-                    'status' => 'required',
-                    'category_id' => 'required|numeric',
-                    'placement_id' => 'required|numeric',
-                    'study_program_id' => 'required|numeric',
+            if(!$checkLoaner){
+                return $this->sendError('Error!', [
+                    'error' =>
+                    'Anda bukan peminjam untuk transaksi peminjaman ini. Permintaan tidak dapat dilakukan!'
                 ]);
+            }
+
+            $checkStatus = Loans::
+            where('id', $loan_id)
+            ->where('status', "0")
+            ->first();
+
+            // dd($checkStatus);
+            if(!$checkStatus){
+                return $this->sendError('Error!', [
+                    'error' =>
+                    'Peminjaman ini sedang aktif atau sudah selesai. Permintaan tidak dapat dilakukan!'
+                ]);
+            }
+
+            $asset_ids = $request->asset_ids;
+            $checkAssets = Assets::whereIn("id", $asset_ids)->get();
+            // dd($checkAssets->isEmpty());
+            if($checkAssets->isEmpty())
+            {
+                return $this->sendError('Error!', [
+                    'error' =>
+                    'Tidak ada data aset yang dipinjam!'
+                ]);
+            }
+
+            $hours = (int)$request->hours;
+            switch ($hours) {
+                case 2:
+                    $range = "2 Jam";
+                    break;
+                case 3:
+                    $range = "3 Jam";
+                    break;
+                case 4:
+                    $range = "4 Jam";
+                    break;
+                case 8:
+                    $range = "8 Jam";
+                    break;
+                case 12:
+                    $range = "12 Jam";
+                    break;
+                case 24:
+                    $range = "1 Hari";
+                    break;
+                case 48:
+                    $range = "2 hari";
+                    break;
+                case 72:
+                    $range = "3 Hari";
+                    break;
+                case 96:
+                    $range = "4 Hari";
+                    break;
+                case 120:
+                    $range = "5 Hari";
+                    break;
+                case 144:
+                    $range = "6 Hari";
+                    break;
+                case 168:
+                    $range = "1 Minggu";
+                    break;
+                case 336:
+                    $range = "2 Minggu";
+                    break;
+                case 504:
+                    $range = "3 Minggu";
+                    break;
+                case 720:
+                    $range = "1 Bulan";
+                    break;
                 
-            } elseif ($new_code != NULL) {
-                $validator = Validator::make($request->all(),[
-                    'name' => 'required',
-                    'user_id' => 'required',
-                    'new_code' => 'required|unique:assets,code',
-                    'date' => 'required',
-                    'condition' => 'required',
-                    'status' => 'required',
-                    'category_id' => 'required|numeric',
-                    'placement_id' => 'required|numeric',
-                    'study_program_id' => 'required|numeric',
-                ]);
-                $updateDataAsset->code = $new_code;
+                default:
+                    # code...
+                    break;
+            }
+            // \DB::enableQueryLog();
+            $getAssetFromLoanDetails = LoanDetails::
+            where('loan_id', $loan_id)->get();
+            // dd(\DB::getQueryLog());
+            // dd($getAssetFromLoanDetails[0]['asset_id']);
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            $sortNumber = 0;
+            // if($asset_ids)
+            for ($i=0; $i < count($getAssetFromLoanDetails) ; $i++) { 
+                $unSetStatusAssets = Assets::find($getAssetFromLoanDetails[$i]['asset_id']);
+                // if()
+                $unSetStatusAssets->status = "0";
+                $unSetStatusAssets->save();
+                $getAssetFromLoanDetails[$i]->delete();
+                // dd("test");
+                // dd($updateLoanDetails['asset_id']);
+                // dd($getAssetFromLoanDetails[$i]['asset_id']);
+                $asset_id = $asset_ids[$i];
+                // dd($asset_id);
+                $checkAssets = Assets::find($asset_id);
+                if($checkAssets->status == "0"){
+                    $createLoanDetails = array(
+                        "loan_id" => $loan_id,
+                        "asset_id" => $asset_id
+                    );
+                    $checkAssets->status = "1";
+                    $checkAssets->save();
+                    // dd($updateLoanDetails);
+                    // $getAssetFromLoanDetails->asset_id = $updateLoanDetails[0]['asset_id'];
+                    // $checkAssets->save();
+                    LoanDetails::create($createLoanDetails);
+                    // dd($message);
+                    // \DB::enableQueryLog();
+                    // var_dump($studyProgramAssets[$i] == $checkAssets->study_program_id);exit();
+                    $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
+                    if($sortNumber !== $studyProgramAssets[$i]['study_program_id']){
+                        $loaner_name = Auth::user()->name;
+                        $loaner_code = Auth::user()->code;
+                        $loaner_code_type = Auth::user()->code_type;
+                        $adminPhone = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->pluck('phone');
+                        
+                        if($adminPhone->isEmpty() === FALSE) {
+                            for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
+                                if($adminPhone[$rowPhone]) {
+                                    $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
+                                    // var_dump($adminNumber);exit();
+                                    $getCodeLoans = Loans::
+                                    where('id', $loan_id)
+                                    ->pluck('code');
+                                    if($getCodeLoans){
+                                        $code = $getCodeLoans[0];
+                                        if($loaner_code_type == "0") {
+                                            $strUserCode = 'NIM';
+                                        } else {
+                                            $strUserCode = 'NIDN';                                        
+                                        }
+                                        $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                        $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                    }
+                                    // dd($adminPhone[$rowPhone]);
+                                }
+                            }
+                        }
+                    }   
+                    $sortNumber = $studyProgramAssets[$i]['study_program_id'];
+                } else {
+                    return $this->sendError('Error!', [
+                        'error' =>
+                        'Seluruh aset yang dipilih dalam keadaan tidak tersedia!'
+                    ]);
+                }
             }
 
-            if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+            $superAdminPhone = User::role('Super-Admin')->pluck('phone');
+            if($superAdminPhone->isEmpty() === FALSE) {
+                for ($rowPhone= 0; $rowPhone < count($superAdminPhone); $rowPhone++) {
+                    if($superAdminPhone[$rowPhone]){
+                        // dd($superAdminPhone);
+                        $strPhone = implode('|', (array) $superAdminPhone[$rowPhone]);
+                        // var_dump($adminNumber);exit();
+                        if($loaner_code_type == "0") {
+                            $strUserCode = 'NIM';
+                        } else {
+                            $strUserCode = 'NIDN';                                        
+                        }
+                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                        $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                    }
+                }
             }
-
-            $updateDataAsset->name = $name;
-            $updateDataAsset->user_id = $user_id;
-            $updateDataAsset->date = $date;
-            $updateDataAsset->placement_id = $placement_id;
-            $updateDataAsset->condition = $condition;
-            $updateDataAsset->status = $status;
-            $updateDataAsset->category_id = $category_id;
-            $updateDataAsset->study_program_id = $study_program_id;
-            // dd($data);exit();
-
-            $updateDataAsset->save();
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Asset berhasil diupdate!";
-            $success['data'] = $updateDataAsset;
+            
+            $success['message'] = "Permintaan peminjaman berhasil diupdate!";
+            // $success['data'] = $updateDataAsset;
             return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', $th);

@@ -142,8 +142,8 @@ Route::controller(LoansController::class)->group(function(){
     Route::middleware('auth:sanctum')->group(function(){
         Route::middleware('role:Super-Admin')->group(function(){
             // Route::get('loans/getAll', 'index');
-            Route::put('loans/update/{id}', 'update');
         });
+        Route::put('loans/update', 'update');
         Route::delete('loans/delete', 'delete');
         Route::get('loans/trash', 'trash');
         Route::put('loans/restore', 'restore');
