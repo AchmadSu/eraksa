@@ -43,7 +43,7 @@ class PlacementsController extends BaseController
             }
             return $this->sendResponse($placements, 'Displaying all placements data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -71,7 +71,7 @@ class PlacementsController extends BaseController
             }
             return $this->sendResponse($placements, 'Displaying all trash data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -94,7 +94,7 @@ class PlacementsController extends BaseController
             }
             return $this->sendResponse($placements, 'Placement detail');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -129,7 +129,7 @@ class PlacementsController extends BaseController
             $success['token'] = Str::random(15);
             return $this->sendResponse($success, 'Placement ditambahkan!');    
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         } 
     }
 
@@ -145,6 +145,9 @@ class PlacementsController extends BaseController
         try {
             sleep(5);
             $id = $request->id;
+            if(!$id) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada penempatan yang dipilih!']);
+            }
             $validator = Validator::make($request->all(),[
                 'name' => 'required|unique:placements,name|min:3'
             ]);
@@ -163,7 +166,7 @@ class PlacementsController extends BaseController
             $success['data'] = $updateDataPlacements;
             return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -194,7 +197,7 @@ class PlacementsController extends BaseController
             $success['data'] = $deletePlacements;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -225,7 +228,7 @@ class PlacementsController extends BaseController
             $success['data'] = $restorePlacements;
             return $this->sendResponse($success, 'Data terpilih berhasil dipulihkan');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 }

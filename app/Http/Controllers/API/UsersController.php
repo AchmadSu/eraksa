@@ -25,6 +25,7 @@ use App\Services\VerificationCodes\VerificationCodesService;
 use Symfony\Component\Console\Input\Input;
 use App\Http\Controllers\API\BaseController;
 use App\Http\Controllers\API\AuthOtpController as AuthOtpController;
+use App\Models\StudyPrograms;
 use App\Services\Users\UserService;
 
 class UsersController extends BaseController
@@ -76,20 +77,31 @@ class UsersController extends BaseController
             }
             
             $users = User::when(isset($keyWords))
-            ->where('name', 'like', '%'.$keyWords.'%')
-            ->orWhere('email', 'like', '%'.$keyWords.'%')
+            ->where('users.name', 'like', '%'.$keyWords.'%')
+            ->orWhere('users.email', 'like', '%'.$keyWords.'%')
             ->when(isset($code))
-            ->where('code', 'like', '%'.$code.'%')
+            ->where('users.code', 'like', '%'.$code.'%')
             ->when(isset($code_type))
-            ->where('code_type', $code_type)
+            ->where('users.code_type', $code_type)
             ->when(isset($status))
-            ->where('status', $status)
+            ->where('users.status', $status)
             ->when(isset($phone))
-            ->where('phone', 'like', '%'.$phone.'%')
+            ->where('users.phone', 'like', '%'.$phone.'%')
             ->when(isset($study_program_id))
-            ->where('study_program_id', $study_program_id)
+            ->where('users.study_program_id', $study_program_id)
             ->when(Auth::user()->hasRole('Admin'))
             ->role('Member')
+            ->select(
+                'users.id as id',
+                'users.name as name',
+                'users.code as code',
+                'users.code_type as code_type',
+                'users.email as email',
+                'users.status as status',
+                'users.created_at as created_at',
+                'users.phone as phone',
+                'users.updated_at as updated_at',
+            )
             ->get();
             // dd($users);
             if ($users->isEmpty()) {
@@ -97,7 +109,7 @@ class UsersController extends BaseController
             }
             return $this->sendResponse($users, 'Displaying all users data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan!"]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -134,24 +146,40 @@ class UsersController extends BaseController
             }
             // dd(Auth::user());
             // dd(Auth::user()->hasRole('Admin'));
-            // \DB::enableQueryLog();
+            \DB::enableQueryLog();
             $users = User::when(isset($keyWords))
-            ->where('name', 'like', '%'.$keyWords.'%')
-            ->orWhere('email', 'like', '%'.$keyWords.'%')
+            ->where('users.name', 'like', '%'.$keyWords.'%')
+            ->orWhere('users.email', 'like', '%'.$keyWords.'%')
             ->when(isset($code))
-            ->where('code', 'like', '%'.$code.'%')
+            ->where('users.code', 'like', '%'.$code.'%')
             ->when(isset($code_type))
-            ->where('code_type', $code_type)
+            ->where('users.code_type', $code_type)
             ->when(isset($status))
-            ->where('status', $status)
+            ->where('users.status', $status)
             ->when(isset($phone))
-            ->where('phone', 'like', '%'.$phone.'%')
+            ->where('users.phone', 'like', '%'.$phone.'%')
             ->when(isset($study_program_id))
-            ->where('study_program_id', $study_program_id)
+            ->where('users.study_program_id', $study_program_id)
             ->when(Auth::user()->hasRole('Admin'))
             ->role('Member')
+            ->select(
+                'users.id as id',
+                'users.name as name',
+                'users.code as code',
+                'users.code_type as code_type',
+                'users.email as email',
+                'users.status as status',
+                'users.created_at as created_at',
+                'users.phone as phone',
+                'users.updated_at as updated_at',
+            )
             ->onlyTrashed()
             ->get();
+            // dd(\DB::getQueryLog());
+            // foreach ($users as $rowUsers) {
+            //     $studyProgram = StudyPrograms::find($rowUsers->study_program_id);
+            //     $studyProgram = $studyProgram->name;
+            // }
             // var_dump($users);exit();
             // var_dump($users->isEmpty());exit();
             if ($users->isEmpty()) {
@@ -159,7 +187,7 @@ class UsersController extends BaseController
             }
             return $this->sendResponse($users, 'Displaying all trash data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -181,7 +209,7 @@ class UsersController extends BaseController
             }
             return $this->sendResponse($user, 'User detail by Id');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -220,9 +248,8 @@ class UsersController extends BaseController
                 return $this->sendError('Unauthorised!', ['error'=> 'Email atau Password salah!']);
             }
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error' => $th]);
-        }
-        
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
+        }  
     }
 
     /**
@@ -328,7 +355,7 @@ class UsersController extends BaseController
     
             return $this->sendResponse($success, 'User ditambahkan!'); 
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         } 
     }
 
@@ -457,7 +484,7 @@ class UsersController extends BaseController
             $success['data'] = $updateDataUser;
             return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -498,7 +525,7 @@ class UsersController extends BaseController
             $success['total_data'] = $counter;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -542,7 +569,7 @@ class UsersController extends BaseController
             $success['total_data'] = $counter;
             return $this->sendResponse($success, 'Data terpilih dipulihkan');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -585,7 +612,7 @@ class UsersController extends BaseController
             }
             
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -652,7 +679,7 @@ class UsersController extends BaseController
             }
             
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -705,7 +732,7 @@ class UsersController extends BaseController
             }
             
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -733,8 +760,8 @@ class UsersController extends BaseController
             $strOtp = "$otp";
 
             $this->verificationCodesService->sendWhatsappNotification($strOtp, $strPhone);
-        } catch (\Throwable $e) {
-            return $this->sendError('Error!', ['error' => $e]);
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 

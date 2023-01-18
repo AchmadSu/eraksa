@@ -41,7 +41,7 @@ class CategoryAssetsController extends BaseController
             }
             return $this->sendResponse($categoryAssets, 'Displaying all category assets data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -71,7 +71,7 @@ class CategoryAssetsController extends BaseController
             return $this->sendResponse($categoryAssets, 'Displaying all trash data');
 
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -94,7 +94,7 @@ class CategoryAssetsController extends BaseController
             }
             return $this->sendResponse($categoryAsset, 'Category Asset detail');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -133,7 +133,7 @@ class CategoryAssetsController extends BaseController
     
             return $this->sendResponse($success, 'Category Asset ditambahkan!');    
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         } 
     }
 
@@ -185,7 +185,7 @@ class CategoryAssetsController extends BaseController
             $success['data'] = $updateDataCategoryAssets;
             return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -216,7 +216,7 @@ class CategoryAssetsController extends BaseController
             $success['data'] = $deleteCategoryAssets;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -247,7 +247,7 @@ class CategoryAssetsController extends BaseController
             $success['data'] = $restoreCategoryAsset;
             return $this->sendResponse($success, 'Data dipulihkan');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 }

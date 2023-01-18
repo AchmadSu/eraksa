@@ -31,12 +31,7 @@ class Assets extends Model implements Auditable
     ];
     protected $guarded = [];
 
-    // /**
-    //  * The attributes that should be cast.
-    //  *
-    //  * @var array<string, string>
-    //  */
-    // protected $casts = [
-    //     'date' => 'datetime',
-    // ];
+    public function lender(){
+        return $this->belongsTo('App\Models\User');
+    }
 }

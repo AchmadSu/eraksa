@@ -239,12 +239,17 @@ class LoansController extends BaseController
             }
             
             $asset_ids = $request->asset_ids;
-            $checkAssets = Assets::whereIn("id", $asset_ids)->get();
+            // \DB::enableQueryLog();
+            $checkAssets = Assets::whereIn("id", $asset_ids)
+            ->where("status", "0")
+            ->where("condition", "0")
+            ->get();
+            // dd(\DB::getQueryLog());
             if($checkAssets->isEmpty())
             {
                 return $this->sendError('Error!', [
                     'error' =>
-                    'Tidak ada data aset yang dipinjam!'
+                    'Aset dalam keadaan tidak tersedia'
                 ]);
             }
 
@@ -338,7 +343,7 @@ class LoansController extends BaseController
                 $asset_id = $asset_ids[$i];
                 $checkAssets = Assets::find($asset_id);
                 // dd($checkAssets);
-                if($checkAssets->status == "0"){
+                if($checkAssets->status == "0" && $checkAssets->condition == "0"){
                     $createLoanDetails = array(
                         "asset_id" => $asset_id,
                         "loan_id" => $loan_id
@@ -366,7 +371,7 @@ class LoansController extends BaseController
                                     } else {
                                         $strUserCode = 'NIDN';                                        
                                     }
-                                    $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                    $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\nPeriode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
                                     $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                     // dd($adminPhone[$rowPhone]);
                                 }
@@ -394,7 +399,7 @@ class LoansController extends BaseController
                         } else {
                             $strUserCode = 'NIDN';                                        
                         }
-                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\nPeriode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
                         $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                     }
                 }
@@ -421,6 +426,9 @@ class LoansController extends BaseController
             $loan_id = $request->id;
             $loaner_id = Auth::user()->id;
             // dd($loaner_id);
+            if(!$loan_id) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada transaksi peminjaman yang dipilih!']);
+            }
             
             $checkLoaner = Loans::
             where('id', $loan_id)
@@ -446,18 +454,20 @@ class LoansController extends BaseController
             if(!$checkStatus){
                 return $this->sendError('Error!', [
                     'error' =>
-                    'Peminjaman ini sedang aktif atau sudah selesai. Permintaan tidak dapat dilakukan!'
+                    'Peminjaman ini sedang aktif atau sudah selesai, data peminjaman tidak dapat diperbarui.'
                 ]);
             }
 
             $asset_ids = $request->asset_ids;
-            $checkAssets = Assets::whereIn("id", $asset_ids)->get();
-            // dd($checkAssets->isEmpty());
+            $checkAssets = Assets::whereIn("id", $asset_ids)
+            ->where("condition", "0")
+            ->get();
+            // dd(\DB::getQueryLog());
             if($checkAssets->isEmpty())
             {
                 return $this->sendError('Error!', [
                     'error' =>
-                    'Tidak ada data aset yang dipinjam!'
+                    'Aset dalam keadaan tidak tersedia'
                 ]);
             }
 
@@ -534,7 +544,7 @@ class LoansController extends BaseController
                     $asset_id = $asset_ids[$i];
                     // dd($asset_id);
                     $checkAssets = Assets::find($asset_id);
-                    if($checkAssets->status == "0"){
+                    if($checkAssets->status == "0" && $checkAssets->condition == "0"){
                         $createLoanDetails = array(
                             "loan_id" => $loan_id,
                             "asset_id" => $asset_id
@@ -613,7 +623,7 @@ class LoansController extends BaseController
             }
             // $success['data'] = $updateDataAsset;
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
     }
 
@@ -629,14 +639,20 @@ class LoansController extends BaseController
         try {
             sleep(5);
             $id = $request->id;
+            if(!$id) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada transaksi peminjaman yang dipilih!']);
+            }
             $lender_id = Auth::user()->id;
             $status = $request->status;
+            if(!$status) {
+                return $this->sendError('Error!', ['error' => 'Status konfirmasi tidak diatur!']);
+            }
             // \DB::enableQueryLog();
             $checkLoans = Loans::find($id);
             // dd(\DB::getQueryLog());
             
             if(!$checkLoans){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dipilih']);
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data transaksi peminjaman']);
             }
 
             // dd(!$checkLoans->status != "0");
@@ -704,7 +720,7 @@ class LoansController extends BaseController
                 return $this->sendError('Error!', ['error'=> 'Set Status Konfirmasi salah!']);
             }
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
     }
 
@@ -721,6 +737,9 @@ class LoansController extends BaseController
             // dd(Auth::user()->name);
             sleep(5);
             $id = $request->id;
+            if(!$id) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada riwayat peminjaman yang dipilih!']);
+            }
             $loaner_id = Auth::user()->id;
             // dd($ids);
             // \DB::enableQueryLog();
@@ -764,7 +783,7 @@ class LoansController extends BaseController
             $success['total_deleted'] = $totalDelete;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
     }
 

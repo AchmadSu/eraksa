@@ -58,7 +58,7 @@ class WorkshopsController extends BaseController
             }
             return $this->sendResponse($workshops, 'Displaying all workshops data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -102,7 +102,7 @@ class WorkshopsController extends BaseController
             }
             return $this->sendResponse($workshops, 'Displaying all trash data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -125,7 +125,7 @@ class WorkshopsController extends BaseController
             }
             return $this->sendResponse($workshop, 'Workshop detail');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -157,7 +157,7 @@ class WorkshopsController extends BaseController
     
             return $this->sendResponse($success, 'Workshop ditambahkan!');    
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         } 
     }
 

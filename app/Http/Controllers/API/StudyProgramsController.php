@@ -43,7 +43,7 @@ class StudyProgramsController extends BaseController
             }
             return $this->sendResponse($studyPrograms, 'Displaying all assets data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -71,7 +71,7 @@ class StudyProgramsController extends BaseController
             }
             return $this->sendResponse($studyPrograms, 'Displaying all trash data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -94,7 +94,7 @@ class StudyProgramsController extends BaseController
             }
             return $this->sendResponse($studyPrograms, 'Program Studi detail');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -128,7 +128,7 @@ class StudyProgramsController extends BaseController
             $success['token'] = Str::random(15);
             return $this->sendResponse($success, 'Program Studi ditambahkan!');    
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         } 
     }
 
@@ -144,6 +144,9 @@ class StudyProgramsController extends BaseController
         try {
             sleep(5);
             $id = $request->id;
+            if(!$id) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada program studi yang dipilih!']);
+            }
             $name = $request->name;
             $validator = Validator::make($request->all(),[
                 'name' => 'required|unique:study_programs,name|min:3'
@@ -162,7 +165,7 @@ class StudyProgramsController extends BaseController
             $success['data'] = $updateDataStudyProgram;
             return $this->sendResponse($success, 'Program Studi berhasil diupdate!');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -178,6 +181,9 @@ class StudyProgramsController extends BaseController
         try {
             sleep(5);
             $ids = $request->ids;
+            if(!$ids) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada program studi yang dipilih!']);
+            }
             // dd($ids);
             // \DB::enableQueryLog();
             $checkStudyPrograms = StudyPrograms::whereIn('id', $ids)->get();
@@ -193,7 +199,7 @@ class StudyProgramsController extends BaseController
             $success['data'] = $deleteStudyPrograms;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -224,7 +230,7 @@ class StudyProgramsController extends BaseController
             $success['data'] = $restoreCategoryAsset;
             return $this->sendResponse($success, 'Data terpilih berhasil dipulihkan');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 }

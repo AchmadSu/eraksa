@@ -30,7 +30,7 @@ class AssetsController extends BaseController
     public function index(Request $request){
         try {
             sleep(5);
-
+            
             $keyWords = $request->keyWords;
             $category_id = $request->category_id;
             $user_keyWords = $request->user_keyWords;
@@ -40,10 +40,10 @@ class AssetsController extends BaseController
             $status = $request->status;
             $placement_id = $request->placement_id;
             $study_program_id = $request->study_program_id;
-
+            
             $from = date($dateOne);
             $to = date($dateTwo);
-
+            
             $user = User::where('name', 'like', '%'.$user_keyWords.'%')
             ->orWhere('email', 'like', '%'.$user_keyWords.'%')
             ->get();
@@ -51,27 +51,44 @@ class AssetsController extends BaseController
             foreach ($user as $rowUser) {
                 $user_ids[] = $rowUser->id;
             }
-
-            $assets = Assets::when(isset($keyWords))
-            ->where('code', 'like', '%'.$keyWords.'%')
-            ->orWhere('name', 'like', '%'.$keyWords.'%')
+            // dd("test");
+            // \DB::enableQueryLog();
+            $assets = Assets::join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->when(isset($keyWords))
+            ->where('assets.code', 'like', '%'.$keyWords.'%')
+            ->orWhere('assets.name', 'like', '%'.$keyWords.'%')
             ->when(isset($user_ids))
-            ->whereIn('user_id', $user_ids)
+            ->whereIn('assets.user_id', $user_ids)
             ->when(isset($category_id))
-            ->where('category_id', $category_id)
+            ->where('assets.category_id', $category_id)
             ->when(isset($study_program_id))
-            ->where('study_program_id', $study_program_id)
+            ->where('assets.study_program_id', $study_program_id)
             ->when(isset($placement_id))
-            ->where('placement_id', $placement_id)
+            ->where('assets.placement_id', $placement_id)
             ->when(isset($dateOne) && !isset($dateTwo))
-            ->where('date', $from)
+            ->where('assets.date', $from)
             ->when(isset($dateOne) && isset($dateTwo))
             ->whereBetween('date', [$from, $to])
-            ->when(isset($dueDateOne) && !isset($dueDateTwo))
             ->when(isset($status))
-            ->where('status', $status)
+            ->where('assets.status', $status)
             ->when(isset($condition))
-            ->where('condition', $condition)
+            ->where('assets.condition', $condition)
+            ->select(
+                'assets.id as id',
+                'assets.name as name',
+                'assets.code as code',
+                'assets.condition as condition',
+                'assets.status as status',
+                'assets.updated_at as updated_at',
+                'assets.date as date',
+                'placements.name as placement_name', 
+                'category_assets.name as category_name', 
+                'users.name as user_name',
+                'study_programs.name as study_program_name',
+            )
             ->get();
             // dd(\DB::getQueryLog());
             // dd($assets);
@@ -80,7 +97,7 @@ class AssetsController extends BaseController
             }
             return $this->sendResponse($assets, 'Displaying all assets data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
     }
 
@@ -117,28 +134,45 @@ class AssetsController extends BaseController
 
             $auth = Auth::user();
 
-            $assets = Assets::onlyTrashed()->when(isset($keyWords))
-            ->where('code', 'like', '%'.$keyWords.'%')
-            ->orWhere('name', 'like', '%'.$keyWords.'%')
+            $assets = Assets::onlyTrashed()
+            ->join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->when(isset($keyWords))
+            ->where('assets.code', 'like', '%'.$keyWords.'%')
+            ->orWhere('assets.name', 'like', '%'.$keyWords.'%')
             ->when(isset($user_ids))
-            ->whereIn('user_id', $user_ids)
+            ->whereIn('assets.user_id', $user_ids)
             ->when(isset($category_id))
-            ->where('category_id', $category_id)
+            ->where('assets.category_id', $category_id)
             ->when($auth->hasRole('Admin'))
-            ->where('study_program_id', $auth->study_program_id)
+            ->where('assets.study_program_id', $auth->study_program_id)
             ->when(isset($study_program_id))
-            ->where('study_program_id', $study_program_id)
+            ->where('assets.study_program_id', $study_program_id)
             ->when(isset($placement_id))
-            ->where('placement_id', $placement_id)
+            ->where('assets.placement_id', $placement_id)
             ->when(isset($dateOne) && !isset($dateTwo))
-            ->where('date', $from)
+            ->where('assets.date', $from)
             ->when(isset($dateOne) && isset($dateTwo))
             ->whereBetween('date', [$from, $to])
-            ->when(isset($dueDateOne) && !isset($dueDateTwo))
             ->when(isset($status))
-            ->where('status', $status)
+            ->where('assets.status', $status)
             ->when(isset($condition))
-            ->where('condition', $condition)
+            ->where('assets.condition', $condition)
+            ->select(
+                'assets.id as id',
+                'assets.name as name',
+                'assets.code as code',
+                'assets.condition as condition',
+                'assets.status as status',
+                'assets.deleted_at as deleted_at',
+                'assets.date as date',
+                'placements.name as placement_name', 
+                'category_assets.name as category_name', 
+                'users.name as user_name',
+                'study_programs.name as study_program_name',
+            )
             ->get();
             // dd(\DB::getQueryLog());
             if ($assets->isEmpty()) {
@@ -147,7 +181,7 @@ class AssetsController extends BaseController
             return $this->sendResponse($assets, 'Displaying all trash data');
 
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
     }
 
@@ -170,7 +204,7 @@ class AssetsController extends BaseController
             }
             return $this->sendResponse($asset, 'Asset detail');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
         
     }
@@ -225,7 +259,7 @@ class AssetsController extends BaseController
     
             return $this->sendResponse($success, 'Asset ditambahkan!');    
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         } 
     }
 
@@ -241,43 +275,53 @@ class AssetsController extends BaseController
         try {
             sleep(5);
             $id = $request->id;
+            if(!$id) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada aset yang dipilih!']);
+            }
             $updateDataAsset = Assets::find($id);
-            
-            $name = $request->name;
-            $new_code = $request->new_code;
+            if(!$updateDataAsset) {
+                return $this->sendError('Error!', ['error' => 'Data aset tidak ada!']);
+            }
+            if($updateDataAsset->status != "0"){
+                return $this->sendError('Error!', ['error' => 'Aset sedang dalam transaksi peminjaman atau perbaikan. Data tidak dapat diperbarui!']);
+            }
+            $name = ucwords(strtolower($request->name));
+            $date = $updateDataAsset->date;
             $category_id = $request->category_id;
-            $user_id = $request->user_id;
+            if($updateDataAsset->category_id != $category_id) {
+                $category_name = CategoryAssets::find($request->category_id)->pluck('name');
+                $category_name = Str::upper(str_replace(array('["','"]'), '', $category_name));
+                $inv = rand(100000, 999999);
+                $strInv = "$inv";
+                $code = "ERK-ASSETS-".$category_name."-".$date."-".$strInv;
+            }
             $placement_id = $request->placement_id;
-            $date = $request->date;
             $condition = $request->condition;
-            $status = $request->status;
             $study_program_id = $request->study_program_id;
             
-            if ($new_code == NULL) {
+            if ($code == NULL) {
                 $validator = Validator::make($request->all(), [
                     'name' => 'required',
                     'user_id' => 'required|numeric',
                     'date' => 'required',
                     'condition' => 'required',
-                    'status' => 'required',
                     'category_id' => 'required|numeric',
                     'placement_id' => 'required|numeric',
                     'study_program_id' => 'required|numeric',
                 ]);
                 
-            } elseif ($new_code != NULL) {
+            } elseif ($code != NULL) {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
                     'user_id' => 'required',
                     'new_code' => 'required|unique:assets,code',
                     'date' => 'required',
                     'condition' => 'required',
-                    'status' => 'required',
                     'category_id' => 'required|numeric',
                     'placement_id' => 'required|numeric',
                     'study_program_id' => 'required|numeric',
                 ]);
-                $updateDataAsset->code = $new_code;
+                $updateDataAsset->code = $code;
             }
 
             if ($validator->fails()) {
@@ -285,11 +329,10 @@ class AssetsController extends BaseController
             }
 
             $updateDataAsset->name = $name;
-            $updateDataAsset->user_id = $user_id;
+            $updateDataAsset->user_id = Auth::user()->id;
             $updateDataAsset->date = $date;
             $updateDataAsset->placement_id = $placement_id;
             $updateDataAsset->condition = $condition;
-            $updateDataAsset->status = $status;
             $updateDataAsset->category_id = $category_id;
             $updateDataAsset->study_program_id = $study_program_id;
             // dd($data);exit();
@@ -301,7 +344,7 @@ class AssetsController extends BaseController
             $success['data'] = $updateDataAsset;
             return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
     }
 
@@ -318,25 +361,30 @@ class AssetsController extends BaseController
             sleep(5);
             $ids = $request->ids;
             // dd($ids);
+            if($ids == NULL) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada aset yang dipilih!']);
+            }
             // \DB::enableQueryLog();
-            $checkAssets = Assets::whereIn('id', $ids)->get();
+            $checkAssets = Assets::whereIn('id', $ids)->where("status", "0")->get();
             // dd(\DB::getQueryLog());
             // dd($checkAssets);
             if($checkAssets->isEmpty()){
-                return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
+                return $this->sendError('Error!', ['error'=> 'Aset sedang dalam transaksi peminjaman atau perbaikan, permintaan tidak dapat dilakukan!']);
             }
             // \DB::enableQueryLog();
             $deleteAssets = Assets::findMany($ids);
-            // dd(\DB::getQueryLog());\
+            // dd(\DB::getQueryLog());
             $totalDelete = 0;
             foreach($deleteAssets as $rowAssets){
                 // dd($rowAssets->id);
                 // if($rowAssets > 0){
                 // dd($rowAssets->id);
                 $deleteAssets = Assets::find($rowAssets->id);
-                $deleteAssets->deleted_at = Carbon::now();
-                $deleteAssets->delete();
-                $totalDelete++;
+                if($deleteAssets->status == "0"){
+                    $deleteAssets->deleted_at = Carbon::now();
+                    $deleteAssets->delete();
+                    $totalDelete++;
+                }
                 // }
             }
 
@@ -346,7 +394,7 @@ class AssetsController extends BaseController
             $success['total_deleted'] = $totalDelete;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
     }
 
@@ -389,7 +437,7 @@ class AssetsController extends BaseController
             $success['total_restored'] = $totalRestore;
             return $this->sendResponse($success, 'Data dipulihkan');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
     }
 }

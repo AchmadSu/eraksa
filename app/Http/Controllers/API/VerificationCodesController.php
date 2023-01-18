@@ -70,8 +70,8 @@ class VerificationCodesController extends BaseController
             $success['token'] = $tokenMsg;
             $success['message'] = "Kode OTP telah dikirim. Silakan buka pesan di What's App anda!";
             return $this->sendResponse($success, 'Kode OTP Terkirim.');    
-        } catch (Exception $e) {
-            return $this->sendError('Error!', ['error' => $e]);
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -119,8 +119,8 @@ class VerificationCodesController extends BaseController
             $success['token'] = $tokenMsg;
             $success['message'] = "Kode OTP telah dikirim. Silakan buka pesan di What's App anda!";
             return $this->sendResponse($success, 'Kode OTP Terkirim.');   
-        } catch (\Throwable $e) {
-            return $this->sendError('Error!', ['error' => $e]);
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -151,8 +151,8 @@ class VerificationCodesController extends BaseController
                 // $success['token'] = $verificationCode->createToken('MyApp')->plainTextToken;
                 return $this->sendResponse($success, 'Kode OTP Benar.');
             }
-        } catch (Exception $e) {
-            return $this->sendError('Error!', ['error' => $e]);
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -164,8 +164,8 @@ class VerificationCodesController extends BaseController
             sleep(5);
             $updateValidate = VerificationCodes::where('user_id', $user_id)->update(array('status' => "1"));
             return $updateValidate;
-        } catch (Exception $e) {
-            return $this->sendError('Error!', ['error' => $e]);
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -178,8 +178,8 @@ class VerificationCodesController extends BaseController
             $updateStatus->status = '1';
             // $updateStatus->save();
             return $updateStatus->save();
-        } catch (Exception $e) {
-            return $this->sendError('Error!', ['error' => $e]);
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
