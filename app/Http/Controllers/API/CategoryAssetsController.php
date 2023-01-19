@@ -29,10 +29,14 @@ class CategoryAssetsController extends BaseController
         try {
             sleep(5);
             $keyWords = $request->keyWords;
+            $skip = $request->skip;
+            $take = $request->take;
 
             $categoryAssets = CategoryAssets::when(isset($keyWords))
             ->where('name', 'like', '%'.$keyWords.'%')
             ->orWhere('description', 'like', '%'.$keyWords.'%')
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             // dd($categoryAssets);
@@ -56,6 +60,8 @@ class CategoryAssetsController extends BaseController
         try {
             sleep(5);
             $keyWords = $request->keyWords;
+            $skip = $request->skip;
+            $take = $request->take;
             // dd(Auth::user());
             // dd(Auth::user());
             // \DB::enableQueryLog();
@@ -63,6 +69,8 @@ class CategoryAssetsController extends BaseController
             ->when(isset($keyWords))
             ->where('name', 'like', '%'.$keyWords.'%')
             ->orWhere('description', 'like', '%'.$keyWords.'%')
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             if ($categoryAssets->isEmpty()) {
@@ -87,7 +95,7 @@ class CategoryAssetsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $categoryAsset = CategoryAssets::where('id', $id)->first();
+            $categoryAsset = CategoryAssets::find($id);
             // dd(\DB::getQueryLog());
             if (!$categoryAsset) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);

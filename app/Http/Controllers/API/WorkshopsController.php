@@ -33,6 +33,8 @@ class WorkshopsController extends BaseController
             // \DB::enableQueryLog();
             $name = $request->name;
             $phone = $request->phone;
+            $skip = $request->skip;
+            $take = $request->take;
             
             if(isset($phone)) {
                 $spiltPhone = str_split($phone);
@@ -50,6 +52,8 @@ class WorkshopsController extends BaseController
             ->where('name', 'like', '%'.$name.'%')
             ->when(isset($phone))
             ->where('phone', 'like', '%'.$phone.'%')
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             // dd($workshops);
@@ -77,6 +81,8 @@ class WorkshopsController extends BaseController
             // \DB::enableQueryLog();
             $name = $request->name;
             $phone = $request->phone;
+            $skip = $request->skip;
+            $take = $request->take;
             
             if(isset($phone)) {
                 $spiltPhone = str_split($phone);
@@ -95,6 +101,8 @@ class WorkshopsController extends BaseController
             ->where('name', 'like', '%'.$name.'%')
             ->when(isset($phone))
             ->where('phone', 'like', '%'.$phone.'%')
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             if ($workshops->isEmpty()) {
@@ -118,7 +126,7 @@ class WorkshopsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $workshop = Workshops::where('id', $id)->first();
+            $workshop = Workshops::find($id);
             // dd(\DB::getQueryLog());
             if (!$workshop) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);

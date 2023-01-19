@@ -60,6 +60,8 @@ class UsersController extends BaseController
             $code_type = $request->code_type;
             $status = $request->status;
             $phone = $request->phone;
+            $skip = $request->skip;
+            $take = $request->take;
 
             // dd(Auth::user()->hasRole('Super-Admin'));
             $study_program_id = $request->study_program_id;
@@ -102,6 +104,8 @@ class UsersController extends BaseController
                 'users.phone as phone',
                 'users.updated_at as updated_at',
             )
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd($users);
             if ($users->isEmpty()) {
@@ -129,6 +133,8 @@ class UsersController extends BaseController
             $code_type = $request->code_type;
             $status = $request->status;
             $phone = $request->phone;
+            $skip = $request->skip;
+            $take = $request->take;
 
             // dd(Auth::user()->hasRole('Super-Admin'));
             $study_program_id = $request->study_program_id;
@@ -173,15 +179,10 @@ class UsersController extends BaseController
                 'users.phone as phone',
                 'users.updated_at as updated_at',
             )
+            ->skip($skip)
+            ->take($take)
             ->onlyTrashed()
             ->get();
-            // dd(\DB::getQueryLog());
-            // foreach ($users as $rowUsers) {
-            //     $studyProgram = StudyPrograms::find($rowUsers->study_program_id);
-            //     $studyProgram = $studyProgram->name;
-            // }
-            // var_dump($users);exit();
-            // var_dump($users->isEmpty());exit();
             if ($users->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
@@ -202,7 +203,7 @@ class UsersController extends BaseController
     {
         try {
             sleep(5);
-            $user = User::where('id', $id)->first();
+            $user = User::find($id);
             // dd(\DB::getQueryLog());
             if (!$user) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);

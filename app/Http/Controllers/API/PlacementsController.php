@@ -33,8 +33,12 @@ class PlacementsController extends BaseController
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
             $name = $request->name;
+            $skip = $request->skip;
+            $take = $request->take;
             $placements = Placements::when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             // dd($placements);
@@ -60,10 +64,14 @@ class PlacementsController extends BaseController
             // dd(Auth::user());
             // dd(Auth::user());
             // \DB::enableQueryLog();
+            $skip = $request->skip;
+            $take = $request->take;
             $name = $request->name;
             $placements = Placements::onlyTrashed()
             ->when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             if ($placements->isEmpty()) {
@@ -87,7 +95,7 @@ class PlacementsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $placements = Placements::where('id', $id)->first();
+            $placements = Placements::find($id);
             // dd(\DB::getQueryLog());
             if (!$placements) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);

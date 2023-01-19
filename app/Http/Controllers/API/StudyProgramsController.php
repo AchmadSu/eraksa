@@ -33,8 +33,12 @@ class StudyProgramsController extends BaseController
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
             $name = $request->name;
+            $skip = $request->skip;
+            $take = $request->take;
             $studyPrograms = StudyPrograms::when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             // dd($studyPrograms);
@@ -87,7 +91,7 @@ class StudyProgramsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $studyPrograms = StudyPrograms::where('id', $id)->first();
+            $studyPrograms = StudyPrograms::find($id);
             // dd(\DB::getQueryLog());
             if (!$studyPrograms) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);

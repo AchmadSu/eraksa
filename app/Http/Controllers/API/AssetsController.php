@@ -40,6 +40,8 @@ class AssetsController extends BaseController
             $status = $request->status;
             $placement_id = $request->placement_id;
             $study_program_id = $request->study_program_id;
+            $skip = $request->skip;
+            $take = $request->take;
             
             $from = date($dateOne);
             $to = date($dateTwo);
@@ -82,13 +84,19 @@ class AssetsController extends BaseController
                 'assets.code as code',
                 'assets.condition as condition',
                 'assets.status as status',
-                'assets.updated_at as updated_at',
+                'assets.deleted_at as deleted_at',
                 'assets.date as date',
+                'assets.placement_id as placement_id', 
                 'placements.name as placement_name', 
+                'assets.category_id as category_id', 
                 'category_assets.name as category_name', 
+                'assets.user_id as user_id',
                 'users.name as user_name',
+                'assets.study_program_id as study_program_id',
                 'study_programs.name as study_program_name',
             )
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             // dd($assets);
@@ -120,6 +128,8 @@ class AssetsController extends BaseController
             $status = $request->status;
             $placement_id = $request->placement_id;
             $study_program_id = $request->study_program_id;
+            $skip = $request->skip;
+            $take = $request->take;
 
             $from = date($dateOne);
             $to = date($dateTwo);
@@ -168,11 +178,17 @@ class AssetsController extends BaseController
                 'assets.status as status',
                 'assets.deleted_at as deleted_at',
                 'assets.date as date',
+                'assets.placement_id as placement_id', 
                 'placements.name as placement_name', 
+                'assets.category_id as category_id', 
                 'category_assets.name as category_name', 
+                'assets.user_id as user_id',
                 'users.name as user_name',
+                'assets.study_program_id as study_program_id',
                 'study_programs.name as study_program_name',
             )
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             if ($assets->isEmpty()) {
@@ -197,7 +213,29 @@ class AssetsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $asset = Assets::where('id', $id)->first();
+            $asset = Assets::find($id)
+            ->join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->select(
+                'assets.id as id',
+                'assets.name as name',
+                'assets.code as code',
+                'assets.condition as condition',
+                'assets.status as status',
+                'assets.deleted_at as deleted_at',
+                'assets.date as date',
+                'assets.placement_id as placement_id', 
+                'placements.name as placement_name', 
+                'assets.category_id as category_id', 
+                'category_assets.name as category_name', 
+                'assets.user_id as user_id',
+                'users.name as user_name',
+                'assets.study_program_id as study_program_id',
+                'study_programs.name as study_program_name',
+            )
+            ->first();
             // dd(\DB::getQueryLog());
             if (!$asset) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);

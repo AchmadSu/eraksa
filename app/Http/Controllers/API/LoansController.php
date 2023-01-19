@@ -50,6 +50,8 @@ class LoansController extends BaseController
             $return_code = $request->return_code;
             $dueDateOne = $request->dueDateOne;
             $dueDateTwo = $request->dueDateTwo;
+            $skip = $request->skip;
+            $take = $request->take;
 
             $from = date($dateOne);
             $to = date($dateTwo);
@@ -79,24 +81,27 @@ class LoansController extends BaseController
             }
             // \DB::enableQueryLog();
             // dd($request->loaner_ids == NULL);
+            
             $loans = Loans::when(isset($code))
-            ->where('code', 'like', '%'.$code.'%')
+            ->where('loans.code', 'like', '%'.$code.'%')
             ->when(isset($loaner_ids))
-            ->whereIn('loaner_id', $loaner_ids)
+            ->whereIn('loans.loaner_id', $loaner_ids)
             ->when(isset($lender_id))
-            ->where('lender_id', $lender_id)
+            ->where('loans.lender_id', $lender_id)
             ->when(isset($dateOne) && !isset($dateTwo))
-            ->where('date', $from)
+            ->where('loans.date', $from)
             ->when(isset($dateOne) && isset($dateTwo))
-            ->whereBetween('date', [$from, $to])
+            ->whereBetween('loans.date', [$from, $to])
             ->when(isset($dueDateOne) && !isset($dueDateTwo))
-            ->where('due_date', $dueFrom)
+            ->where('loans.due_date', $dueFrom)
             ->when(isset($dueDateOne) && isset($dueDateTwo))
-            ->whereBetween('due_date', [$dueFrom, $dueTo])
+            ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
             ->when(isset($status))
-            ->where('status', $status)
+            ->where('loans.status', $status)
             ->when(isset($return_code))
-            ->whereIn('return_id', $return_ids)
+            ->whereIn('loans.return_id', $return_ids)
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(Loans::all());
             // dd(Auth::user()->name);
@@ -152,6 +157,8 @@ class LoansController extends BaseController
             $return_code = $request->return_code;
             $dueDateOne = $request->dueDateOne;
             $dueDateTwo = $request->dueDateTwo;
+            $skip = $request->skip;
+            $take = $request->take;
 
             $from = date($dateOne);
             $to = date($dateTwo);
@@ -185,6 +192,8 @@ class LoansController extends BaseController
             ->when(isset($dueDateOne) && isset($dueDateTwo))
             ->whereBetween('due_date', [$dueFrom, $dueTo])
             ->where('status', "0")
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(Loans::all());
             // dd(Auth::user()->name);
