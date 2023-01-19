@@ -247,6 +247,78 @@ class AssetsController extends BaseController
         
     }
 
+    /** 
+     * Get Assets Percentage
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function percentage(Request $request)
+    {
+        try {
+            // sleep(5);
+            // \DB::enableQueryLog();
+            $keyWords = $request->keyWords;
+            $category_id = $request->category_id;
+            $user_keyWords = $request->user_keyWords;
+            $dateOne = $request->dateOne;
+            $dateTwo = $request->dateTwo;
+            $condition = $request->condition;
+            $status = $request->status;
+            $placement_id = $request->placement_id;
+            $study_program_id = $request->study_program_id;
+            
+            $from = date($dateOne);
+            $to = date($dateTwo);
+            
+            $user = User::where('name', 'like', '%'.$user_keyWords.'%')
+            ->orWhere('email', 'like', '%'.$user_keyWords.'%')
+            ->get();
+            $user_ids = array();
+            foreach ($user as $rowUser) {
+                $user_ids[] = $rowUser->id;
+            }
+            $countAll = Assets::count();
+            $countRequest = Assets::
+            join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->when(isset($keyWords))
+            ->where('assets.code', 'like', '%'.$keyWords.'%')
+            ->orWhere('assets.name', 'like', '%'.$keyWords.'%')
+            ->when(isset($user_ids))
+            ->whereIn('assets.user_id', $user_ids)
+            ->when(isset($category_id))
+            ->where('assets.category_id', $category_id)
+            ->when(isset($study_program_id))
+            ->where('assets.study_program_id', $study_program_id)
+            ->when(isset($placement_id))
+            ->where('assets.placement_id', $placement_id)
+            ->when(isset($dateOne) && !isset($dateTwo))
+            ->where('assets.date', $from)
+            ->when(isset($dateOne) && isset($dateTwo))
+            ->whereBetween('date', [$from, $to])
+            ->when(isset($status))
+            ->where('assets.status', $status)
+            ->when(isset($condition))
+            ->where('assets.condition', $condition)
+            ->count();
+            // dd(\DB::getQueryLog());
+            if (!$countAll && !$countRequest) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            $success['countAll'] = $countAll;
+            $success['countRequest'] = $countRequest;
+            $success['percentage'] = number_format((float)$countRequest/$countAll * 100, 0, '.', '');
+            return $this->sendResponse($success, 'Count Asset by Status and Condition');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+        }
+        
+    }
+
     /** CRUD ASSETS */
     
     /**

@@ -54,10 +54,11 @@ Route::controller(AssetsController::class)->group(function(){
     // dd(Auth::guest());
     Route::middleware('auth:sanctum')->group(function(){
         Route::middleware('role:Super-Admin|Admin')->group(function(){
+            Route::get('assets/trash', 'trash');
+            Route::get('assets/percentage', 'percentage');
             Route::post('assets/create', 'create'); 
             Route::put('assets/update', 'update');
             Route::delete('assets/delete', 'delete');
-            Route::get('assets/trash', 'trash');
             Route::put('assets/restore', 'restore');
         });
         Route::get('assets/getAll', 'index');
