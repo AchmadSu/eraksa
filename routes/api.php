@@ -147,6 +147,7 @@ Route::controller(LoansController::class)->group(function(){
         Route::put('loans/update', 'update');
         Route::delete('loans/delete', 'delete');
         Route::get('loans/trash', 'trash');
+        Route::get('loans/percentage', 'percentage');
         Route::put('loans/restore', 'restore');
         Route::get('loans/getAll', 'index');
         Route::post('loans/create', 'create'); 

@@ -45,6 +45,15 @@ class AssetsController extends BaseController
             
             $from = date($dateOne);
             $to = date($dateTwo);
+
+            if(isset($dateTwo)){
+                if($from > $to){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
+                    ]);
+                }
+            }
             
             $user = User::where('name', 'like', '%'.$user_keyWords.'%')
             ->orWhere('email', 'like', '%'.$user_keyWords.'%')
@@ -133,6 +142,15 @@ class AssetsController extends BaseController
 
             $from = date($dateOne);
             $to = date($dateTwo);
+
+            if(isset($dateTwo)){
+                if($from > $to){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
+                    ]);
+                }
+            }
 
             $user = User::where('name', 'like', '%'.$user_keyWords.'%')
             ->orWhere('email', 'like', '%'.$user_keyWords.'%')
@@ -257,7 +275,7 @@ class AssetsController extends BaseController
     public function percentage(Request $request)
     {
         try {
-            // sleep(5);
+            sleep(1);
             // \DB::enableQueryLog();
             $keyWords = $request->keyWords;
             $category_id = $request->category_id;
@@ -271,6 +289,15 @@ class AssetsController extends BaseController
             
             $from = date($dateOne);
             $to = date($dateTwo);
+
+            if(isset($dateTwo)){
+                if($from > $to){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
+                    ]);
+                }
+            }
             
             $user = User::where('name', 'like', '%'.$user_keyWords.'%')
             ->orWhere('email', 'like', '%'.$user_keyWords.'%')

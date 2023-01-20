@@ -58,9 +58,28 @@ class LoansController extends BaseController
             
             $dueFrom = date($dueDateOne);
             $dueTo = date($dueDateTwo);
+
+            if(isset($to)){
+                if($from > $to){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
+                    ]);
+                }
+            }
+
+            if(isset($dueTo)){
+                if($dueFrom > $dueTo){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal tenggang waktu pertama harus lebih kecil atau sama dengan tanggal tenggang waktu kedua!'
+                    ]);
+                }
+            }
+            
             // dd($request->loaner_ids);
             // \DB::enableQueryLog();
-            if($request->loaner_ids == NULL){
+            if($request->loaner_ids == NULL && $loaner_keyWords){
                 $loaner = User::
                 where('name', 'like', '%'.$loaner_keyWords.'%')
                 ->orWhere('email', 'like', '%'.$loaner_keyWords.'%')
@@ -73,11 +92,13 @@ class LoansController extends BaseController
                 $loaner_ids = $request->loaner_ids;
             }
             // dd(isset($loaner_ids));
-            $return = Returns::where('code', 'like', '%'.$return_code.'%')->get();
-            // $loans = Loans::whereIn('loaner_id', $loaner_ids)->get();
-            $return_ids = array();
-            foreach ($return as $rowReturn) {
-                $return_ids[] = $rowReturn->id;
+            if($return_code) {
+                $return = Returns::where('code', 'like', '%'.$return_code.'%')->get();
+                // $loans = Loans::whereIn('loaner_id', $loaner_ids)->get();
+                $return_ids = array();
+                foreach ($return as $rowReturn) {
+                    $return_ids[] = $rowReturn->id;
+                }
             }
             // \DB::enableQueryLog();
             // dd($request->loaner_ids == NULL);
@@ -88,12 +109,8 @@ class LoansController extends BaseController
             ->whereIn('loans.loaner_id', $loaner_ids)
             ->when(isset($lender_id))
             ->where('loans.lender_id', $lender_id)
-            ->when(isset($dateOne) && !isset($dateTwo))
-            ->where('loans.date', $from)
             ->when(isset($dateOne) && isset($dateTwo))
             ->whereBetween('loans.date', [$from, $to])
-            ->when(isset($dueDateOne) && !isset($dueDateTwo))
-            ->where('loans.due_date', $dueFrom)
             ->when(isset($dueDateOne) && isset($dueDateTwo))
             ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
             ->when(isset($status))
@@ -128,7 +145,7 @@ class LoansController extends BaseController
     {
         try {
             sleep(5);
-            $Loans = Loans::where('id', $id)->first();
+            $Loans = Loans::find($id)->first();
             // dd(\DB::getQueryLog());
             if (!$Loans) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -165,14 +182,34 @@ class LoansController extends BaseController
             
             $dueFrom = date($dueDateOne);
             $dueTo = date($dueDateTwo);
+
+            if(isset($to)){
+                if($from > $to){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
+                    ]);
+                }
+            }
+
+            if(isset($dueTo)){
+                if($dueFrom > $dueTo){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal tenggang waktu pertama harus lebih kecil atau sama dengan tanggal tenggang waktu kedua!'
+                    ]);
+                }
+            }
             // dd($request->loaner_ids);
             // \DB::enableQueryLog();
             // dd(isset($loaner_ids));
-            $return = Returns::where('code', 'like', '%'.$return_code.'%')->get();
-            // $loans = Loans::whereIn('loaner_id', $loaner_ids)->get();
-            $return_ids = array();
-            foreach ($return as $rowReturn) {
-                $return_ids[] = $rowReturn->id;
+            if($return_code) {
+                $return = Returns::where('code', 'like', '%'.$return_code.'%')->get();
+                // $loans = Loans::whereIn('loaner_id', $loaner_ids)->get();
+                $return_ids = array();
+                foreach ($return as $rowReturn) {
+                    $return_ids[] = $rowReturn->id;
+                }
             }
             // \DB::enableQueryLog();
             // dd($request->loaner_ids == NULL);
@@ -209,6 +246,114 @@ class LoansController extends BaseController
         }
     }
 
+    /** 
+     * Get Percentage loans
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function percentage(Request $request){
+        try {
+            // sleep(5);
+            $code = $request->code;
+            $loaner_keyWords = $request->loaner_keyWords;
+            $lender_id = $request->lender_id;
+            $dateOne = $request->dateOne;
+            $dateTwo = $request->dateTwo;
+            $status = $request->status;
+            // $return_code = $request->return_code;
+            $dueDateOne = $request->dueDateOne;
+            $dueDateTwo = $request->dueDateTwo;
+            
+            $from = date($dateOne);
+            $to = date($dateTwo);
+            $dueFrom = date($dueDateOne);
+            $dueTo = date($dueDateTwo);
+            
+            // dd(isset($dateTwo));
+            if(isset($to)){
+                if($from > $to){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
+                    ]);
+                }
+            }
+
+            if(isset($dueTo)){
+                if($dueFrom > $dueTo){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal tenggang waktu pertama harus lebih kecil atau sama dengan tanggal tenggang waktu kedua!'
+                    ]);
+                }
+            }
+
+            // dd($request->loaner_ids);
+            // \DB::enableQueryLog();
+            if($request->loaner_ids == NULL && $loaner_keyWords){
+                $loaner = User::
+                where('name', 'like', '%'.$loaner_keyWords.'%')
+                ->orWhere('email', 'like', '%'.$loaner_keyWords.'%')
+                ->get();
+                $loaner_ids = array();
+                foreach ($loaner as $rowLoaner) {
+                    $loaner_ids[] = $rowLoaner->id;
+                }
+            } else {
+                $loaner_ids = $request->loaner_ids;
+            }
+            // dd(isset($loaner_ids));
+            // $return = Returns::where('code', 'like', '%'.$return_code.'%')->get();
+            // $loans = Loans::whereIn('loaner_id', $loaner_ids)->get();
+            // $return_ids = array();
+            // foreach ($return as $rowReturn) {
+            //     $return_ids[] = $rowReturn->id;
+            // }
+            \DB::enableQueryLog();
+            // dd($request->loaner_ids == NULL);
+            
+            $loans = Loans::
+            when(isset($code))
+            ->where('loans.code', 'like', '%'.$code.'%')
+            ->when(isset($loaner_ids))
+            ->whereIn('loans.loaner_id', $loaner_ids)
+            ->when(isset($lender_id))
+            ->where('loans.lender_id', $lender_id)
+            ->when(isset($dateOne) && isset($dateTwo))
+            ->whereBetween('loans.date', [$from, $to])
+            ->when(isset($dueDateOne) && isset($dueDateTwo))
+            ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
+            ->when(isset($status))
+            ->where('loans.status', $status)
+            ->select('id')
+            ->get();
+
+            $loans_ids = array();
+            foreach ($loans as $rowLoans) {
+                $loans_ids[] = $rowLoans->id;
+            }
+            // dd(\DB::getQueryLog());
+            $countAll = Assets::count();
+            // dd($loans);
+            $countRequest = LoanDetails::whereIn('loan_id', $loans_ids)->count();
+            if (!$countAll && !$countRequest) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            $success['countAll'] = $countAll;
+            $success['countRequest'] = $countRequest;
+            $success['percentage'] = number_format((float)$countRequest/$countAll * 100, 0, '.', '');
+            // dd(Loans::all());
+            // dd(Auth::user()->name);
+            // \DB::enableQueryLog();
+            // dd($loans);
+            return $this->sendResponse($success, 'Displaying all Loans data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
+        }
+    }
+
     /** CRUD LOANS */
     
     /**
@@ -222,7 +367,7 @@ class LoansController extends BaseController
         try {
             // dd();
             // $this->loansRequestService->sendWhatsappNotification("Test", Auth::user()->phone);
-            sleep(5);
+            sleep(2);
             $loaner_id = Auth::user()->id;
 
             $checkStatusLoans = Loans::
@@ -784,12 +929,12 @@ class LoansController extends BaseController
             }
             $deleteLoans->deleted_at = Carbon::now();
             $deleteLoans->delete();
-            $totalDelete++;
+            // $totalDelete++;
 
             $tokenMsg = Str::random(15);
             $success['token'] = $tokenMsg;
             $success['message'] = "Delete selected data";
-            $success['total_deleted'] = $totalDelete;
+            // $success['total_deleted'] = $totalDelete;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
