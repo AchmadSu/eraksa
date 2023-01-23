@@ -750,6 +750,11 @@ class UsersController extends BaseController
             sleep(5);
             $id = $request->id;
             $roles = $request->roles;
+            if($roles == 2) {
+                $study_program_id = $request->study_program_id;
+            } else {
+                $study_program_id = 0;
+            }
 
             $checkUser = User::find($id);
             // dd($checkUser);
@@ -757,6 +762,9 @@ class UsersController extends BaseController
                 $checkUser->roles()->detach();
                 $role = Role::find($roles);
                 $checkUser->assignRole($role);
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+                $checkUser->study_program_id = $study_program_id;
+                $checkUser->save();
                 
                 $success['user_name'] = $checkUser->name;
                 $success['user_roles'] = $role->name;
