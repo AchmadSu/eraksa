@@ -141,8 +141,11 @@ Route::controller(VerificationCodesController::class)->group(function(){
 Route::controller(LoansController::class)->group(function(){
     // dd(Auth::guest());
     Route::middleware('auth:sanctum')->group(function(){
-        Route::middleware('role:Super-Admin')->group(function(){
-            Route::put('loans/confirmation', 'confirmation');
+        Route::middleware('role:Super-Admin|Admin')->group(function(){
+            Route::middleware('role:Super-Admin')->group(function(){
+                Route::put('loans/confirmation', 'confirmation');
+            });
+            Route::post('loans/demand', 'demand');
         });
         Route::put('loans/update', 'update');
         Route::delete('loans/delete', 'delete');

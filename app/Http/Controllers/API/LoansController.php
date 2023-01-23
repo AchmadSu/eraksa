@@ -255,7 +255,7 @@ class LoansController extends BaseController
 
     public function percentage(Request $request){
         try {
-            // sleep(5);
+            sleep(1);
             $code = $request->code;
             $loaner_keyWords = $request->loaner_keyWords;
             $lender_id = $request->lender_id;
@@ -872,6 +872,62 @@ class LoansController extends BaseController
                 return $this->sendResponse($success, 'Konfirmasi Peminjaman Berhasil!');
             } else {
                 return $this->sendError('Error!', ['error'=> 'Set Status Konfirmasi salah!']);
+            }
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+        }
+    }
+
+    /**
+     * Demand for Assets Return
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function demand(Request $request)
+    {
+        try {
+            sleep(5);
+            $id = $request->id;
+            if(!$id) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada transaksi peminjaman yang dipilih!']);
+            }
+            $checkLoans = Loans::find($id);
+            $status = $checkLoans->status;
+            if(!$checkLoans){
+                return $this->sendError('Error!', ['error'=> 'Tidak ada data transaksi peminjaman']);
+            }
+            if($status != "1") {
+                return $this->sendError('Error!', ['error' => 'Status peminjaman bukan peminjaman aktif!']);
+            }
+
+            if($status == "1") {
+                $dateNow = Carbon::now();
+                $due_date = Carbon::parse($checkLoans->due_date);
+                $diff = $dateNow->diff($due_date);
+
+                // dd($dateNow > $due_date);
+                if($dateNow <= $due_date){
+                    return $this->sendError('Error!', ['error'=> 'Peminjaman belum melewati tenggat waktu!']);
+                }
+
+                $code = $checkLoans->code;
+                $loaner = User::find($checkLoans->loaner_id);
+                $loaner_name = $loaner->name;
+                $loaner_phone = $loaner->phone;
+                
+                // dd($getLoanerPhone->phone);
+                $demand = "*Hai $loaner_name!*\nPeminjaman anda telah *MELAMPAUI* batas waktu.";
+                $instruction = "\nSegera kembalikan setiap aset kepada Admin dari masing-masing Program Studi terkait! Terima kasih.\n";
+
+                $message = "$demand $instruction\nRincian Peminjaman\nNama peminjam: *$loaner_name*\nKode: *$code*\n\nLihat detailnya melalui tautan berikut: ";
+                $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+
+                $success['message'] = "Pesan permintaan pengembalian aset yang dipinjam telah kami kirim melalui Pesan WhatsApp Peminjam!";
+                return $this->sendResponse($success, 'Konfirmasi Peminjaman Berhasil!');
+            } else {
+                return $this->sendError('Error!', ['error'=> 'Status peminjaman bukan peminjaman aktif!']);
             }
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
