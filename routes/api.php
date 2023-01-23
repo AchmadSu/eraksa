@@ -32,11 +32,14 @@ use App\Http\Controllers\API\VerificationCodesController;
 /**--- Users --- */
 Route::controller(UsersController::class)->group(function(){
     Route::middleware(['auth:sanctum'])->group(function(){
+        Route::middleware(['role:Super-Admin'])->group(function(){
+            Route::put('users/assignRoles', 'assignRoles');
+        });
         Route::middleware(['role:Super-Admin|Admin'])->group(function(){
-            Route::get('users/getAll', 'index')->name('all users');
-            Route::delete('users/delete', 'delete');
-            Route::get('users/trash', 'trash');
-            Route::put('users/restore', 'restore');
+        Route::get('users/getAll', 'index')->name('all users');
+        Route::delete('users/delete', 'delete');
+        Route::get('users/trash', 'trash');
+        Route::put('users/restore', 'restore');
         });
         Route::get('users/detail/{id}', 'show');
         Route::put('users/update', 'update');

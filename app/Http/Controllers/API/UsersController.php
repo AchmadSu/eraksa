@@ -737,6 +737,39 @@ class UsersController extends BaseController
         }
     }
 
+    /**
+     * Assign User Roles
+     * 
+     * @param \Illuminate\Http\Request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function assignRoles(Request $request)
+    {
+        try {
+            sleep(5);
+            $id = $request->id;
+            $roles = $request->roles;
+
+            $checkUser = User::find($id);
+            // dd($checkUser);
+            if($checkUser){
+                $checkUser->roles()->detach();
+                $role = Role::find($roles);
+                $checkUser->assignRole($role);
+                
+                $success['user_name'] = $checkUser->name;
+                $success['user_roles'] = $role->name;
+                return $this->sendResponse($success, 'Peran pengguna berhasil direset!');
+            } else {
+                return $this->sendError('Error!', ['error' => "Pengguna atau peran pengguna tidak ditemukan!"]);
+            }
+            
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
+        }
+    }
+
     /** GENERATE OTP AND SEND OTP TO NUMBER ACCOUNT */
 
     /** Generate OTP Update Phone Number*/ 

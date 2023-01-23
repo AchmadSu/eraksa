@@ -888,6 +888,7 @@ class LoansController extends BaseController
     public function demand(Request $request)
     {
         try {
+            // dd(Auth::user());
             sleep(5);
             $id = $request->id;
             if(!$id) {
