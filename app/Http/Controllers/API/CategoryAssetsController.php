@@ -27,7 +27,12 @@ class CategoryAssetsController extends BaseController
 
     public function index(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             $keyWords = $request->keyWords;
             $skip = $request->skip;
             $take = $request->take;
@@ -58,7 +63,12 @@ class CategoryAssetsController extends BaseController
 
     public function trash(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             $keyWords = $request->keyWords;
             $skip = $request->skip;
             $take = $request->take;

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\LoansController;
 use App\Http\Controllers\API\UsersController;
 use App\Http\Controllers\API\AssetsController;
+use App\Http\Controllers\API\ReturnsController;
 use App\Http\Controllers\API\WorkshopsController;
 use App\Http\Controllers\API\PlacementsController;
 use App\Http\Controllers\API\StudyProgramsController;
@@ -158,6 +159,18 @@ Route::controller(LoansController::class)->group(function(){
         Route::get('loans/getAll', 'index');
         Route::post('loans/create', 'create'); 
         Route::get('loans/detail/{id}', 'show');
+    });
+});
+
+/**--- Returns --- */
+Route::controller(ReturnsController::class)->group(function(){
+    // dd(Auth::guest());
+    Route::middleware('auth:sanctum')->group(function(){
+        Route::middleware('role:Super-Admin|Admin')->group(function(){
+            Route::post('returns/create', 'create'); 
+        });
+        Route::get('returns/getAll', 'index');
+        Route::get('returns/detail/{id}', 'show');
     });
 });
 

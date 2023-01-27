@@ -62,6 +62,7 @@ class UsersController extends BaseController
             $phone = $request->phone;
             $skip = $request->skip;
             $take = $request->take;
+            $order = $request->order;
 
             // dd(Auth::user()->hasRole('Super-Admin'));
             $study_program_id = $request->study_program_id;
@@ -104,6 +105,8 @@ class UsersController extends BaseController
                 'users.phone as phone',
                 'users.updated_at as updated_at',
             )
+            ->when($order)
+            ->orderBy($order, 'ASC')
             ->skip($skip)
             ->take($take)
             ->get();
@@ -135,6 +138,7 @@ class UsersController extends BaseController
             $phone = $request->phone;
             $skip = $request->skip;
             $take = $request->take;
+            $order = $request->order;
 
             // dd(Auth::user()->hasRole('Super-Admin'));
             $study_program_id = $request->study_program_id;
@@ -179,6 +183,8 @@ class UsersController extends BaseController
                 'users.phone as phone',
                 'users.updated_at as updated_at',
             )
+            ->when($order)
+            ->orderBy($order, 'ASC')
             ->skip($skip)
             ->take($take)
             ->onlyTrashed()

@@ -29,8 +29,14 @@ class AssetsController extends BaseController
 
     public function index(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             
+            $order = $request->order;
             $keyWords = $request->keyWords;
             $category_id = $request->category_id;
             $user_keyWords = $request->user_keyWords;
@@ -104,6 +110,8 @@ class AssetsController extends BaseController
                 'assets.study_program_id as study_program_id',
                 'study_programs.name as study_program_name',
             )
+            ->when($order)
+            ->orderBy($order, 'ASC')
             ->skip($skip)
             ->take($take)
             ->get();
@@ -127,7 +135,14 @@ class AssetsController extends BaseController
 
     public function trash(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
+
+            $order = $request->order;
             $keyWords = $request->keyWords;
             $category_id = $request->category_id;
             $user_keyWords = $request->user_keyWords;
@@ -194,7 +209,6 @@ class AssetsController extends BaseController
                 'assets.code as code',
                 'assets.condition as condition',
                 'assets.status as status',
-                'assets.deleted_at as deleted_at',
                 'assets.date as date',
                 'assets.placement_id as placement_id', 
                 'placements.name as placement_name', 
@@ -205,8 +219,12 @@ class AssetsController extends BaseController
                 'assets.study_program_id as study_program_id',
                 'study_programs.name as study_program_name',
             )
+            ->when($order)
+            ->orderBy($order, 'ASC')
             ->skip($skip)
             ->take($take)
+            // ->when($order)
+            ->orderBy('name', 'ASC')
             ->get();
             // dd(\DB::getQueryLog());
             if ($assets->isEmpty()) {
@@ -231,8 +249,7 @@ class AssetsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $asset = Assets::find($id)
-            ->join('users as users', 'assets.user_id', '=', 'users.id')
+            $asset = Assets::join('users as users', 'assets.user_id', '=', 'users.id')
             ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
             ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
@@ -253,7 +270,7 @@ class AssetsController extends BaseController
                 'assets.study_program_id as study_program_id',
                 'study_programs.name as study_program_name',
             )
-            ->first();
+            ->find($id);
             // dd(\DB::getQueryLog());
             if (!$asset) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -275,16 +292,18 @@ class AssetsController extends BaseController
     public function percentage(Request $request)
     {
         try {
-            sleep(1);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             // \DB::enableQueryLog();
-            $keyWords = $request->keyWords;
             $category_id = $request->category_id;
-            $user_keyWords = $request->user_keyWords;
             $dateOne = $request->dateOne;
             $dateTwo = $request->dateTwo;
             $condition = $request->condition;
             $status = $request->status;
-            $placement_id = $request->placement_id;
             $study_program_id = $request->study_program_id;
             
             $from = date($dateOne);
@@ -299,30 +318,12 @@ class AssetsController extends BaseController
                 }
             }
             
-            $user = User::where('name', 'like', '%'.$user_keyWords.'%')
-            ->orWhere('email', 'like', '%'.$user_keyWords.'%')
-            ->get();
-            $user_ids = array();
-            foreach ($user as $rowUser) {
-                $user_ids[] = $rowUser->id;
-            }
             $countAll = Assets::count();
             $countRequest = Assets::
-            join('users as users', 'assets.user_id', '=', 'users.id')
-            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
-            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
-            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
-            ->when(isset($keyWords))
-            ->where('assets.code', 'like', '%'.$keyWords.'%')
-            ->orWhere('assets.name', 'like', '%'.$keyWords.'%')
-            ->when(isset($user_ids))
-            ->whereIn('assets.user_id', $user_ids)
-            ->when(isset($category_id))
+            when(isset($category_id))
             ->where('assets.category_id', $category_id)
             ->when(isset($study_program_id))
             ->where('assets.study_program_id', $study_program_id)
-            ->when(isset($placement_id))
-            ->where('assets.placement_id', $placement_id)
             ->when(isset($dateOne) && !isset($dateTwo))
             ->where('assets.date', $from)
             ->when(isset($dateOne) && isset($dateTwo))

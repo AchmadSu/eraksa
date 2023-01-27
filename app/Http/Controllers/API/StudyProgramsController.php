@@ -28,7 +28,12 @@ class StudyProgramsController extends BaseController
 
     public function index(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             // dd(Auth::user());
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
@@ -37,6 +42,7 @@ class StudyProgramsController extends BaseController
             $take = $request->take;
             $studyPrograms = StudyPrograms::when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
+            ->orderBy('name', 'ASC')
             ->skip($skip)
             ->take($take)
             ->get();
@@ -60,14 +66,24 @@ class StudyProgramsController extends BaseController
 
     public function trash(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             // dd(Auth::user());
             // dd(Auth::user());
             // \DB::enableQueryLog();
+            $skip = $request->skip;
+            $take = $request->take;
             $name = $request->name;
             $studyPrograms =StudyPrograms::onlyTrashed()
             ->when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
+            ->orderBy('name', 'ASC')
+            ->skip($skip)
+            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             if ($studyPrograms->isEmpty()) {

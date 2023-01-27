@@ -27,12 +27,18 @@ class WorkshopsController extends BaseController
 
     public function index(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             // dd(Auth::user());
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
             $name = $request->name;
             $phone = $request->phone;
+            $order = $request->order;
             $skip = $request->skip;
             $take = $request->take;
             
@@ -52,6 +58,8 @@ class WorkshopsController extends BaseController
             ->where('name', 'like', '%'.$name.'%')
             ->when(isset($phone))
             ->where('phone', 'like', '%'.$phone.'%')
+            ->when($order)
+            ->orderBy($order, 'ASC')
             ->skip($skip)
             ->take($take)
             ->get();
@@ -75,12 +83,18 @@ class WorkshopsController extends BaseController
 
     public function trash(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             // dd(Auth::user());
             // dd(Auth::user());
             // \DB::enableQueryLog();
             $name = $request->name;
             $phone = $request->phone;
+            $order = $request->order;
             $skip = $request->skip;
             $take = $request->take;
             
@@ -101,6 +115,8 @@ class WorkshopsController extends BaseController
             ->where('name', 'like', '%'.$name.'%')
             ->when(isset($phone))
             ->where('phone', 'like', '%'.$phone.'%')
+            ->when($order)
+            ->orderBy($order, 'ASC')
             ->skip($skip)
             ->take($take)
             ->get();

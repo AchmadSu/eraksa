@@ -28,7 +28,12 @@ class PlacementsController extends BaseController
 
     public function index(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             // dd(Auth::user());
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
@@ -37,6 +42,7 @@ class PlacementsController extends BaseController
             $take = $request->take;
             $placements = Placements::when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
+            ->orderBy('name', 'ASC')
             ->skip($skip)
             ->take($take)
             ->get();
@@ -60,7 +66,12 @@ class PlacementsController extends BaseController
 
     public function trash(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             // dd(Auth::user());
             // dd(Auth::user());
             // \DB::enableQueryLog();
@@ -70,6 +81,7 @@ class PlacementsController extends BaseController
             $placements = Placements::onlyTrashed()
             ->when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
+            ->orderBy('name', 'ASC')
             ->skip($skip)
             ->take($take)
             ->get();
