@@ -51,7 +51,10 @@ class StudyProgramsController extends BaseController
             if ($studyPrograms->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($studyPrograms, 'Displaying all assets data');
+            $count = $studyPrograms->count();
+            $success['count'] = $count;
+            $success['study_programs'] = $studyPrograms;
+            return $this->sendResponse($success, 'Displaying all assets data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
