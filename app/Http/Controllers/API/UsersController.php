@@ -63,6 +63,7 @@ class UsersController extends BaseController
             $skip = $request->skip;
             $take = $request->take;
             $order = $request->order;
+            $trash = $request->trash;
 
             // dd(Auth::user()->hasRole('Super-Admin'));
             $study_program_id = $request->study_program_id;
@@ -79,7 +80,10 @@ class UsersController extends BaseController
                 }
             }
             
-            $users = User::when(isset($keyWords))
+            $users = User::
+            when($trash == 1)
+            ->onlyTrashed()
+            ->when(isset($keyWords))
             ->where('users.name', 'like', '%'.$keyWords.'%')
             ->orWhere('users.email', 'like', '%'.$keyWords.'%')
             ->when(isset($code))
@@ -119,83 +123,6 @@ class UsersController extends BaseController
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
-    }
-
-    /** 
-     * Get All Users in Trash
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-    */
-
-    public function trash(Request $request){
-        try {
-            sleep(5);
-            $keyWords = $request->keyWords;
-            $code = $request->code;
-            $code_type = $request->code_type;
-            $status = $request->status;
-            $phone = $request->phone;
-            $skip = $request->skip;
-            $take = $request->take;
-            $order = $request->order;
-
-            // dd(Auth::user()->hasRole('Super-Admin'));
-            $study_program_id = $request->study_program_id;
-
-            if(isset($phone)) {
-                $spiltPhone = str_split($phone);
-                // dd($spiltPhone);
-                if($spiltPhone[0] === '8'){
-                    $phone = '+62'.$phone;
-                }
-                // dd($spiltPhone[0].$spiltPhone[1]);
-                if($spiltPhone[0].$spiltPhone[1] === '62'){
-                    $phone = '+'.$phone;
-                }
-            }
-            // dd(Auth::user());
-            // dd(Auth::user()->hasRole('Admin'));
-            \DB::enableQueryLog();
-            $users = User::when(isset($keyWords))
-            ->where('users.name', 'like', '%'.$keyWords.'%')
-            ->orWhere('users.email', 'like', '%'.$keyWords.'%')
-            ->when(isset($code))
-            ->where('users.code', 'like', '%'.$code.'%')
-            ->when(isset($code_type))
-            ->where('users.code_type', $code_type)
-            ->when(isset($status))
-            ->where('users.status', $status)
-            ->when(isset($phone))
-            ->where('users.phone', 'like', '%'.$phone.'%')
-            ->when(isset($study_program_id))
-            ->where('users.study_program_id', $study_program_id)
-            ->when(Auth::user()->hasRole('Admin'))
-            ->role('Member')
-            ->select(
-                'users.id as id',
-                'users.name as name',
-                'users.code as code',
-                'users.code_type as code_type',
-                'users.email as email',
-                'users.status as status',
-                'users.created_at as created_at',
-                'users.phone as phone',
-                'users.updated_at as updated_at',
-            )
-            ->when($order)
-            ->orderBy($order, 'ASC')
-            ->skip($skip)
-            ->take($take)
-            ->onlyTrashed()
-            ->get();
-            if ($users->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($users, 'Displaying all trash data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
-        }
     }
 
     /** 

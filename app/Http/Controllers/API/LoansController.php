@@ -59,6 +59,7 @@ class LoansController extends BaseController
             $dueDateTwo = $request->dueDateTwo;
             $skip = $request->skip;
             $take = $request->take;
+            $trash = $request->trash;
 
             $from = date($dateOne);
             $to = date($dateTwo);
@@ -105,19 +106,11 @@ class LoansController extends BaseController
                     $lender_ids[] = $rowLender->id;
                 }
             }
-            
-            // if($return_code) {
-            //     $return = Returns::where('code', 'like', '%'.$return_code.'%')->get();
-            //     // $loans = Loans::whereIn('loaner_id', $loaner_ids)->get();
-            //     foreach ($return as $rowReturn) {
-            //         $return_ids[] = $rowReturn->id;
-            //     }
-            // }
-            // \DB::enableQueryLog();
-            // dd($request->loaner_ids == NULL);
 
             $loans = Loans::
-            join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            when($trash == 1)
+            ->onlyTrashed()
+            ->join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
             ->join('users as lenders', 'loans.lender_id', '=', 'lenders.id')
             ->when(isset($code))
             ->where('loans.code', 'like', '%'.$code.'%')

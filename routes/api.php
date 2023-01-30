@@ -123,7 +123,6 @@ Route::controller(StudyProgramsController::class)->group(function(){
             Route::post('studyPrograms/create', 'create'); 
             Route::put('studyPrograms/update', 'update');
             Route::delete('studyPrograms/delete', 'delete');
-            Route::get('studyPrograms/trash', 'trash');
             Route::put('studyPrograms/restore', 'restore');
         });
         Route::get('studyPrograms/getAll', 'index');
@@ -153,7 +152,6 @@ Route::controller(LoansController::class)->group(function(){
         });
         Route::put('loans/update', 'update');
         Route::delete('loans/delete', 'delete');
-        Route::get('loans/trash', 'trash');
         Route::get('loans/percentage', 'percentage');
         Route::put('loans/restore', 'restore');
         Route::get('loans/getAll', 'index');

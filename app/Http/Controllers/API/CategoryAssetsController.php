@@ -36,8 +36,12 @@ class CategoryAssetsController extends BaseController
             $keyWords = $request->keyWords;
             $skip = $request->skip;
             $take = $request->take;
+            $trash = $request->trash;
 
-            $categoryAssets = CategoryAssets::when(isset($keyWords))
+            $categoryAssets = CategoryAssets::
+            when($trash == 1)
+            ->onlyTrashed()
+            ->when(isset($keyWords))
             ->where('name', 'like', '%'.$keyWords.'%')
             ->orWhere('description', 'like', '%'.$keyWords.'%')
             ->skip($skip)

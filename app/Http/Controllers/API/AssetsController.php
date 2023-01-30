@@ -154,6 +154,7 @@ class AssetsController extends BaseController
             $study_program_id = $request->study_program_id;
             $skip = $request->skip;
             $take = $request->take;
+            
 
             $from = date($dateOne);
             $to = date($dateTwo);

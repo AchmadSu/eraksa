@@ -40,7 +40,11 @@ class StudyProgramsController extends BaseController
             $name = $request->name;
             $skip = $request->skip;
             $take = $request->take;
-            $studyPrograms = StudyPrograms::when(isset($name))
+            $trash = $request->trash;
+            $studyPrograms = StudyPrograms::
+            when($trash == 1)
+            ->onlyTrashed()
+            ->when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
             ->orderBy('name', 'ASC')
             ->skip($skip)
@@ -55,44 +59,6 @@ class StudyProgramsController extends BaseController
             $success['count'] = $count;
             $success['study_programs'] = $studyPrograms;
             return $this->sendResponse($success, 'Displaying all assets data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
-        }
-    }
-
-    /** 
-     * Get All Study Programs in Trash
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-    */
-
-    public function trash(Request $request){
-        try {
-            $sleep = $request->sleep;
-            if($sleep) {
-                sleep($sleep);
-            } else {
-                sleep(5);
-            }
-            // dd(Auth::user());
-            // dd(Auth::user());
-            // \DB::enableQueryLog();
-            $skip = $request->skip;
-            $take = $request->take;
-            $name = $request->name;
-            $studyPrograms =StudyPrograms::onlyTrashed()
-            ->when(isset($name))
-            ->where('name', 'like', '%'.$name.'%')
-            ->orderBy('name', 'ASC')
-            ->skip($skip)
-            ->take($take)
-            ->get();
-            // dd(\DB::getQueryLog());
-            if ($studyPrograms->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($studyPrograms, 'Displaying all trash data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
