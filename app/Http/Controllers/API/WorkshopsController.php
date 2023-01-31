@@ -172,7 +172,7 @@ class WorkshopsController extends BaseController
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Validator Error.', $validator->errors());
+                return $this->sendError('Validator Error.', ['error'=>'Data tidak valid. Nama atau nomor ponsel sudah tersedia!']);
             }
     
             $input = $request->all();
@@ -230,7 +230,7 @@ class WorkshopsController extends BaseController
             }
 
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. Nama atau nomor ponsel sudah tersedia!']);
             }
 
             // dd($data);exit();

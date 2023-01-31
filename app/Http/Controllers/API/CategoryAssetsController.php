@@ -195,7 +195,7 @@ class CategoryAssetsController extends BaseController
                 );
             }
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Nama sudah tersedia atau deskripsi kurang dari 5 karakter!']);
             }
 
             // dd($data);exit();

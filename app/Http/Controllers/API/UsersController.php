@@ -263,7 +263,7 @@ class UsersController extends BaseController
             }
             
             if ($validator->fails()){
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Data tidak valid!']);
             }
             
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
@@ -381,7 +381,7 @@ class UsersController extends BaseController
             }   
 
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. Masukan data valid!']);
             }
 
             if ($new_email != NULL) {
@@ -573,7 +573,7 @@ class UsersController extends BaseController
             ]);
 
             if ($validator->fails()){
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Data tidak valid!']);
             }
 
             $checkDeletedUser = User::onlyTrashed()->where('email', $email)->first();

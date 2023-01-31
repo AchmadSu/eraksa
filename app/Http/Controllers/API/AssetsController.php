@@ -368,7 +368,7 @@ class AssetsController extends BaseController
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Validator Error.', $validator->errors());
+                return $this->sendError('Validator Error.', ['error'=>'Data tidak valid!']);
             }
 
             $user_id =  Auth::user()->id;
@@ -464,7 +464,7 @@ class AssetsController extends BaseController
             }
 
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Data tidak valid!']);
             }
 
             $updateDataAsset->name = $name;

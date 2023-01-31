@@ -36,7 +36,6 @@ class StudyProgramsController extends BaseController
             }
             // dd(Auth::user());
             // dd(Auth::user()->name);
-            // \DB::enableQueryLog();
             $name = $request->name;
             $skip = $request->skip;
             $take = $request->take;
@@ -50,13 +49,17 @@ class StudyProgramsController extends BaseController
             ->skip($skip)
             ->take($take)
             ->get();
-            // dd(\DB::getQueryLog());
             // dd($studyPrograms);
             if ($studyPrograms->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            $count = $studyPrograms->count();
+            // dd(\DB::getQueryLog());
+            // \DB::enableQueryLog();
+            $count = StudyPrograms::count();
+            $countDelete = StudyPrograms::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
             $success['count'] = $count;
+            $success['countDelete'] = $countDelete;
             $success['study_programs'] = $studyPrograms;
             return $this->sendResponse($success, 'Displaying all assets data');
         } catch (\Throwable $th) {
@@ -105,7 +108,7 @@ class StudyProgramsController extends BaseController
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Validator Error.', $validator->errors());
+                return $this->sendError('Error!', ['error' => 'Nama sudah tersedia. Gunakan nama yang lain!']);
             }
     
             $name = ucwords(strtolower($request->name));
@@ -142,7 +145,7 @@ class StudyProgramsController extends BaseController
             ]);
                 
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Nama sudah tersedia. Gunakan nama yang lain!']);
             }
 
             // dd($data);exit();

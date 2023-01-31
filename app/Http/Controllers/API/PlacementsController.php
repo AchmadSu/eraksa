@@ -102,7 +102,7 @@ class PlacementsController extends BaseController
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Validator Error.', $validator->errors());
+                return $this->sendError('Validator Error.', ['error'=>'Nama penempatan sudah tersedia. Gunakan nama yang lain!']);
             }
     
             $name = $request->name;
@@ -139,7 +139,7 @@ class PlacementsController extends BaseController
             ]);
                 
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Nama penempatan sudah tersedia. Gunakan nama tempat yang lain!']);
             }
 
             // dd($data);exit();
