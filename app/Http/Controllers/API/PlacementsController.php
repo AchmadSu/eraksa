@@ -42,20 +42,29 @@ class PlacementsController extends BaseController
             $skip = $request->skip;
             $take = $request->take;
             $placements = Placements::
-            when($trash == 1)
-            ->onlyTrashed()
-            ->when(isset($name))
+            when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
             ->orderBy('name', 'ASC')
-            ->skip($skip)
-            ->take($take)
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
             // dd(\DB::getQueryLog());
             // dd($placements);
             if ($placements->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($placements, 'Displaying all placements data');
+            $count = $placements->count();
+            $countDelete = Placements::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
+            $success['count'] = $count;
+            $success['countDelete'] = $countDelete;
+            $success['placements']= $placements
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all placements data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
@@ -102,7 +111,7 @@ class PlacementsController extends BaseController
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Validator Error.', ['error'=>'Nama penempatan sudah tersedia. Gunakan nama yang lain!']);
+                return $this->sendError('Error!', ['error'=>'Nama penempatan sudah tersedia. Gunakan nama yang lain!']);
             }
     
             $name = $request->name;

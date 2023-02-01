@@ -41,6 +41,7 @@ class WorkshopsController extends BaseController
             $order = $request->order;
             $skip = $request->skip;
             $take = $request->take;
+            $trash = $request->trash;
             
             if(isset($phone)) {
                 $spiltPhone = str_split($phone);
@@ -54,77 +55,33 @@ class WorkshopsController extends BaseController
                 }
             }
 
-            $workshops = Workshops::when(isset($name))
-            ->where('name', 'like', '%'.$name.'%')
-            ->when(isset($phone))
-            ->where('phone', 'like', '%'.$phone.'%')
-            ->when($order)
-            ->orderBy($order, 'ASC')
-            ->skip($skip)
-            ->take($take)
-            ->get();
-            // dd(\DB::getQueryLog());
-            // dd($workshops);
-            if ($workshops->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($workshops, 'Displaying all workshops data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
-        }
-    }
-
-    /** 
-     * Get All Workshops in Trash
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-    */
-
-    public function trash(Request $request){
-        try {
-            $sleep = $request->sleep;
-            if($sleep) {
-                sleep($sleep);
-            } else {
-                sleep(5);
-            }
-            // dd(Auth::user());
-            // dd(Auth::user());
-            // \DB::enableQueryLog();
-            $name = $request->name;
-            $phone = $request->phone;
-            $order = $request->order;
-            $skip = $request->skip;
-            $take = $request->take;
-            
-            if(isset($phone)) {
-                $spiltPhone = str_split($phone);
-                // dd($spiltPhone);
-                if($spiltPhone[0] === '8'){
-                    $phone = '+62'.$phone;
-                }
-                // dd($spiltPhone[0].$spiltPhone[1]);
-                if($spiltPhone[0].$spiltPhone[1] === '62'){
-                    $phone = '+'.$phone;
-                }
-            }
-
-            $workshops = Workshops::onlyTrashed()
+            $workshops = Workshops::
+            when($trash == 1)
+            ->onlyTrashed()
             ->when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
             ->when(isset($phone))
             ->where('phone', 'like', '%'.$phone.'%')
             ->when($order)
             ->orderBy($order, 'ASC')
-            ->skip($skip)
-            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
+            // dd($workshops);
             if ($workshops->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($workshops, 'Displaying all trash data');
+            $count = $workshops->count();
+            $countDelete = Workshops::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
+            $success['count'] = $count;
+            $success['countDelete'] = $countDelete;
+            $success['workshops']= $workshops
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all workshops data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
@@ -172,7 +129,7 @@ class WorkshopsController extends BaseController
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Validator Error.', ['error'=>'Data tidak valid. Nama atau nomor ponsel sudah tersedia!']);
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. Nama atau nomor ponsel sudah tersedia!']);
             }
     
             $input = $request->all();

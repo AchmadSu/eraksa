@@ -81,9 +81,7 @@ class UsersController extends BaseController
             }
             
             $users = User::
-            when($trash == 1)
-            ->onlyTrashed()
-            ->when(isset($keyWords))
+            when(isset($keyWords))
             ->where('users.name', 'like', '%'.$keyWords.'%')
             ->orWhere('users.email', 'like', '%'.$keyWords.'%')
             ->when(isset($code))
@@ -108,17 +106,27 @@ class UsersController extends BaseController
                 'users.created_at as created_at',
                 'users.phone as phone',
                 'users.updated_at as updated_at',
-            )
+                )
             ->when($order)
             ->orderBy($order, 'ASC')
-            ->skip($skip)
-            ->take($take)
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
             // dd($users);
             if ($users->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($users, 'Displaying all users data');
+            $countDelete = User::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
+            $success['count'] = $users->count();
+            $success['countDelete'] = $countDelete;
+            $success['users'] = $users
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all users data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }

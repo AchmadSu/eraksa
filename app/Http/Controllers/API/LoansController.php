@@ -108,9 +108,7 @@ class LoansController extends BaseController
             }
 
             $loans = Loans::
-            when($trash == 1)
-            ->onlyTrashed()
-            ->join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
             ->join('users as lenders', 'loans.lender_id', '=', 'lenders.id')
             ->when(isset($code))
             ->where('loans.code', 'like', '%'.$code.'%')
@@ -134,19 +132,30 @@ class LoansController extends BaseController
                 'loaners.name as loaner_name', 
                 'loans.lender_id as lender_id', 
                 'lenders.name as lender_name',
-            )
-            ->skip($skip)
-            ->take($take)
+                )
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
-            // dd(Loans::all());
-            // dd(Auth::user()->name);
+                // dd(Loans::all());
+                // dd(Auth::user()->name);
             // \DB::enableQueryLog();
             // dd(\DB::getQueryLog());
             // dd($loans);
             if ($loans->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($loans, 'Displaying all Loans data');
+            $count = $loans->count();
+            $countDelete = Loans::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
+            $success['count'] = $count;
+            $success['countDelete'] = $countDelete;
+            $success['loans']= $loans
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all Loans data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
         }

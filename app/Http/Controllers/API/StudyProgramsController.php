@@ -28,6 +28,7 @@ class StudyProgramsController extends BaseController
 
     public function index(Request $request){
         try {
+            // dd(base64_encode(2));
             $sleep = $request->sleep;
             if($sleep) {
                 sleep($sleep);
@@ -41,13 +42,11 @@ class StudyProgramsController extends BaseController
             $take = $request->take;
             $trash = $request->trash;
             $studyPrograms = StudyPrograms::
-            when($trash == 1)
-            ->onlyTrashed()
-            ->when(isset($name))
+            when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
             ->orderBy('name', 'ASC')
-            ->skip($skip)
-            ->take($take)
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
             // dd($studyPrograms);
             if ($studyPrograms->isEmpty()) {
@@ -55,12 +54,16 @@ class StudyProgramsController extends BaseController
             }
             // dd(\DB::getQueryLog());
             // \DB::enableQueryLog();
-            $count = StudyPrograms::count();
             $countDelete = StudyPrograms::onlyTrashed()->count();
             // dd(\DB::getQueryLog());
-            $success['count'] = $count;
+            $success['count'] = $studyPrograms->count();
             $success['countDelete'] = $countDelete;
-            $success['study_programs'] = $studyPrograms;
+            $success['study_programs'] = $studyPrograms
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
             return $this->sendResponse($success, 'Displaying all assets data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);

@@ -112,15 +112,24 @@ class AssetsController extends BaseController
             )
             ->when($order)
             ->orderBy($order, 'ASC')
-            ->skip($skip)
-            ->take($take)
             ->get();
             // dd(\DB::getQueryLog());
             // dd($assets);
             if ($assets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($assets, 'Displaying all assets data');
+            $countDelete = Assets::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
+            $success['countDelete'] = $countDelete;
+            $success['count'] = $assets->count();
+            // dd($success['count']);
+            $success['assets']= $assets
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all assets data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
@@ -177,9 +186,9 @@ class AssetsController extends BaseController
             }
 
             $auth = Auth::user();
-
-            $assets = Assets::onlyTrashed()
-            ->join('users as users', 'assets.user_id', '=', 'users.id')
+            \DB::enableQueryLog();
+            $assets = Assets::
+            join('users as users', 'assets.user_id', '=', 'users.id')
             ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
             ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
@@ -222,16 +231,23 @@ class AssetsController extends BaseController
             )
             ->when($order)
             ->orderBy($order, 'ASC')
-            ->skip($skip)
-            ->take($take)
+            ->onlyTrashed()
             // ->when($order)
-            ->orderBy('name', 'ASC')
             ->get();
             // dd(\DB::getQueryLog());
             if ($assets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($assets, 'Displaying all trash data');
+            // dd($assets);
+            $success['count'] = $assets->count();
+            // dd($success['count']);
+            $success['assets']= $assets
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all trash data');
 
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
@@ -368,7 +384,7 @@ class AssetsController extends BaseController
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Validator Error.', ['error'=>'Data tidak valid!']);
+                return $this->sendError('Error!', ['error'=>'Data tidak valid!']);
             }
 
             $user_id =  Auth::user()->id;

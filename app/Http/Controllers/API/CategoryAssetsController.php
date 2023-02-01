@@ -39,20 +39,29 @@ class CategoryAssetsController extends BaseController
             $trash = $request->trash;
 
             $categoryAssets = CategoryAssets::
-            when($trash == 1)
-            ->onlyTrashed()
-            ->when(isset($keyWords))
+            when(isset($keyWords))
             ->where('name', 'like', '%'.$keyWords.'%')
             ->orWhere('description', 'like', '%'.$keyWords.'%')
-            ->skip($skip)
-            ->take($take)
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
             // dd(\DB::getQueryLog());
             // dd($categoryAssets);
             if ($categoryAssets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($categoryAssets, 'Displaying all category assets data');
+
+            $countDelete = CategoryAssets::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
+            $success['count'] = $categoryAssets->count();
+            $success['countDelete'] = $countDelete;
+            $success['category_assets']= $categoryAssets
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all category assets data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
@@ -139,9 +148,9 @@ class CategoryAssetsController extends BaseController
                 'description' => 'required|min:5'
             ]);
     
-            // if ($validator->fails()){
-            //     return $this->sendError('Validator Error.', $validator->errors());
-            // }
+            if ($validator->fails()){
+                return $this->sendError('Error!', ['error'=>'Nama sudah tersedia atau deskripsi kurang dari 5 karakter!']);
+            }
             $name = ucwords(strtolower($request->name));
             $desc = ucfirst(strtolower($request->description));
             $input = array(

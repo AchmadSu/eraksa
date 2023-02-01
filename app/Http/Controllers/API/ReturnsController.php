@@ -55,6 +55,7 @@ class ReturnsController extends BaseController
             $order = $request->order;
             $skip = $request->skip;
             $take = $request->take;
+            $trash = $request->trash;
             
             $from = date($dateOne);
             $to = date($dateTwo);
@@ -131,8 +132,8 @@ class ReturnsController extends BaseController
             )
             ->when($order)
             ->orderBy($order, 'ASC')
-            ->skip($skip)
-            ->take($take)
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
                 // dd("test");
                 // dd(Loans::all());
@@ -143,7 +144,18 @@ class ReturnsController extends BaseController
             if ($returns->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($returns, 'Displaying all Returns data');
+            $count = $returns->count();
+            $countDelete = Returns::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
+            $success['count'] = $count;
+            $success['countDelete'] = $countDelete;
+            $success['returns']= $returns
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all Returns data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
         }
