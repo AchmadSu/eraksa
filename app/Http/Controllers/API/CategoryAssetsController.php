@@ -42,6 +42,7 @@ class CategoryAssetsController extends BaseController
             when(isset($keyWords))
             ->where('name', 'like', '%'.$keyWords.'%')
             ->orWhere('description', 'like', '%'.$keyWords.'%')
+            ->orderBy('name', 'ASC')
             ->when($trash == 1)
             ->onlyTrashed()
             ->get();
@@ -62,45 +63,6 @@ class CategoryAssetsController extends BaseController
                 ->take($take)
             ;
             return $this->sendResponse($success, 'Displaying all category assets data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
-        }
-    }
-
-    /** 
-     * Get All Category Assets in Trash
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-    */
-
-    public function trash(Request $request){
-        try {
-            $sleep = $request->sleep;
-            if($sleep) {
-                sleep($sleep);
-            } else {
-                sleep(5);
-            }
-            $keyWords = $request->keyWords;
-            $skip = $request->skip;
-            $take = $request->take;
-            // dd(Auth::user());
-            // dd(Auth::user());
-            // \DB::enableQueryLog();
-            $categoryAssets = CategoryAssets::onlyTrashed()
-            ->when(isset($keyWords))
-            ->where('name', 'like', '%'.$keyWords.'%')
-            ->orWhere('description', 'like', '%'.$keyWords.'%')
-            ->skip($skip)
-            ->take($take)
-            ->get();
-            // dd(\DB::getQueryLog());
-            if ($categoryAssets->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($categoryAssets, 'Displaying all trash data');
-
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
@@ -147,7 +109,7 @@ class CategoryAssetsController extends BaseController
                 'name' => 'required|unique:category_assets,name',
                 'description' => 'required|min:5'
             ]);
-    
+            
             if ($validator->fails()){
                 return $this->sendError('Error!', ['error'=>'Nama sudah tersedia atau deskripsi kurang dari 5 karakter!']);
             }

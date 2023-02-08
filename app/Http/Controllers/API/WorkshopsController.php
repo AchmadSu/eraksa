@@ -36,34 +36,33 @@ class WorkshopsController extends BaseController
             // dd(Auth::user());
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
-            $name = $request->name;
-            $phone = $request->phone;
+            $keyWords = $request->keyWords;
+            // $phone = $request->phone;
             $order = $request->order;
             $skip = $request->skip;
             $take = $request->take;
             $trash = $request->trash;
             
-            if(isset($phone)) {
-                $spiltPhone = str_split($phone);
-                // dd($spiltPhone);
-                if($spiltPhone[0] === '8'){
-                    $phone = '+62'.$phone;
-                }
-                // dd($spiltPhone[0].$spiltPhone[1]);
-                if($spiltPhone[0].$spiltPhone[1] === '62'){
-                    $phone = '+'.$phone;
-                }
-            }
+            // if(isset($phone)) {
+            //     $spiltPhone = str_split($phone);
+            //     // dd($spiltPhone);
+            //     if($spiltPhone[0] === '8'){
+            //         $phone = '+62'.$phone;
+            //     }
+            //     // dd($spiltPhone[0].$spiltPhone[1]);
+            //     if($spiltPhone[0].$spiltPhone[1] === '62'){
+            //         $phone = '+'.$phone;
+            //     }
+            // }
 
             $workshops = Workshops::
-            when($trash == 1)
-            ->onlyTrashed()
-            ->when(isset($name))
-            ->where('name', 'like', '%'.$name.'%')
-            ->when(isset($phone))
-            ->where('phone', 'like', '%'.$phone.'%')
+            when(isset($keyWords))
+            ->where('name', 'like', '%'.$keyWords.'%')
+            ->orWhere('phone', 'like', '%'.$keyWords.'%')
             ->when($order)
             ->orderBy($order, 'ASC')
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
             // dd(\DB::getQueryLog());
             // dd($workshops);
@@ -123,16 +122,34 @@ class WorkshopsController extends BaseController
     public function create(Request $request){
         try {
             sleep(5);
+            $phone = $request->phone;
+            if(isset($phone)) {
+                $spiltPhone = str_split($phone);
+                // dd($spiltPhone);
+                if($spiltPhone[0] === '8'){
+                    $phone = '+62'.$phone;
+                }
+                // dd($spiltPhone[0].$spiltPhone[1]);
+                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                    $phone = '+'.$phone;
+                }
+            }
+
             $validator = Validator::make($request->all(),[
                 'name' => 'required|unique:workshops,name|min:3',
-                'phone' => 'required|numeric|unique:workshops,phone'
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Error!', ['error'=>'Data tidak valid. Nama atau nomor ponsel sudah tersedia!']);
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. Nama sudah tersedia!']);
+            }
+            $checkPhone = Workshops::where('phone', $phone)->first();
+            // dd($phone);
+            if($checkPhone){
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. No Telepon sudah tersedia!']);
             }
     
             $input = $request->all();
+            $input['phone'] = $phone;
             $createWorkshop = Workshops::create($input);
             $success['token'] = Str::random(15);
     
@@ -156,6 +173,24 @@ class WorkshopsController extends BaseController
             $id = $request->id;
             $new_name = $request->new_name;
             $new_phone = $request->new_phone;
+            
+            if(isset($new_phone)) {
+                $spiltPhone = str_split($new_phone);
+                // dd($spiltPhone);
+                if($spiltPhone[0] === '8'){
+                    $new_phone = '+62'.$new_phone;
+                }
+                // dd($spiltPhone[0].$spiltPhone[1]);
+                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                    $new_phone = '+'.$new_phone;
+                }
+            }
+
+            $checkPhone = Workshops::where('phone', $new_phone)->first();
+            // dd($phone);
+            if($checkPhone){
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. No Telepon sudah tersedia!']);
+            }
             
             if ($new_name == NULL) {
                 $validator = Validator::make($request->all(), [
