@@ -75,8 +75,9 @@ class AssetsController extends BaseController
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
             ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
             ->when(isset($keyWords))
-            ->where('assets.code', 'like', '%'.$keyWords.'%')
-            ->orWhere('assets.name', 'like', '%'.$keyWords.'%')
+            ->where(function ($query) use ($keyWords){
+                $query->where('assets.code', 'like', '%'.$keyWords.'%')->orWhere('assets.name', 'like', '%'.$keyWords.'%');
+            })
             ->when(isset($user_ids))
             ->whereIn('assets.user_id', $user_ids)
             ->when(isset($category_id))
@@ -193,8 +194,9 @@ class AssetsController extends BaseController
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
             ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
             ->when(isset($keyWords))
-            ->where('assets.code', 'like', '%'.$keyWords.'%')
-            // ->orWhere('assets.name', 'like', '%'.$keyWords.'%')
+            ->where(function ($query) use ($keyWords){
+                $query->where('assets.code', 'like', '%'.$keyWords.'%')->orWhere('assets.name', 'like', '%'.$keyWords.'%');
+            })
             ->when(isset($user_ids))
             ->whereIn('assets.user_id', $user_ids)
             ->when(isset($category_id))
@@ -231,8 +233,8 @@ class AssetsController extends BaseController
             )
             ->when($order)
             ->orderBy($order, 'ASC')
-            ->onlyTrashed()
             // ->when($order)
+            ->onlyTrashed()
             ->get();
             // dd(\DB::getQueryLog());
             if ($assets->isEmpty()) {

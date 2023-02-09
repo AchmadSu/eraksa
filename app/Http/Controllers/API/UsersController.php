@@ -82,8 +82,9 @@ class UsersController extends BaseController
             
             $users = User::
             when(isset($keyWords))
-            ->where('users.name', 'like', '%'.$keyWords.'%')
-            ->orWhere('users.email', 'like', '%'.$keyWords.'%')
+            ->where(function ($query) use ($keyWords){
+                $query->where('users.name', 'like', '%'.$keyWords.'%')->orWhere('users.email', 'like', '%'.$keyWords.'%');
+            })
             ->when(isset($code))
             ->where('users.code', 'like', '%'.$code.'%')
             ->when(isset($code_type))

@@ -57,8 +57,9 @@ class WorkshopsController extends BaseController
 
             $workshops = Workshops::
             when(isset($keyWords))
-            ->where('name', 'like', '%'.$keyWords.'%')
-            ->orWhere('phone', 'like', '%'.$keyWords.'%')
+            ->where(function ($query) use ($keyWords){
+                $query->where('name', 'like', '%'.$keyWords.'%')->orWhere('phone', 'like', '%'.$keyWords.'%');
+            })
             ->when($order)
             ->orderBy($order, 'ASC')
             ->when($trash == 1)

@@ -40,8 +40,9 @@ class CategoryAssetsController extends BaseController
 
             $categoryAssets = CategoryAssets::
             when(isset($keyWords))
-            ->where('name', 'like', '%'.$keyWords.'%')
-            ->orWhere('description', 'like', '%'.$keyWords.'%')
+            ->where(function ($query) use ($keyWords){
+                $query->where('name', 'like', '%'.$keyWords.'%')->orWhere('description', 'like', '%'.$keyWords.'%');
+            })
             ->orderBy('name', 'ASC')
             ->when($trash == 1)
             ->onlyTrashed()
