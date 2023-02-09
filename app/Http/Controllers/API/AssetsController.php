@@ -194,7 +194,7 @@ class AssetsController extends BaseController
             ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
             ->when(isset($keyWords))
             ->where('assets.code', 'like', '%'.$keyWords.'%')
-            ->orWhere('assets.name', 'like', '%'.$keyWords.'%')
+            // ->orWhere('assets.name', 'like', '%'.$keyWords.'%')
             ->when(isset($user_ids))
             ->whereIn('assets.user_id', $user_ids)
             ->when(isset($category_id))
