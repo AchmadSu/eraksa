@@ -391,8 +391,9 @@ class AssetsController extends BaseController
 
             $user_id =  Auth::user()->id;
             $date = date("d/m/Y");
-            $category_name = CategoryAssets::find($request->category_id)->pluck('name');
+            $category_name = CategoryAssets::where('id', $request->category_id)->pluck('name');
             $category_name = Str::upper(str_replace(array('["','"]'), '', $category_name));
+            // dd($category_name);
             $inv = rand(100000, 999999);
             $strInv = "$inv";
             $code = "ERK-ASSETS-".$category_name."-".$date."-".$strInv;
@@ -401,8 +402,9 @@ class AssetsController extends BaseController
                 "user_id" => $user_id,
                 "date" => Carbon::now(),
                 "status" => "0",
+                "condition" => "0",
                 "code" => $code,
-                "name" => ucwords(strtolower($request->name)),
+                "name" => ucwords($request->name),
                 "study_program_id" => (int)$request->study_program_id,
                 "category_id" => (int)$request->category_id,
                 "placement_id" => (int)$request->placement_id,
@@ -412,6 +414,7 @@ class AssetsController extends BaseController
             
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             $createAsset = Assets::create($input);
+            $success['code'] = "Kode Aset: ".$createAsset->code;
             $success['token'] = Str::random(15);
     
             return $this->sendResponse($success, 'Asset ditambahkan!');    
@@ -442,49 +445,43 @@ class AssetsController extends BaseController
             if($updateDataAsset->status != "0"){
                 return $this->sendError('Error!', ['error' => 'Aset sedang dalam transaksi peminjaman atau perbaikan. Data tidak dapat diperbarui!']);
             }
-            $name = ucwords(strtolower($request->name));
+            $name = ucwords($request->name);
             $date = $updateDataAsset->date;
             $category_id = $request->category_id;
+            // dd($updateDataAsset->category_id != $category_id);
             if($updateDataAsset->category_id != $category_id) {
-                $category_name = CategoryAssets::find($request->category_id)->pluck('name');
+                $category_name = CategoryAssets::where('id', $request->category_id)->pluck('name');
                 $category_name = Str::upper(str_replace(array('["','"]'), '', $category_name));
                 $inv = rand(100000, 999999);
                 $strInv = "$inv";
-                $code = "ERK-ASSETS-".$category_name."-".$date."-".$strInv;
+                $code = "ERK-ASSETS-".$category_name."-".date("d/m/Y", strtotime($date))."-".$strInv;
+                
+                $checkCode = Assets::where('code', $code)->get();
+                // dd($checkCode);
+                if($checkCode->isEmpty() == false) {
+                    return $this->sendError('Error!', ['error'=>'Kode sudah tersedia!']);
+                }
             }
+
             $placement_id = $request->placement_id;
             $condition = $request->condition;
             $study_program_id = $request->study_program_id;
             
-            if ($code == NULL) {
-                $validator = Validator::make($request->all(), [
-                    'name' => 'required',
-                    'user_id' => 'required|numeric',
-                    'date' => 'required',
-                    'condition' => 'required',
-                    'category_id' => 'required|numeric',
-                    'placement_id' => 'required|numeric',
-                    'study_program_id' => 'required|numeric',
-                ]);
-                
-            } elseif ($code != NULL) {
-                $validator = Validator::make($request->all(),[
-                    'name' => 'required',
-                    'user_id' => 'required',
-                    'new_code' => 'required|unique:assets,code',
-                    'date' => 'required',
-                    'condition' => 'required',
-                    'category_id' => 'required|numeric',
-                    'placement_id' => 'required|numeric',
-                    'study_program_id' => 'required|numeric',
-                ]);
-                $updateDataAsset->code = $code;
-            }
-
-            if ($validator->fails()) {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required',
+                'condition' => 'required',
+                'category_id' => 'required|numeric',
+                'placement_id' => 'required|numeric',
+                'study_program_id' => 'required|numeric',
+            ]);
+            
+            if ($validator->fails()){
                 return $this->sendError('Error!', ['error'=>'Data tidak valid!']);
             }
 
+            if ($code != NULL) {
+                $updateDataAsset->code = $code;
+            }
             $updateDataAsset->name = $name;
             $updateDataAsset->user_id = Auth::user()->id;
             $updateDataAsset->date = $date;
@@ -493,12 +490,17 @@ class AssetsController extends BaseController
             $updateDataAsset->category_id = $category_id;
             $updateDataAsset->study_program_id = $study_program_id;
             // dd($data);exit();
-
+            
+            // dd($updateDataAsset);
+            // $updateDataAsset->fill($updateDataAsset);
+            // $updateDataAsset = new Assets;
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             $updateDataAsset->save();
             $tokenMsg = Str::random(15);
             $success['token'] = $tokenMsg;
             $success['message'] = "Asset berhasil diupdate!";
             $success['data'] = $updateDataAsset;
+            // $success['code'] = "Kode Aset: ".$updateDataAsset->code;
             return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);

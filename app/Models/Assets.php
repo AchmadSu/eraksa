@@ -29,9 +29,4 @@ class Assets extends Model implements Auditable
         'study_program_id',
         'deleted_at'
     ];
-    protected $guarded = [];
-
-    public function lender(){
-        return $this->belongsTo('App\Models\User');
-    }
 }
