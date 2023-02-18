@@ -458,7 +458,9 @@ class AssetsController extends BaseController
                 
                 $checkCode = Assets::where('code', $code)->get();
                 // dd($checkCode);
-                if($checkCode->isEmpty() == false) {
+                if($checkCode->isEmpty()) {
+                    $updateDataAsset->code = $code;
+                } else {
                     return $this->sendError('Error!', ['error'=>'Kode sudah tersedia!']);
                 }
             }
@@ -479,11 +481,7 @@ class AssetsController extends BaseController
                 return $this->sendError('Error!', ['error'=>'Data tidak valid!']);
             }
 
-            if ($code != NULL) {
-                $updateDataAsset->code = $code;
-            }
             $updateDataAsset->name = $name;
-            $updateDataAsset->user_id = Auth::user()->id;
             $updateDataAsset->date = $date;
             $updateDataAsset->placement_id = $placement_id;
             $updateDataAsset->condition = $condition;
