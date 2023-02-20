@@ -86,7 +86,7 @@ class LoansController extends BaseController
             }
             
             // dd($request->loaner_ids);
-            \DB::enableQueryLog();
+            // \DB::enableQueryLog();
             if($loaner_keyWords){
                 $loaner = User::
                 where('name', 'like', '%'.$loaner_keyWords.'%')

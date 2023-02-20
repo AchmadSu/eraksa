@@ -36,6 +36,7 @@ class AssetsController extends BaseController
                 sleep(5);
             }
             
+            $negation_ids = $request->negation_ids;
             $order = $request->order;
             $keyWords = $request->keyWords;
             $category_id = $request->category_id;
@@ -70,6 +71,7 @@ class AssetsController extends BaseController
             }
             // dd("test");
             // \DB::enableQueryLog();
+            // dd($negation_ids);
             $assets = Assets::join('users as users', 'assets.user_id', '=', 'users.id')
             ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
@@ -122,13 +124,19 @@ class AssetsController extends BaseController
             $countDelete = Assets::onlyTrashed()->count();
             // dd(\DB::getQueryLog());
             $success['countDelete'] = $countDelete;
-            $success['count'] = $assets->count();
+            $success['count'] = $assets
+            ->when(isset($negation_ids))
+            ->whereNotIn('id', $negation_ids)
+            ->count();
             // dd($success['count']);
             $success['assets']= $assets
                 ->when(isset($skip))
                 ->skip($skip)
                 ->when(isset($take))
                 ->take($take)
+                ->when(isset($negation_ids))
+                ->whereNotIn('id', $negation_ids)
+                ->values()
             ;
             return $this->sendResponse($success, 'Displaying all assets data');
         } catch (\Throwable $th) {
@@ -151,7 +159,7 @@ class AssetsController extends BaseController
             } else {
                 sleep(5);
             }
-
+            $negation_ids = $request->negation_ids;
             $order = $request->order;
             $keyWords = $request->keyWords;
             $category_id = $request->category_id;
@@ -241,13 +249,19 @@ class AssetsController extends BaseController
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             // dd($assets);
-            $success['count'] = $assets->count();
+            $success['count'] = $assets
+            ->when(isset($negation_ids))
+            ->whereNotIn('id', $negation_ids)
+            ->count();
             // dd($success['count']);
             $success['assets']= $assets
                 ->when(isset($skip))
                 ->skip($skip)
                 ->when(isset($take))
                 ->take($take)
+                ->when(isset($negation_ids))
+                ->whereNotIn('id', $negation_ids)
+                ->values()
             ;
             return $this->sendResponse($success, 'Displaying all trash data');
 
