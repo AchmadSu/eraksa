@@ -653,6 +653,7 @@ class LoansController extends BaseController
     {
         try {
             sleep(5);
+            // dd(Auth::user());
             $loan_id = $request->id;
             $loaner_id = Auth::user()->id;
             // dd($loaner_id);
@@ -688,6 +689,7 @@ class LoansController extends BaseController
                 ]);
             }
 
+            $code = $checkStatus->code;
             $asset_ids = $request->asset_ids;
             $checkAssets = Assets::whereIn("id", $asset_ids)
             ->where("condition", "0")
@@ -761,6 +763,9 @@ class LoansController extends BaseController
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             $sortNumber = 0;
             // if($asset_ids)
+            $loaner_name = Auth::user()->name;
+            $loaner_code = Auth::user()->code;
+            $loaner_code_type = Auth::user()->code_type;
             if($getAssetFromLoanDetails) {
                 for ($i=0; $i < count($getAssetFromLoanDetails) ; $i++) { 
                     $unSetStatusAssets = Assets::find($getAssetFromLoanDetails[$i]['asset_id']);
@@ -792,30 +797,29 @@ class LoansController extends BaseController
                         // var_dump($studyProgramAssets[$i] == $checkAssets->study_program_id);exit();
                         $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
                         if($sortNumber !== $studyProgramAssets[$i]['study_program_id']){
-                            $loaner_name = Auth::user()->name;
-                            $loaner_code = Auth::user()->code;
-                            $loaner_code_type = Auth::user()->code_type;
-                            $adminPhone = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->pluck('phone');
-                            
-                            if($adminPhone->isEmpty() === FALSE) {
-                                for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
-                                    if($adminPhone[$rowPhone]) {
-                                        $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
-                                        // var_dump($adminNumber);exit();
-                                        $getCodeLoans = Loans::
-                                        where('id', $loan_id)
-                                        ->pluck('code');
-                                        if($getCodeLoans){
-                                            $code = $getCodeLoans[0];
-                                            if($loaner_code_type == "0") {
-                                                $strUserCode = 'NIM';
-                                            } else {
-                                                $strUserCode = 'NIDN';                                        
+                            $checkAdmin = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->role('Admin')->get();
+                            if(!($checkAdmin->isEmpty())) {
+                                $adminPhone = $checkAdmin->pluck('phone');
+                                if(!($adminPhone->isEmpty())) {
+                                    for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
+                                        if($adminPhone[$rowPhone]) {
+                                            $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
+                                            // var_dump($adminNumber);exit();
+                                            $getCodeLoans = Loans::
+                                            where('id', $loan_id)
+                                            ->pluck('code');
+                                            if($getCodeLoans){
+                                                $code = $getCodeLoans[0];
+                                                if($loaner_code_type == "0") {
+                                                    $strUserCode = 'NIM';
+                                                } else {
+                                                    $strUserCode = 'NIDN';                                        
+                                                }
+                                                $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                                $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                             }
-                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
-                                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                            // dd($adminPhone[$rowPhone]);
                                         }
-                                        // dd($adminPhone[$rowPhone]);
                                     }
                                 }
                             }
@@ -828,8 +832,9 @@ class LoansController extends BaseController
                         ]);
                     }
                 }
-                $superAdminPhone = User::role('Super-Admin')->pluck('phone');
-                if($superAdminPhone->isEmpty() === FALSE) {
+                $checkSuperAdmin = User::role('Super-Admin')->get();
+                $superAdminPhone = $checkSuperAdmin->pluck('phone');
+                if(!($superAdminPhone->isEmpty())) {
                     for ($rowPhone= 0; $rowPhone < count($superAdminPhone); $rowPhone++) {
                         if($superAdminPhone[$rowPhone]){
                             // dd($superAdminPhone);
@@ -840,7 +845,7 @@ class LoansController extends BaseController
                             } else {
                                 $strUserCode = 'NIDN';                                        
                             }
-                            $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
                             $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                         }
                     }
