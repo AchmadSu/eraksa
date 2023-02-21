@@ -805,19 +805,13 @@ class LoansController extends BaseController
                                         if($adminPhone[$rowPhone]) {
                                             $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
                                             // var_dump($adminNumber);exit();
-                                            $getCodeLoans = Loans::
-                                            where('id', $loan_id)
-                                            ->pluck('code');
-                                            if($getCodeLoans){
-                                                $code = $getCodeLoans[0];
-                                                if($loaner_code_type == "0") {
-                                                    $strUserCode = 'NIM';
-                                                } else {
-                                                    $strUserCode = 'NIDN';                                        
-                                                }
-                                                $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
-                                                $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                            if($loaner_code_type == "0") {
+                                                $strUserCode = 'NIM';
+                                            } else {
+                                                $strUserCode = 'NIDN';                                        
                                             }
+                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                             // dd($adminPhone[$rowPhone]);
                                         }
                                     }
