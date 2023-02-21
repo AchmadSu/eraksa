@@ -190,11 +190,52 @@ class LoansController extends BaseController
                 'loans.lender_id as lender_id', 
                 'lenders.name as lender_name',
             )->find($id);
-            return $this->sendResponse($loans, 'Loans detail by Id');
+            // \DB::enableQueryLog();
+            $loan_details = LoanDetails::
+            join('assets', 'loan_details.asset_id', '=', 'assets.id')
+            ->join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->where('loan_details.loan_id', $id)
+            ->select(
+                'loan_details.id',
+                'loan_details.loan_id',
+                'loan_details.asset_id',
+                'assets.name as asset_name',
+                'assets.code as asset_code',
+                'assets.condition as asset_condition',
+                'assets.status as asset_status',
+                'assets.deleted_at as asset_deleted_at',
+                'assets.date as asset_date',
+                'assets.placement_id as asset_placement_id', 
+                'placements.name as asset_placement_name', 
+                'assets.category_id as asset_category_id', 
+                'category_assets.name as asset_category_name', 
+                'assets.user_id as asset_creator_id',
+                'users.name as asset_creator_name',
+                'assets.study_program_id as asset_study_program_id',
+                'study_programs.name as asset_study_program_name',
+            )
+            ->get();
+            $date = Carbon::parse($loans->date);
+            $due_date = Carbon::parse($loans->due_date);
+            $diff = $date->diff($due_date);
+
+            if($diff->d !== 0) {
+                $hours = $diff->d * 24;
+            } elseif($diff->h !== 0) {
+                $hours = $diff->h;
+            }
+            // dd(\DB::getQueryLog());
+            $success['loans'] = $loans;
+            $success['hours'] = $hours;
+            $success['loan_details'] = $loan_details;
+            return $this->sendResponse($success, 'Loans detail by Id');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
         }
-        
+            
     }
 
     /** 

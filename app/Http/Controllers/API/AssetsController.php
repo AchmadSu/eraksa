@@ -121,21 +121,21 @@ class AssetsController extends BaseController
             if ($assets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
+            
+            if(isset($negation_ids)){
+                $assets = $assets->whereNotIn('id', $negation_ids);
+            }
+
             $countDelete = Assets::onlyTrashed()->count();
             // dd(\DB::getQueryLog());
             $success['countDelete'] = $countDelete;
-            $success['count'] = $assets
-            ->when(isset($negation_ids))
-            ->whereNotIn('id', $negation_ids)
-            ->count();
+            $success['count'] = $assets->count();
             // dd($success['count']);
             $success['assets']= $assets
                 ->when(isset($skip))
                 ->skip($skip)
                 ->when(isset($take))
                 ->take($take)
-                ->when(isset($negation_ids))
-                ->whereNotIn('id', $negation_ids)
                 ->values()
             ;
             return $this->sendResponse($success, 'Displaying all assets data');
@@ -248,19 +248,18 @@ class AssetsController extends BaseController
             if ($assets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
+
+            if(isset($negation_ids)){
+                $assets = $assets->whereNotIn('id', $negation_ids);
+            }
             // dd($assets);
-            $success['count'] = $assets
-            ->when(isset($negation_ids))
-            ->whereNotIn('id', $negation_ids)
-            ->count();
+            $success['count'] = $assets->count();
             // dd($success['count']);
             $success['assets']= $assets
                 ->when(isset($skip))
                 ->skip($skip)
                 ->when(isset($take))
                 ->take($take)
-                ->when(isset($negation_ids))
-                ->whereNotIn('id', $negation_ids)
                 ->values()
             ;
             return $this->sendResponse($success, 'Displaying all trash data');
