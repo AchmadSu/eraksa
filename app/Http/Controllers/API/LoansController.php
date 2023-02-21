@@ -177,20 +177,33 @@ class LoansController extends BaseController
             if (!$loans) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            $loans = Loans::join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-            ->join('users as lenders', 'loans.lender_id', '=', 'lenders.id')
-            ->select(
-                'loans.id as id',
-                'loans.code as code',
-                'loans.status as status',
-                'loans.date as date',
-                'loans.due_date as due_date',
-                'loans.loaner_id as loaner_id', 
-                'loaners.name as loaner_name', 
-                'loans.lender_id as lender_id', 
-                'lenders.name as lender_name',
-            )->find($id);
-            // \DB::enableQueryLog();
+            if($loans->status == '0') {
+                $loans = Loans::join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+                ->select(
+                    'loans.id as id',
+                    'loans.code as code',
+                    'loans.status as status',
+                    'loans.date as date',
+                    'loans.due_date as due_date',
+                    'loans.loaner_id as loaner_id', 
+                    'loaners.name as loaner_name', 
+                )->find($id);
+            } else {
+                $loans = Loans::join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+                ->join('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+                ->select(
+                    'loans.id as id',
+                    'loans.code as code',
+                    'loans.status as status',
+                    'loans.date as date',
+                    'loans.due_date as due_date',
+                    'loans.loaner_id as loaner_id', 
+                    'loaners.name as loaner_name', 
+                    'loans.lender_id as lender_id', 
+                    'lenders.name as lender_name',
+                )->find($id);
+            }
+                // \DB::enableQueryLog();
             $loan_details = LoanDetails::
             join('assets', 'loan_details.asset_id', '=', 'assets.id')
             ->join('users as users', 'assets.user_id', '=', 'users.id')
@@ -758,6 +771,8 @@ class LoansController extends BaseController
                     // dd("test");
                     // dd($updateLoanDetails['asset_id']);
                     // dd($getAssetFromLoanDetails[$i]['asset_id']);
+                }
+                for ($i=0; $i < count($asset_ids); $i++) { 
                     $asset_id = $asset_ids[$i];
                     // dd($asset_id);
                     $checkAssets = Assets::find($asset_id);
