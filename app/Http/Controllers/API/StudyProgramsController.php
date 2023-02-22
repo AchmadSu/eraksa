@@ -37,12 +37,15 @@ class StudyProgramsController extends BaseController
             }
             // dd(Auth::user());
             // dd(Auth::user()->name);
+            $ids = $request->ids;
             $name = $request->name;
             $skip = $request->skip;
             $take = $request->take;
             $trash = $request->trash;
             $studyPrograms = StudyPrograms::
-            when(isset($name))
+            when(isset($ids))
+            ->whereIn('id', $ids)
+            ->when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
             ->orderBy('name', 'ASC')
             ->when($trash == 1)
