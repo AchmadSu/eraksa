@@ -217,7 +217,7 @@ class LoansController extends BaseController
     public function show(Int $id)
     {
         try {
-            sleep(5);
+            sleep(2);
             $loans = Loans::find($id);
             // dd(\DB::getQueryLog());
             if (!$loans) {
@@ -233,6 +233,8 @@ class LoansController extends BaseController
                     'loans.due_date as due_date',
                     'loans.loaner_id as loaner_id', 
                     'loaners.name as loaner_name', 
+                    'loaners.code_type as loaner_code_type', 
+                    'loaners.code as loaner_code', 
                 )->find($id);
             } else {
                 $loans = Loans::join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
@@ -244,9 +246,13 @@ class LoansController extends BaseController
                     'loans.date as date',
                     'loans.due_date as due_date',
                     'loans.loaner_id as loaner_id', 
-                    'loaners.name as loaner_name', 
+                    'loaners.name as loaner_name',
+                    'loaners.code_type as loaner_code_type', 
+                    'loaners.code as loaner_code', 
                     'loans.lender_id as lender_id', 
                     'lenders.name as lender_name',
+                    'lenders.code_type as lender_code_type', 
+                    'lenders.code as lender_code',
                 )->find($id);
             }
                 // \DB::enableQueryLog();
