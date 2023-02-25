@@ -63,6 +63,7 @@ class LoansController extends BaseController
             $take = $request->take;
             $trash = $request->trash;
             $orderDate = $request->orderDate;
+            $orderDueDate = $request->orderDueDate;
 
             $from = date($dateOne);
             $to = date($dateTwo);
@@ -148,6 +149,8 @@ class LoansController extends BaseController
                     ->onlyTrashed()
                     ->when($orderDate)
                     ->orderby('date', $orderDate)
+                    ->when($orderDueDate)
+                    ->orderby('due_date', $orderDueDate)
                     ->get()
                 ;
                 // dd(\DB::getQueryLog());
@@ -184,6 +187,8 @@ class LoansController extends BaseController
                     ->onlyTrashed()
                     ->when($orderDate)
                     ->orderby('date', $orderDate)
+                    ->when($orderDueDate)
+                    ->orderby('due_date', $orderDueDate)
                     ->get()
                 ;
             }
