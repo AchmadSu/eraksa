@@ -62,6 +62,7 @@ class LoansController extends BaseController
             $skip = $request->skip;
             $take = $request->take;
             $trash = $request->trash;
+            $orderDate = $request->orderDate;
 
             $from = date($dateOne);
             $to = date($dateTwo);
@@ -145,6 +146,8 @@ class LoansController extends BaseController
                     )
                     ->when($trash == 1)
                     ->onlyTrashed()
+                    ->when($orderDate)
+                    ->orderby('date', $orderDate)
                     ->get()
                 ;
                 // dd(\DB::getQueryLog());
@@ -179,6 +182,8 @@ class LoansController extends BaseController
                     )
                     ->when($trash == 1)
                     ->onlyTrashed()
+                    ->when($orderDate)
+                    ->orderby('date', $orderDate)
                     ->get()
                 ;
             }
@@ -1034,16 +1039,18 @@ class LoansController extends BaseController
                     $getAssetFromLoanDetails[$i]['deleted_at'] = Carbon::now();
                     $getAssetFromLoanDetails[$i]->delete();
                 }     
+                $deleteLoans->deleted_at = Carbon::now();
+                $deleteLoans->delete();
+                // $totalDelete++;
+    
+                $tokenMsg = Str::random(15);
+                $success['token'] = $tokenMsg;
+                $success['message'] = "Delete selected data";
+                // $success['total_deleted'] = $totalDelete;
+                return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
+            } else {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan']);
             }
-            $deleteLoans->deleted_at = Carbon::now();
-            $deleteLoans->delete();
-            // $totalDelete++;
-
-            $tokenMsg = Str::random(15);
-            $success['token'] = $tokenMsg;
-            $success['message'] = "Delete selected data";
-            // $success['total_deleted'] = $totalDelete;
-            return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
