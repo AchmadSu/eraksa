@@ -114,7 +114,7 @@ class CategoryAssetsController extends BaseController
             if ($validator->fails()){
                 return $this->sendError('Error!', ['error'=>'Nama sudah tersedia atau deskripsi kurang dari 5 karakter!']);
             }
-            $name = ucwords(strtolower($request->name));
+            $name = ucwords($request->name);
             $desc = ucfirst(strtolower($request->description));
             $input = array(
                 "name" => $name,
@@ -162,7 +162,7 @@ class CategoryAssetsController extends BaseController
                 ]);
                             
                 $data = array(
-                    'name' => ucwords(strtolower($new_name)),
+                    'name' => ucwords($new_name),
                     'description' => ucwords(strtolower($description))
                 );
             }

@@ -140,10 +140,15 @@ class LoansController extends BaseController
                         'loans.status as status',
                         'loans.date as date',
                         'loans.due_date as due_date',
+                        'loans.return_id as return_id',
                         'loans.loaner_id as loaner_id', 
                         'loaners.name as loaner_name', 
+                        'loaners.code_type as loaner_code_type', 
+                        'loaners.code as loaner_code', 
                         'loans.lender_id as lender_id', 
                         'lenders.name as lender_name',
+                        'lenders.code_type as lender_code_type', 
+                        'lenders.code as lender_code',  
                     )
                     ->when($trash == 1)
                     ->onlyTrashed()
@@ -182,6 +187,8 @@ class LoansController extends BaseController
                         'loans.due_date as due_date',
                         'loans.loaner_id as loaner_id', 
                         'loaners.name as loaner_name', 
+                        'loaners.code_type as loaner_code_type', 
+                        'loaners.code as loaner_code', 
                     )
                     ->when($trash == 1)
                     ->onlyTrashed()
@@ -426,11 +433,14 @@ class LoansController extends BaseController
             // sleep(2);
             $loaner_id = Auth::user()->id;
 
+            // \DB::enableQueryLog();
             $checkStatusLoans = Loans::
             where('loaner_id', $loaner_id)
-            ->where('status', "0")
-            ->orWhere('status', "1")
+            ->where(function ($query){
+                $query->where('status', "0")->orWhere('status', "1");
+            })
             ->first();
+            // dd(\DB::getQueryLog());
 
             // dd($checkStatusLoans->status == "0");
 
