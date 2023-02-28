@@ -1049,8 +1049,9 @@ class LoansController extends BaseController
                 $code = $checkLoans->code;
                 $loaner = User::find($checkLoans->loaner_id);
                 $loaner_name = $loaner->name;
-                $loaner_code_type = $loaner->loaner_code_type;
-                $loaner_code = $loaner->loaner_code;
+                $loaner_code_type = $loaner->code_type;
+                // dd($loaner0>);
+                $loaner_code = $loaner->code;
                 $strUserCode = '';
                 if($loaner_code_type == '0') {
                     $strUserCode = 'NIM';
@@ -1060,7 +1061,7 @@ class LoansController extends BaseController
                 $loaner_phone = $loaner->phone;
                 
                 // dd($getLoanerPhone->phone);
-                $demand = "*Hai $loaner_name!*\nPeminjaman anda telah *MELAMPAUI* batas waktu.";
+                $demand = "*Hai $loaner_name!*\nPeminjaman anda telah *MELAMPAUI BATAS WAKTU*.";
                 $instruction = "\nSegera kembalikan setiap aset kepada Admin dari masing-masing Program Studi terkait! Terima kasih.\n";
 
                 if($loaner_phone) {
