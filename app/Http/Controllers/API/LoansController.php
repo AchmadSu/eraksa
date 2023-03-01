@@ -319,6 +319,7 @@ class LoansController extends BaseController
                     'loans.date as date',
                     'loans.due_date as due_date',
                     'loans.loaner_id as loaner_id', 
+                    'loans.return_id as return_id', 
                     'loaners.name as loaner_name',
                     'loaners.code_type as loaner_code_type', 
                     'loaners.code as loaner_code', 
@@ -327,6 +328,10 @@ class LoansController extends BaseController
                     'lenders.code_type as lender_code_type', 
                     'lenders.code as lender_code',
                 )->find($id);
+            }
+
+            if (!$loans) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
                 // \DB::enableQueryLog();
             $loan_details = LoanDetails::

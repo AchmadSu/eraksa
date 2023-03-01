@@ -300,4 +300,35 @@ class WorkshopsController extends BaseController
             return $this->sendError('Error!', $th);
         }
     }
+
+    /**
+     * Delete Multiple Workshops Permanently
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+     public function deletePermanent(Request $request)
+     {
+         try {
+             sleep(5);
+             $ids = $request->ids;
+             // dd($ids);
+             // \DB::enableQueryLog();
+             $checkWorkshops = Workshops::whereIn('id', $ids)->onlyTrashed()->get();
+             // dd(\DB::getQueryLog());
+             // dd($checkWorkshops);
+             if($checkWorkshops->isEmpty()){
+                 return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
+             }
+             $deleteWorkshops = Workshops::whereIn('id', $ids)->forceDelete();
+             $tokenMsg = Str::random(15);
+             $success['token'] = $tokenMsg;
+             $success['message'] = "Delete selected data";
+             $success['data'] = $deleteWorkshops;
+             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
+         } catch (\Throwable $th) {
+             return $this->sendError('Error!', $th);
+         }
+     }
 }

@@ -173,12 +173,62 @@ class ReturnsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $returns = Returns::find($id);
+            // $returns = Returns::find($id);
+            $returns = Returns::
+                join('users as loaners', 'returns.loaner_id', '=', 'loaners.id')
+                ->join('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+                ->join('loans as loans', 'returns.loan_id', '=', 'loans.id')
+                ->select(
+                    'returns.id as id',
+                    'returns.code as code',
+                    'returns.date as date',
+                    'loans.id as loan_id',
+                    'loans.code as loan_code',
+                    'loans.status as loan_status',
+                    'returns.loaner_id as loaner_id', 
+                    'loaners.name as loaner_name',
+                    'loaners.code_type as loaner_code_type', 
+                    'loaners.code as loaner_code', 
+                    'returns.recipient_id as recipient_id', 
+                    'recipients.name as recipient_name',
+                    'recipients.code_type as recipient_code_type', 
+                    'recipients.code as recipient_code',
+                )->find($id);
+            
+            $return_details = ReturnDetails::
+                join('assets', 'return_details.asset_id', '=', 'assets.id')
+                ->join('users as users', 'assets.user_id', '=', 'users.id')
+                ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+                ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+                ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+                ->where('return_details.return_id', $id)
+                ->select(
+                    'return_details.id',
+                    'return_details.return_id',
+                    'return_details.asset_id',
+                    'assets.name as asset_name',
+                    'assets.code as asset_code',
+                    'assets.condition as asset_condition',
+                    'assets.status as asset_status',
+                    'assets.deleted_at as asset_deleted_at',
+                    'assets.date as asset_date',
+                    'assets.placement_id as asset_placement_id', 
+                    'placements.name as asset_placement_name', 
+                    'assets.category_id as asset_category_id', 
+                    'category_assets.name as asset_category_name', 
+                    'assets.user_id as asset_creator_id',
+                    'users.name as asset_creator_name',
+                    'assets.study_program_id as asset_study_program_id',
+                    'study_programs.name as asset_study_program_name',
+                )
+                ->get();
             // dd(\DB::getQueryLog());
             if (!$returns) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($returns, 'Returns detail by Id');
+            $success['returns'] = $returns;
+            $success['return_details'] = $return_details;
+            return $this->sendResponse($success, 'Returns detail by Id');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
         }

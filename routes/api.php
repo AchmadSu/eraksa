@@ -109,6 +109,7 @@ Route::controller(WorkshopsController::class)->group(function(){
             Route::post('workshops/create', 'create'); 
             Route::put('workshops/update', 'update');
             Route::delete('workshops/delete', 'delete');
+            Route::delete('workshops/deletePermanent', 'deletePermanent');
             Route::get('workshops/trash', 'trash');
             Route::put('workshops/restore', 'restore');
         });
