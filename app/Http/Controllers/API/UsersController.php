@@ -53,6 +53,7 @@ class UsersController extends BaseController
 
     public function index(Request $request){
         try {
+            // dd(Auth::user()->name);
             sleep(5);
             //$users = User::all();
             $keyWords = $request->keyWords;
@@ -64,9 +65,11 @@ class UsersController extends BaseController
             $take = $request->take;
             $order = $request->order;
             $trash = $request->trash;
+            $roles = $request->roles;
 
             // dd(Auth::user()->hasRole('Super-Admin'));
             $study_program_id = $request->study_program_id;
+            $study_program_keyWords = $request->study_program_keyWords;
 
             if(isset($phone)) {
                 $spiltPhone = str_split($phone);
@@ -79,9 +82,21 @@ class UsersController extends BaseController
                     $phone = '+'.$phone;
                 }
             }
-            
+
+            $studyPrograms = StudyPrograms::where('name', 'like', '%'.$study_program_keyWords.'%')
+            ->get();
+            $studyProgram_ids = array();
+            foreach ($studyPrograms as $rowstudyPrograms) {
+                $studyProgram_ids[] = $rowstudyPrograms->id;
+            }
+
+            // dd($studyProgram_ids);
+            \DB::enableQueryLog();
             $users = User::
-            when(isset($keyWords))
+            leftJoin('model_has_roles as model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+            ->leftJoin('roles as roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->leftJoin('study_programs as study_programs','users.study_program_id', '=', 'study_programs.id')
+            ->when(isset($keyWords))
             ->where(function ($query) use ($keyWords){
                 $query->where('users.name', 'like', '%'.$keyWords.'%')->orWhere('users.email', 'like', '%'.$keyWords.'%');
             })
@@ -91,10 +106,14 @@ class UsersController extends BaseController
             ->where('users.code_type', $code_type)
             ->when(isset($status))
             ->where('users.status', $status)
+            ->when(isset($roles))
+            ->where('roles.id', $roles)
             ->when(isset($phone))
             ->where('users.phone', 'like', '%'.$phone.'%')
             ->when(isset($study_program_id))
             ->where('users.study_program_id', $study_program_id)
+            ->when(isset($study_program_keyWords))
+            ->whereIn('users.study_program_id', $studyProgram_ids)
             ->when(Auth::user()->hasRole('Admin'))
             ->role('Member')
             ->select(
@@ -107,12 +126,16 @@ class UsersController extends BaseController
                 'users.created_at as created_at',
                 'users.phone as phone',
                 'users.updated_at as updated_at',
+                'study_programs.id as study_program_id',
+                'study_programs.name as study_program_name',
+                'roles.name as user_role'
                 )
             ->when($order)
             ->orderBy($order, 'ASC')
             ->when($trash == 1)
             ->onlyTrashed()
             ->get();
+            // dd(\DB::getQueryLog());
             // dd($users);
             if ($users->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
