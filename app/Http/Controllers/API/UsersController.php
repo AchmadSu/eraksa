@@ -57,7 +57,6 @@ class UsersController extends BaseController
             sleep(5);
             //$users = User::all();
             $keyWords = $request->keyWords;
-            $code = $request->code;
             $code_type = $request->code_type;
             $status = $request->status;
             $phone = $request->phone;
@@ -98,10 +97,11 @@ class UsersController extends BaseController
             ->leftJoin('study_programs as study_programs','users.study_program_id', '=', 'study_programs.id')
             ->when(isset($keyWords))
             ->where(function ($query) use ($keyWords){
-                $query->where('users.name', 'like', '%'.$keyWords.'%')->orWhere('users.email', 'like', '%'.$keyWords.'%');
+                $query
+                ->where('users.name', 'like', '%'.$keyWords.'%')
+                ->orWhere('users.email', 'like', '%'.$keyWords.'%')
+                ->orWhere('users.code', 'like', '%'.$keyWords.'%');
             })
-            ->when(isset($code))
-            ->where('users.code', 'like', '%'.$code.'%')
             ->when(isset($code_type))
             ->where('users.code_type', $code_type)
             ->when(isset($status))
@@ -168,7 +168,25 @@ class UsersController extends BaseController
     {
         try {
             sleep(5);
-            $user = User::find($id);
+            $user = User::
+            leftJoin('model_has_roles as model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+            ->leftJoin('roles as roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->leftJoin('study_programs as study_programs','users.study_program_id', '=', 'study_programs.id')
+            ->select(
+                'users.id as id',
+                'users.name as name',
+                'users.code as code',
+                'users.code_type as code_type',
+                'users.email as email',
+                'users.status as status',
+                'users.created_at as created_at',
+                'users.phone as phone',
+                'users.updated_at as updated_at',
+                'study_programs.id as study_program_id',
+                'study_programs.name as study_program_name',
+                'roles.name as user_role'
+                )
+            ->find($id);
             // dd(\DB::getQueryLog());
             if (!$user) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
