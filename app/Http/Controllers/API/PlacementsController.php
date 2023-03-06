@@ -28,50 +28,45 @@ class PlacementsController extends BaseController
 
     public function index(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             // dd(Auth::user());
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
             $name = $request->name;
-            $placements = Placements::when(isset($name))
+            $trash = $request->trash;
+            $skip = $request->skip;
+            $take = $request->take;
+            $placements = Placements::
+            when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
+            ->orderBy('name', 'ASC')
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
             // dd(\DB::getQueryLog());
             // dd($placements);
             if ($placements->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($placements, 'Displaying all placements data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
-        }
-    }
-
-    /** 
-     * Get All Placement Assets in Trash
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-    */
-
-    public function trash(Request $request){
-        try {
-            sleep(5);
-            // dd(Auth::user());
-            // dd(Auth::user());
-            // \DB::enableQueryLog();
-            $name = $request->name;
-            $placements = Placements::onlyTrashed()
-            ->when(isset($name))
-            ->where('name', 'like', '%'.$name.'%')
-            ->get();
+            $count = $placements->count();
+            $countDelete = Placements::onlyTrashed()->count();
             // dd(\DB::getQueryLog());
-            if ($placements->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($placements, 'Displaying all trash data');
+            $success['count'] = $count;
+            $success['countDelete'] = $countDelete;
+            $success['placements']= $placements
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all placements data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -87,14 +82,14 @@ class PlacementsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $placements = Placements::where('id', $id)->first();
+            $placements = Placements::find($id);
             // dd(\DB::getQueryLog());
             if (!$placements) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             return $this->sendResponse($placements, 'Placement detail');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -116,7 +111,7 @@ class PlacementsController extends BaseController
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Validator Error.', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Nama penempatan sudah tersedia. Gunakan nama yang lain!']);
             }
     
             $name = $request->name;
@@ -129,7 +124,7 @@ class PlacementsController extends BaseController
             $success['token'] = Str::random(15);
             return $this->sendResponse($success, 'Placement ditambahkan!');    
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         } 
     }
 
@@ -145,12 +140,15 @@ class PlacementsController extends BaseController
         try {
             sleep(5);
             $id = $request->id;
+            if(!$id) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada penempatan yang dipilih!']);
+            }
             $validator = Validator::make($request->all(),[
                 'name' => 'required|unique:placements,name|min:3'
             ]);
                 
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Nama penempatan sudah tersedia. Gunakan nama tempat yang lain!']);
             }
 
             // dd($data);exit();
@@ -163,7 +161,7 @@ class PlacementsController extends BaseController
             $success['data'] = $updateDataPlacements;
             return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -194,7 +192,7 @@ class PlacementsController extends BaseController
             $success['data'] = $deletePlacements;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -225,7 +223,7 @@ class PlacementsController extends BaseController
             $success['data'] = $restorePlacements;
             return $this->sendResponse($success, 'Data terpilih berhasil dipulihkan');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 }

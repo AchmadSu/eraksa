@@ -27,51 +27,45 @@ class CategoryAssetsController extends BaseController
 
     public function index(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             $keyWords = $request->keyWords;
+            $skip = $request->skip;
+            $take = $request->take;
+            $trash = $request->trash;
 
-            $categoryAssets = CategoryAssets::when(isset($keyWords))
-            ->where('name', 'like', '%'.$keyWords.'%')
-            ->orWhere('description', 'like', '%'.$keyWords.'%')
+            $categoryAssets = CategoryAssets::
+            when(isset($keyWords))
+            ->where(function ($query) use ($keyWords){
+                $query->where('name', 'like', '%'.$keyWords.'%')->orWhere('description', 'like', '%'.$keyWords.'%');
+            })
+            ->orderBy('name', 'ASC')
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
             // dd(\DB::getQueryLog());
             // dd($categoryAssets);
             if ($categoryAssets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($categoryAssets, 'Displaying all category assets data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
-        }
-    }
 
-    /** 
-     * Get All Category Assets in Trash
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-    */
-
-    public function trash(Request $request){
-        try {
-            sleep(5);
-            $keyWords = $request->keyWords;
-            // dd(Auth::user());
-            // dd(Auth::user());
-            // \DB::enableQueryLog();
-            $categoryAssets = CategoryAssets::onlyTrashed()
-            ->when(isset($keyWords))
-            ->where('name', 'like', '%'.$keyWords.'%')
-            ->orWhere('description', 'like', '%'.$keyWords.'%')
-            ->get();
+            $countDelete = CategoryAssets::onlyTrashed()->count();
             // dd(\DB::getQueryLog());
-            if ($categoryAssets->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($categoryAssets, 'Displaying all trash data');
-
+            $success['count'] = $categoryAssets->count();
+            $success['countDelete'] = $countDelete;
+            $success['category_assets']= $categoryAssets
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all category assets data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -87,14 +81,14 @@ class CategoryAssetsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $categoryAsset = CategoryAssets::where('id', $id)->first();
+            $categoryAsset = CategoryAssets::find($id);
             // dd(\DB::getQueryLog());
             if (!$categoryAsset) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             return $this->sendResponse($categoryAsset, 'Category Asset detail');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -116,11 +110,11 @@ class CategoryAssetsController extends BaseController
                 'name' => 'required|unique:category_assets,name',
                 'description' => 'required|min:5'
             ]);
-    
-            // if ($validator->fails()){
-            //     return $this->sendError('Validator Error.', $validator->errors());
-            // }
-            $name = ucwords(strtolower($request->name));
+            
+            if ($validator->fails()){
+                return $this->sendError('Error!', ['error'=>'Nama sudah tersedia atau deskripsi kurang dari 5 karakter!']);
+            }
+            $name = ucwords($request->name);
             $desc = ucfirst(strtolower($request->description));
             $input = array(
                 "name" => $name,
@@ -133,7 +127,7 @@ class CategoryAssetsController extends BaseController
     
             return $this->sendResponse($success, 'Category Asset ditambahkan!');    
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         } 
     }
 
@@ -168,12 +162,12 @@ class CategoryAssetsController extends BaseController
                 ]);
                             
                 $data = array(
-                    'name' => ucwords(strtolower($new_name)),
+                    'name' => ucwords($new_name),
                     'description' => ucwords(strtolower($description))
                 );
             }
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Nama sudah tersedia atau deskripsi kurang dari 5 karakter!']);
             }
 
             // dd($data);exit();
@@ -185,7 +179,7 @@ class CategoryAssetsController extends BaseController
             $success['data'] = $updateDataCategoryAssets;
             return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -216,7 +210,7 @@ class CategoryAssetsController extends BaseController
             $success['data'] = $deleteCategoryAssets;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -247,7 +241,7 @@ class CategoryAssetsController extends BaseController
             $success['data'] = $restoreCategoryAsset;
             return $this->sendResponse($success, 'Data dipulihkan');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 }

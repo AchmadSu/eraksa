@@ -25,6 +25,7 @@ use App\Services\VerificationCodes\VerificationCodesService;
 use Symfony\Component\Console\Input\Input;
 use App\Http\Controllers\API\BaseController;
 use App\Http\Controllers\API\AuthOtpController as AuthOtpController;
+use App\Models\StudyPrograms;
 use App\Services\Users\UserService;
 
 class UsersController extends BaseController
@@ -52,6 +53,7 @@ class UsersController extends BaseController
 
     public function index(Request $request){
         try {
+            // dd(Auth::user()->name);
             sleep(5);
             //$users = User::all();
             $keyWords = $request->keyWords;
@@ -59,9 +61,15 @@ class UsersController extends BaseController
             $code_type = $request->code_type;
             $status = $request->status;
             $phone = $request->phone;
+            $skip = $request->skip;
+            $take = $request->take;
+            $order = $request->order;
+            $trash = $request->trash;
+            $roles = $request->roles;
 
             // dd(Auth::user()->hasRole('Super-Admin'));
             $study_program_id = $request->study_program_id;
+            $study_program_keyWords = $request->study_program_keyWords;
 
             if(isset($phone)) {
                 $spiltPhone = str_split($phone);
@@ -74,93 +82,79 @@ class UsersController extends BaseController
                     $phone = '+'.$phone;
                 }
             }
-            
-            $users = User::when(isset($keyWords))
-            ->where('name', 'like', '%'.$keyWords.'%')
-            ->orWhere('email', 'like', '%'.$keyWords.'%')
+
+            $studyPrograms = StudyPrograms::where('name', 'like', '%'.$study_program_keyWords.'%')
+            ->get();
+            $studyProgram_ids = array();
+            foreach ($studyPrograms as $rowstudyPrograms) {
+                $studyProgram_ids[] = $rowstudyPrograms->id;
+            }
+
+            // dd($studyProgram_ids);
+            \DB::enableQueryLog();
+            $users = User::
+            leftJoin('model_has_roles as model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+            ->leftJoin('roles as roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->leftJoin('study_programs as study_programs','users.study_program_id', '=', 'study_programs.id')
+            ->when(isset($keyWords))
+            ->where(function ($query) use ($keyWords){
+                $query->where('users.name', 'like', '%'.$keyWords.'%')->orWhere('users.email', 'like', '%'.$keyWords.'%');
+            })
             ->when(isset($code))
-            ->where('code', 'like', '%'.$code.'%')
+            ->where('users.code', 'like', '%'.$code.'%')
             ->when(isset($code_type))
-            ->where('code_type', $code_type)
+            ->where('users.code_type', $code_type)
             ->when(isset($status))
-            ->where('status', $status)
+            ->where('users.status', $status)
+            ->when(isset($roles))
+            ->where('roles.id', $roles)
             ->when(isset($phone))
-            ->where('phone', 'like', '%'.$phone.'%')
+            ->where('users.phone', 'like', '%'.$phone.'%')
             ->when(isset($study_program_id))
-            ->where('study_program_id', $study_program_id)
+            ->where('users.study_program_id', $study_program_id)
+            ->when(isset($study_program_keyWords))
+            ->whereIn('users.study_program_id', $studyProgram_ids)
             ->when(Auth::user()->hasRole('Admin'))
             ->role('Member')
+            ->select(
+                'users.id as id',
+                'users.name as name',
+                'users.code as code',
+                'users.code_type as code_type',
+                'users.email as email',
+                'users.status as status',
+                'users.created_at as created_at',
+                'users.phone as phone',
+                'users.updated_at as updated_at',
+                'study_programs.id as study_program_id',
+                'study_programs.name as study_program_name',
+                'roles.name as user_role'
+                )
+            ->when($order)
+            ->orderBy($order, 'ASC')
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
+            // dd(\DB::getQueryLog());
             // dd($users);
             if ($users->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($users, 'Displaying all users data');
+            $countDelete = User::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
+            $success['count'] = $users->count();
+            $success['countDelete'] = $countDelete;
+            $success['users'] = $users
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all users data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan!"]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
-    }
-
-    /** 
-     * Get All Users in Trash
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-    */
-
-    public function trash(Request $request){
-        try {
-            sleep(5);
-            $keyWords = $request->keyWords;
-            $code = $request->code;
-            $code_type = $request->code_type;
-            $status = $request->status;
-            $phone = $request->phone;
-
-            // dd(Auth::user()->hasRole('Super-Admin'));
-            $study_program_id = $request->study_program_id;
-
-            if(isset($phone)) {
-                $spiltPhone = str_split($phone);
-                // dd($spiltPhone);
-                if($spiltPhone[0] === '8'){
-                    $phone = '+62'.$phone;
-                }
-                // dd($spiltPhone[0].$spiltPhone[1]);
-                if($spiltPhone[0].$spiltPhone[1] === '62'){
-                    $phone = '+'.$phone;
-                }
-            }
-            // dd(Auth::user());
-            // dd(Auth::user()->hasRole('Admin'));
-            // \DB::enableQueryLog();
-            $users = User::when(isset($keyWords))
-            ->where('name', 'like', '%'.$keyWords.'%')
-            ->orWhere('email', 'like', '%'.$keyWords.'%')
-            ->when(isset($code))
-            ->where('code', 'like', '%'.$code.'%')
-            ->when(isset($code_type))
-            ->where('code_type', $code_type)
-            ->when(isset($status))
-            ->where('status', $status)
-            ->when(isset($phone))
-            ->where('phone', 'like', '%'.$phone.'%')
-            ->when(isset($study_program_id))
-            ->where('study_program_id', $study_program_id)
-            ->when(Auth::user()->hasRole('Admin'))
-            ->role('Member')
-            ->onlyTrashed()
-            ->get();
-            // var_dump($users);exit();
-            // var_dump($users->isEmpty());exit();
-            if ($users->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($users, 'Displaying all trash data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
-        }
     }
 
     /** 
@@ -174,14 +168,14 @@ class UsersController extends BaseController
     {
         try {
             sleep(5);
-            $user = User::where('id', $id)->first();
+            $user = User::find($id);
             // dd(\DB::getQueryLog());
             if (!$user) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             return $this->sendResponse($user, 'User detail by Id');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -220,9 +214,8 @@ class UsersController extends BaseController
                 return $this->sendError('Unauthorised!', ['error'=> 'Email atau Password salah!']);
             }
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error' => $th]);
-        }
-        
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
+        }  
     }
 
     /**
@@ -302,7 +295,7 @@ class UsersController extends BaseController
             }
             
             if ($validator->fails()){
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Data tidak valid!']);
             }
             
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
@@ -328,7 +321,7 @@ class UsersController extends BaseController
     
             return $this->sendResponse($success, 'User ditambahkan!'); 
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         } 
     }
 
@@ -420,7 +413,7 @@ class UsersController extends BaseController
             }   
 
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. Masukan data valid!']);
             }
 
             if ($new_email != NULL) {
@@ -457,7 +450,7 @@ class UsersController extends BaseController
             $success['data'] = $updateDataUser;
             return $this->sendResponse($success, 'Update data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -498,7 +491,7 @@ class UsersController extends BaseController
             $success['total_data'] = $counter;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -542,7 +535,7 @@ class UsersController extends BaseController
             $success['total_data'] = $counter;
             return $this->sendResponse($success, 'Data terpilih dipulihkan');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -585,7 +578,7 @@ class UsersController extends BaseController
             }
             
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -612,7 +605,7 @@ class UsersController extends BaseController
             ]);
 
             if ($validator->fails()){
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Data tidak valid!']);
             }
 
             $checkDeletedUser = User::onlyTrashed()->where('email', $email)->first();
@@ -652,7 +645,7 @@ class UsersController extends BaseController
             }
             
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -705,7 +698,48 @@ class UsersController extends BaseController
             }
             
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
+        }
+    }
+
+    /**
+     * Assign User Roles
+     * 
+     * @param \Illuminate\Http\Request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function assignRoles(Request $request)
+    {
+        try {
+            sleep(5);
+            $id = $request->id;
+            $roles = $request->roles;
+            if($roles == 2) {
+                $study_program_id = $request->study_program_id;
+            } else {
+                $study_program_id = 0;
+            }
+
+            $checkUser = User::find($id);
+            // dd($checkUser);
+            if($checkUser){
+                $checkUser->roles()->detach();
+                $role = Role::find($roles);
+                $checkUser->assignRole($role);
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+                $checkUser->study_program_id = $study_program_id;
+                $checkUser->save();
+                
+                $success['user_name'] = $checkUser->name;
+                $success['user_roles'] = $role->name;
+                return $this->sendResponse($success, 'Peran pengguna berhasil direset!');
+            } else {
+                return $this->sendError('Error!', ['error' => "Pengguna atau peran pengguna tidak ditemukan!"]);
+            }
+            
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -733,8 +767,8 @@ class UsersController extends BaseController
             $strOtp = "$otp";
 
             $this->verificationCodesService->sendWhatsappNotification($strOtp, $strPhone);
-        } catch (\Throwable $e) {
-            return $this->sendError('Error!', ['error' => $e]);
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 

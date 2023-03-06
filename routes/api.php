@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\LoansController;
 use App\Http\Controllers\API\UsersController;
 use App\Http\Controllers\API\AssetsController;
+use App\Http\Controllers\API\ReturnsController;
 use App\Http\Controllers\API\WorkshopsController;
 use App\Http\Controllers\API\PlacementsController;
 use App\Http\Controllers\API\StudyProgramsController;
@@ -32,11 +33,14 @@ use App\Http\Controllers\API\VerificationCodesController;
 /**--- Users --- */
 Route::controller(UsersController::class)->group(function(){
     Route::middleware(['auth:sanctum'])->group(function(){
+        Route::middleware(['role:Super-Admin'])->group(function(){
+            Route::put('users/assignRoles', 'assignRoles');
+        });
         Route::middleware(['role:Super-Admin|Admin'])->group(function(){
-            Route::get('users/getAll', 'index')->name('all users');
-            Route::delete('users/delete', 'delete');
-            Route::get('users/trash', 'trash');
-            Route::put('users/restore', 'restore');
+        Route::get('users/getAll', 'index')->name('all users');
+        Route::delete('users/delete', 'delete');
+        Route::get('users/trash', 'trash');
+        Route::put('users/restore', 'restore');
         });
         Route::get('users/detail/{id}', 'show');
         Route::put('users/update', 'update');
@@ -54,10 +58,11 @@ Route::controller(AssetsController::class)->group(function(){
     // dd(Auth::guest());
     Route::middleware('auth:sanctum')->group(function(){
         Route::middleware('role:Super-Admin|Admin')->group(function(){
+            Route::get('assets/trash', 'trash');
+            Route::get('assets/percentage', 'percentage');
             Route::post('assets/create', 'create'); 
             Route::put('assets/update', 'update');
             Route::delete('assets/delete', 'delete');
-            Route::get('assets/trash', 'trash');
             Route::put('assets/restore', 'restore');
         });
         Route::get('assets/getAll', 'index');
@@ -104,6 +109,7 @@ Route::controller(WorkshopsController::class)->group(function(){
             Route::post('workshops/create', 'create'); 
             Route::put('workshops/update', 'update');
             Route::delete('workshops/delete', 'delete');
+            Route::delete('workshops/deletePermanent', 'deletePermanent');
             Route::get('workshops/trash', 'trash');
             Route::put('workshops/restore', 'restore');
         });
@@ -113,17 +119,16 @@ Route::controller(WorkshopsController::class)->group(function(){
 /**--- Programs Study --- */
 Route::controller(StudyProgramsController::class)->group(function(){
     Route::middleware('auth:sanctum')->group(function(){
-        Route::middleware('role:Super-Admin|Admin')->group(function(){
-            Route::middleware('role:Super-Admin')->group(function(){
-                Route::post('studyPrograms/create', 'create'); 
-                Route::put('studyPrograms/update', 'update');
-                Route::delete('studyPrograms/delete', 'delete');
-                Route::get('studyPrograms/trash', 'trash');
-                Route::put('studyPrograms/restore', 'restore');
-            });
-            Route::get('studyPrograms/getAll', 'index');
-            Route::get('studyPrograms/detail/{id}', 'show');
+        // Route::middleware('role:Super-Admin|Admin')->group(function(){
+        Route::middleware('role:Super-Admin')->group(function(){
+            Route::post('studyPrograms/create', 'create'); 
+            Route::put('studyPrograms/update', 'update');
+            Route::delete('studyPrograms/delete', 'delete');
+            Route::put('studyPrograms/restore', 'restore');
         });
+        Route::get('studyPrograms/getAll', 'index');
+        Route::get('studyPrograms/detail/{id}', 'show');
+        // });
     });
 });
 
@@ -140,16 +145,31 @@ Route::controller(VerificationCodesController::class)->group(function(){
 Route::controller(LoansController::class)->group(function(){
     // dd(Auth::guest());
     Route::middleware('auth:sanctum')->group(function(){
-        Route::middleware('role:Super-Admin')->group(function(){
-            Route::put('loans/confirmation', 'confirmation');
+        Route::middleware('role:Super-Admin|Admin')->group(function(){
+            Route::middleware('role:Super-Admin')->group(function(){
+                Route::put('loans/confirmation', 'confirmation');
+            });
+            Route::post('loans/demand', 'demand');
         });
         Route::put('loans/update', 'update');
         Route::delete('loans/delete', 'delete');
-        Route::get('loans/trash', 'trash');
+        Route::get('loans/percentage', 'percentage');
         Route::put('loans/restore', 'restore');
         Route::get('loans/getAll', 'index');
         Route::post('loans/create', 'create'); 
         Route::get('loans/detail/{id}', 'show');
+    });
+});
+
+/**--- Returns --- */
+Route::controller(ReturnsController::class)->group(function(){
+    // dd(Auth::guest());
+    Route::middleware('auth:sanctum')->group(function(){
+        Route::middleware('role:Super-Admin|Admin')->group(function(){
+            Route::post('returns/create', 'create'); 
+        });
+        Route::get('returns/getAll', 'index');
+        Route::get('returns/detail/{id}', 'show');
     });
 });
 

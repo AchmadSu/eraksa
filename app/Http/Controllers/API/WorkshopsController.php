@@ -27,82 +27,63 @@ class WorkshopsController extends BaseController
 
     public function index(Request $request){
         try {
-            sleep(5);
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             // dd(Auth::user());
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
-            $name = $request->name;
-            $phone = $request->phone;
+            $keyWords = $request->keyWords;
+            // $phone = $request->phone;
+            $order = $request->order;
+            $skip = $request->skip;
+            $take = $request->take;
+            $trash = $request->trash;
             
-            if(isset($phone)) {
-                $spiltPhone = str_split($phone);
-                // dd($spiltPhone);
-                if($spiltPhone[0] === '8'){
-                    $phone = '+62'.$phone;
-                }
-                // dd($spiltPhone[0].$spiltPhone[1]);
-                if($spiltPhone[0].$spiltPhone[1] === '62'){
-                    $phone = '+'.$phone;
-                }
-            }
+            // if(isset($phone)) {
+            //     $spiltPhone = str_split($phone);
+            //     // dd($spiltPhone);
+            //     if($spiltPhone[0] === '8'){
+            //         $phone = '+62'.$phone;
+            //     }
+            //     // dd($spiltPhone[0].$spiltPhone[1]);
+            //     if($spiltPhone[0].$spiltPhone[1] === '62'){
+            //         $phone = '+'.$phone;
+            //     }
+            // }
 
-            $workshops = Workshops::when(isset($name))
-            ->where('name', 'like', '%'.$name.'%')
-            ->when(isset($phone))
-            ->where('phone', 'like', '%'.$phone.'%')
+            $workshops = Workshops::
+            when(isset($keyWords))
+            ->where(function ($query) use ($keyWords){
+                $query->where('name', 'like', '%'.$keyWords.'%')->orWhere('phone', 'like', '%'.$keyWords.'%');
+            })
+            ->when($order)
+            ->orderBy($order, 'ASC')
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
             // dd(\DB::getQueryLog());
             // dd($workshops);
             if ($workshops->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($workshops, 'Displaying all workshops data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
-        }
-    }
-
-    /** 
-     * Get All Workshops in Trash
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-    */
-
-    public function trash(Request $request){
-        try {
-            sleep(5);
-            // dd(Auth::user());
-            // dd(Auth::user());
-            // \DB::enableQueryLog();
-            $name = $request->name;
-            $phone = $request->phone;
-            
-            if(isset($phone)) {
-                $spiltPhone = str_split($phone);
-                // dd($spiltPhone);
-                if($spiltPhone[0] === '8'){
-                    $phone = '+62'.$phone;
-                }
-                // dd($spiltPhone[0].$spiltPhone[1]);
-                if($spiltPhone[0].$spiltPhone[1] === '62'){
-                    $phone = '+'.$phone;
-                }
-            }
-
-            $workshops = Workshops::onlyTrashed()
-            ->when(isset($name))
-            ->where('name', 'like', '%'.$name.'%')
-            ->when(isset($phone))
-            ->where('phone', 'like', '%'.$phone.'%')
-            ->get();
+            $count = $workshops->count();
+            $countDelete = Workshops::onlyTrashed()->count();
             // dd(\DB::getQueryLog());
-            if ($workshops->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($workshops, 'Displaying all trash data');
+            $success['count'] = $count;
+            $success['countDelete'] = $countDelete;
+            $success['workshops']= $workshops
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all workshops data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -118,14 +99,14 @@ class WorkshopsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $workshop = Workshops::where('id', $id)->first();
+            $workshop = Workshops::find($id);
             // dd(\DB::getQueryLog());
             if (!$workshop) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             return $this->sendResponse($workshop, 'Workshop detail');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -142,22 +123,40 @@ class WorkshopsController extends BaseController
     public function create(Request $request){
         try {
             sleep(5);
+            $phone = $request->phone;
+            if(isset($phone)) {
+                $spiltPhone = str_split($phone);
+                // dd($spiltPhone);
+                if($spiltPhone[0] === '8'){
+                    $phone = '+62'.$phone;
+                }
+                // dd($spiltPhone[0].$spiltPhone[1]);
+                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                    $phone = '+'.$phone;
+                }
+            }
+
             $validator = Validator::make($request->all(),[
                 'name' => 'required|unique:workshops,name|min:3',
-                'phone' => 'required|numeric|unique:workshops,phone'
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Validator Error.', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. Nama sudah tersedia!']);
+            }
+            $checkPhone = Workshops::where('phone', $phone)->first();
+            // dd($phone);
+            if($checkPhone){
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. No Telepon sudah tersedia!']);
             }
     
             $input = $request->all();
+            $input['phone'] = $phone;
             $createWorkshop = Workshops::create($input);
             $success['token'] = Str::random(15);
     
             return $this->sendResponse($success, 'Workshop ditambahkan!');    
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         } 
     }
 
@@ -175,6 +174,24 @@ class WorkshopsController extends BaseController
             $id = $request->id;
             $new_name = $request->new_name;
             $new_phone = $request->new_phone;
+            
+            if(isset($new_phone)) {
+                $spiltPhone = str_split($new_phone);
+                // dd($spiltPhone);
+                if($spiltPhone[0] === '8'){
+                    $new_phone = '+62'.$new_phone;
+                }
+                // dd($spiltPhone[0].$spiltPhone[1]);
+                if($spiltPhone[0].$spiltPhone[1] === '62'){
+                    $new_phone = '+'.$new_phone;
+                }
+            }
+
+            $checkPhone = Workshops::where('phone', $new_phone)->first();
+            // dd($phone);
+            if($checkPhone){
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. No Telepon sudah tersedia!']);
+            }
             
             if ($new_name == NULL) {
                 $validator = Validator::make($request->all(), [
@@ -206,7 +223,7 @@ class WorkshopsController extends BaseController
             }
 
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. Nama atau nomor ponsel sudah tersedia!']);
             }
 
             // dd($data);exit();
@@ -283,4 +300,35 @@ class WorkshopsController extends BaseController
             return $this->sendError('Error!', $th);
         }
     }
+
+    /**
+     * Delete Multiple Workshops Permanently
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+     public function deletePermanent(Request $request)
+     {
+         try {
+             sleep(5);
+             $ids = $request->ids;
+             // dd($ids);
+             // \DB::enableQueryLog();
+             $checkWorkshops = Workshops::whereIn('id', $ids)->onlyTrashed()->get();
+             // dd(\DB::getQueryLog());
+             // dd($checkWorkshops);
+             if($checkWorkshops->isEmpty()){
+                 return $this->sendError('Error!', ['error'=> 'Tidak ada data yang dihapus!']);
+             }
+             $deleteWorkshops = Workshops::whereIn('id', $ids)->forceDelete();
+             $tokenMsg = Str::random(15);
+             $success['token'] = $tokenMsg;
+             $success['message'] = "Delete selected data";
+             $success['data'] = $deleteWorkshops;
+             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
+         } catch (\Throwable $th) {
+             return $this->sendError('Error!', $th);
+         }
+     }
 }

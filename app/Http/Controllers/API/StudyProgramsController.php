@@ -28,50 +28,48 @@ class StudyProgramsController extends BaseController
 
     public function index(Request $request){
         try {
-            sleep(5);
+            // dd(base64_encode(2));
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
             // dd(Auth::user());
             // dd(Auth::user()->name);
-            // \DB::enableQueryLog();
+            $ids = $request->ids;
             $name = $request->name;
-            $studyPrograms = StudyPrograms::when(isset($name))
+            $skip = $request->skip;
+            $take = $request->take;
+            $trash = $request->trash;
+            $studyPrograms = StudyPrograms::
+            when(isset($ids))
+            ->whereIn('id', $ids)
+            ->when(isset($name))
             ->where('name', 'like', '%'.$name.'%')
+            ->orderBy('name', 'ASC')
+            ->when($trash == 1)
+            ->onlyTrashed()
             ->get();
-            // dd(\DB::getQueryLog());
             // dd($studyPrograms);
             if ($studyPrograms->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            return $this->sendResponse($studyPrograms, 'Displaying all assets data');
-        } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
-        }
-    }
-
-    /** 
-     * Get All Study Programs in Trash
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-    */
-
-    public function trash(Request $request){
-        try {
-            sleep(5);
-            // dd(Auth::user());
-            // dd(Auth::user());
-            // \DB::enableQueryLog();
-            $name = $request->name;
-            $studyPrograms =StudyPrograms::onlyTrashed()
-            ->when(isset($name))
-            ->where('name', 'like', '%'.$name.'%')
-            ->get();
             // dd(\DB::getQueryLog());
-            if ($studyPrograms->isEmpty()) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-            return $this->sendResponse($studyPrograms, 'Displaying all trash data');
+            // \DB::enableQueryLog();
+            $countDelete = StudyPrograms::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
+            $success['count'] = $studyPrograms->count();
+            $success['countDelete'] = $countDelete;
+            $success['study_programs'] = $studyPrograms
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all assets data');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -87,14 +85,14 @@ class StudyProgramsController extends BaseController
         try {
             sleep(5);
             // \DB::enableQueryLog();
-            $studyPrograms = StudyPrograms::where('id', $id)->first();
+            $studyPrograms = StudyPrograms::find($id);
             // dd(\DB::getQueryLog());
             if (!$studyPrograms) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             return $this->sendResponse($studyPrograms, 'Program Studi detail');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', ['error' => $th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
         
     }
@@ -116,7 +114,7 @@ class StudyProgramsController extends BaseController
             ]);
     
             if ($validator->fails()){
-                return $this->sendError('Validator Error.', $validator->errors());
+                return $this->sendError('Error!', ['error' => 'Nama sudah tersedia. Gunakan nama yang lain!']);
             }
     
             $name = ucwords(strtolower($request->name));
@@ -128,7 +126,7 @@ class StudyProgramsController extends BaseController
             $success['token'] = Str::random(15);
             return $this->sendResponse($success, 'Program Studi ditambahkan!');    
         } catch (\Throwable $th) {
-            return $this->sendError('Error!'.$th, ['error'=>$th]);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         } 
     }
 
@@ -144,13 +142,16 @@ class StudyProgramsController extends BaseController
         try {
             sleep(5);
             $id = $request->id;
+            if(!$id) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada program studi yang dipilih!']);
+            }
             $name = $request->name;
             $validator = Validator::make($request->all(),[
                 'name' => 'required|unique:study_programs,name|min:3'
             ]);
                 
             if ($validator->fails()) {
-                return $this->sendError('Error!', $validator->errors());
+                return $this->sendError('Error!', ['error'=>'Nama sudah tersedia. Gunakan nama yang lain!']);
             }
 
             // dd($data);exit();
@@ -162,7 +163,7 @@ class StudyProgramsController extends BaseController
             $success['data'] = $updateDataStudyProgram;
             return $this->sendResponse($success, 'Program Studi berhasil diupdate!');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -178,6 +179,9 @@ class StudyProgramsController extends BaseController
         try {
             sleep(5);
             $ids = $request->ids;
+            if(!$ids) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada program studi yang dipilih!']);
+            }
             // dd($ids);
             // \DB::enableQueryLog();
             $checkStudyPrograms = StudyPrograms::whereIn('id', $ids)->get();
@@ -193,7 +197,7 @@ class StudyProgramsController extends BaseController
             $success['data'] = $deleteStudyPrograms;
             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 
@@ -224,7 +228,7 @@ class StudyProgramsController extends BaseController
             $success['data'] = $restoreCategoryAsset;
             return $this->sendResponse($success, 'Data terpilih berhasil dipulihkan');
         } catch (\Throwable $th) {
-            return $this->sendError('Error!', $th);
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
         }
     }
 }

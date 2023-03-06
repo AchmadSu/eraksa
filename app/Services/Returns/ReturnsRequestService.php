@@ -1,5 +1,5 @@
 <?php
-namespace App\Services\Loans;
+namespace App\Services\Returns;
 // require_once '/path/to/vendor/autoload.php';
 use App\Http\Controllers\API\BaseController;
 use Carbon\Carbon;
@@ -7,11 +7,11 @@ use Twilio\Rest\Client;
 use Illuminate\Support\Str;
 // use App\Models\VerificationCodes;
 
-class LoansRequestService{
+class ReturnsRequestService{
 
     /** Sending OTP via Whats App */
     public function sendWhatsappNotification(String $message, String $recipient){
-        // sleep(5);
+        sleep(5);
         // dd($recipient);
         $tokenMsg = Str::random(15);
         $sid    = getenv("TWILIO_SID");

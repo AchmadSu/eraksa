@@ -6,8 +6,9 @@
     "license": "MIT",
     "require": {
         "php": "^8.0.2",
+        "barryvdh/laravel-cors": "^3.0",
         "doctrine/dbal": "^3.5",
-        "guzzlehttp/guzzle": "^7.2",
+        "guzzlehttp/guzzle": "^7.5",
         "laravel/framework": "^9.19",
         "laravel/passport": "^11.3",
         "laravel/sanctum": "^3.0",
