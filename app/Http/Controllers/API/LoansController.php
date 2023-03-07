@@ -198,49 +198,42 @@ class LoansController extends BaseController
     {
         try {
             sleep(2);
+            // dd(Auth::user()->id);
             $loans = Loans::find($id);
+            // $loaner_id = $request->loaner_id;
+            if (!$loans) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            // \DB::enableQueryLog();
+            $loans = Loans::join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->leftJoin('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',
+                'loans.loaner_id as loaner_id', 
+                'loaners.name as loaner_name', 
+                'loaners.code_type as loaner_code_type', 
+                'loaners.code as loaner_code', 
+                'loans.lender_id as lender_id', 
+                'lenders.name as lender_name',
+                'lenders.code_type as lender_code_type', 
+                'lenders.code as lender_code',  
+                'recipients.id as recipient_id',
+                'recipients.name as recipient_name',
+                'recipients.code_type as recipient_code_type', 
+                'recipients.code as recipient_code', 
+            )->find($id);
             // dd(\DB::getQueryLog());
             if (!$loans) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            if($loans->status == '0') {
-                $loans = Loans::join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-                ->select(
-                    'loans.id as id',
-                    'loans.code as code',
-                    'loans.status as status',
-                    'loans.date as date',
-                    'loans.due_date as due_date',
-                    'loans.loaner_id as loaner_id', 
-                    'loaners.name as loaner_name', 
-                    'loaners.code_type as loaner_code_type', 
-                    'loaners.code as loaner_code', 
-                )->find($id);
-            } else {
-                $loans = Loans::join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-                ->join('users as lenders', 'loans.lender_id', '=', 'lenders.id')
-                ->select(
-                    'loans.id as id',
-                    'loans.code as code',
-                    'loans.status as status',
-                    'loans.date as date',
-                    'loans.due_date as due_date',
-                    'loans.loaner_id as loaner_id', 
-                    'loans.return_id as return_id', 
-                    'loaners.name as loaner_name',
-                    'loaners.code_type as loaner_code_type', 
-                    'loaners.code as loaner_code', 
-                    'loans.lender_id as lender_id', 
-                    'lenders.name as lender_name',
-                    'lenders.code_type as lender_code_type', 
-                    'lenders.code as lender_code',
-                )->find($id);
-            }
-
-            if (!$loans) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-                // \DB::enableQueryLog();
+            
             $loan_details = LoanDetails::
             join('assets', 'loan_details.asset_id', '=', 'assets.id')
             ->join('users as users', 'assets.user_id', '=', 'users.id')
