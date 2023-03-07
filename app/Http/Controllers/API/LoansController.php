@@ -110,151 +110,58 @@ class LoansController extends BaseController
                 }
             }
 
-            if($status != "0") {
-                if($status == "3") {
-                    $loans = Loans::
-                        join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-                        ->join('users as lenders', 'loans.lender_id', '=', 'lenders.id')
-                        ->join('returns as returns', 'loans.return_id', '=', 'returns.id')
-                        ->join('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
-                        ->when(isset($code))
-                        ->where('loans.code', 'like', '%'.$code.'%')
-                        ->when(isset($loaner_id))
-                        ->where('loans.loaner_id', $loaner_id)
-                        ->when(isset($loaner_keyWords))
-                        ->whereIn('loans.loaner_id', $loaner_ids)
-                        ->when(isset($lender_id))
-                        ->where('loans.lender_id', $lender_id)
-                        ->when(isset($lender_keyWords))
-                        ->whereIn('loans.lender_id', $lender_ids)
-                        ->when(isset($dateOne) && isset($dateTwo))
-                        ->whereBetween('loans.date', [$from, $to])
-                        ->when(isset($dateOne) && !isset($dateTwo))
-                        ->where('loans.date', $from)
-                        ->when(isset($dueDateOne) && isset($dueDateTwo))
-                        ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
-                        ->when(isset($dueDateOne) && !isset($dueDateTwo))
-                        ->where('loans.due_date', $dueFrom)
-                        ->when(isset($status))
-                        ->where('loans.status', $status)
-                        ->select(
-                            'loans.id as id',
-                            'loans.code as code',
-                            'loans.status as status',
-                            'loans.date as date',
-                            'loans.due_date as due_date',
-                            'loans.return_id as return_id',
-                            'loans.loaner_id as loaner_id', 
-                            'loaners.name as loaner_name', 
-                            'loaners.code_type as loaner_code_type', 
-                            'loaners.code as loaner_code', 
-                            'loans.lender_id as lender_id', 
-                            'lenders.name as lender_name',
-                            'lenders.code_type as lender_code_type', 
-                            'lenders.code as lender_code',  
-                            'recipients.id as recipient_id',
-                            'recipients.name as recipient_name',
-                            'recipients.code_type as recipient_code_type', 
-                            'recipients.code as recipient_code',  
-                        )
-                        ->when($trash == 1)
-                        ->onlyTrashed()
-                        ->when($orderDate)
-                        ->orderby('date', $orderDate)
-                        ->when($orderDueDate)
-                        ->orderby('due_date', $orderDueDate)
-                        ->get()
-                    ;
-                } else {
-                    $loans = Loans::
-                        join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-                        ->join('users as lenders', 'loans.lender_id', '=', 'lenders.id')
-                        ->when(isset($code))
-                        ->where('loans.code', 'like', '%'.$code.'%')
-                        ->when(isset($loaner_id))
-                        ->where('loans.loaner_id', $loaner_id)
-                        ->when(isset($loaner_keyWords))
-                        ->whereIn('loans.loaner_id', $loaner_ids)
-                        ->when(isset($lender_id))
-                        ->where('loans.lender_id', $lender_id)
-                        ->when(isset($lender_keyWords))
-                        ->whereIn('loans.lender_id', $lender_ids)
-                        ->when(isset($dateOne) && isset($dateTwo))
-                        ->whereBetween('loans.date', [$from, $to])
-                        ->when(isset($dateOne) && !isset($dateTwo))
-                        ->where('loans.date', $from)
-                        ->when(isset($dueDateOne) && isset($dueDateTwo))
-                        ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
-                        ->when(isset($dueDateOne) && !isset($dueDateTwo))
-                        ->where('loans.due_date', $dueFrom)
-                        ->when(isset($status))
-                        ->where('loans.status', $status)
-                        ->select(
-                            'loans.id as id',
-                            'loans.code as code',
-                            'loans.status as status',
-                            'loans.date as date',
-                            'loans.due_date as due_date',
-                            'loans.return_id as return_id',
-                            'loans.loaner_id as loaner_id', 
-                            'loaners.name as loaner_name', 
-                            'loaners.code_type as loaner_code_type', 
-                            'loaners.code as loaner_code', 
-                            'loans.lender_id as lender_id', 
-                            'lenders.name as lender_name',
-                            'lenders.code_type as lender_code_type', 
-                            'lenders.code as lender_code',  
-                        )
-                        ->when($trash == 1)
-                        ->onlyTrashed()
-                        ->when($orderDate)
-                        ->orderby('date', $orderDate)
-                        ->when($orderDueDate)
-                        ->orderby('due_date', $orderDueDate)
-                        ->get()
-                    ;
-                }
-                // dd(\DB::getQueryLog());
-            } else {
-                // \DB::enableQueryLog();
-                $loans = Loans::
-                    join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-                    ->when(isset($code))
-                    ->where('loans.code', 'like', '%'.$code.'%')
-                    ->when(isset($loaner_id))
-                    ->where('loans.loaner_id', $loaner_id)
-                    ->when(isset($loaner_keyWords))
-                    ->whereIn('loans.loaner_id', $loaner_ids)
-                    ->when(isset($dateOne) && isset($dateTwo))
-                    ->whereBetween('loans.date', [$from, $to])
-                    ->when(isset($dateOne) && !isset($dateTwo))
-                    ->where('loans.date', $from)
-                    ->when(isset($dueDateOne) && isset($dueDateTwo))
-                    ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
-                    ->when(isset($dueDateOne) && !isset($dueDateTwo))
-                    ->where('loans.due_date', $dueFrom)
-                    ->when(isset($status))
-                    ->where('loans.status', $status)
-                    ->select(
-                        'loans.id as id',
-                        'loans.code as code',
-                        'loans.status as status',
-                        'loans.date as date',
-                        'loans.due_date as due_date',
-                        'loans.loaner_id as loaner_id', 
-                        'loaners.name as loaner_name', 
-                        'loaners.code_type as loaner_code_type', 
-                        'loaners.code as loaner_code', 
-                    )
-                    ->when($trash == 1)
-                    ->onlyTrashed()
-                    ->when($orderDate)
-                    ->orderby('date', $orderDate)
-                    ->when($orderDueDate)
-                    ->orderby('due_date', $orderDueDate)
-                    ->get()
-                ;
-            }
+            $loans = Loans::
+            join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->leftJoin('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+            ->when(isset($code))
+            ->where('loans.code', 'like', '%'.$code.'%')
+            ->when(isset($loaner_id))
+            ->where('loans.loaner_id', $loaner_id)
+            ->when(isset($loaner_keyWords))
+            ->whereIn('loans.loaner_id', $loaner_ids)
+            ->when(isset($lender_id))
+            ->where('loans.lender_id', $lender_id)
+            ->when(isset($lender_keyWords))
+            ->whereIn('loans.lender_id', $lender_ids)
+            ->when(isset($dateOne) && isset($dateTwo))
+            ->whereBetween('loans.date', [$from, $to])
+            ->when(isset($dateOne) && !isset($dateTwo))
+            ->where('loans.date', $from)
+            ->when(isset($dueDateOne) && isset($dueDateTwo))
+            ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
+            ->when(isset($dueDateOne) && !isset($dueDateTwo))
+            ->where('loans.due_date', $dueFrom)
+            ->when(isset($status))
+            ->where('loans.status', $status)
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',
+                'loans.loaner_id as loaner_id', 
+                'loaners.name as loaner_name', 
+                'loaners.code_type as loaner_code_type', 
+                'loaners.code as loaner_code', 
+                'loans.lender_id as lender_id', 
+                'lenders.name as lender_name',
+                'lenders.code_type as lender_code_type', 
+                'lenders.code as lender_code',  
+                'recipients.id as recipient_id',
+                'recipients.name as recipient_name',
+                'recipients.code_type as recipient_code_type', 
+                'recipients.code as recipient_code',  
+            )
+            ->when($trash == 1)
+            ->onlyTrashed()
+            ->when($orderDate)
+            ->orderby('date', $orderDate)
+            ->when($orderDueDate)
+            ->orderby('due_date', $orderDueDate)
+            ->get();
                 // dd(Loans::all());
                 // dd(Auth::user()->name);
             // \DB::enableQueryLog();
