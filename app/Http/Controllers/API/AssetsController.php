@@ -401,8 +401,13 @@ class AssetsController extends BaseController
             if ($validator->fails()){
                 return $this->sendError('Error!', ['error'=>'Data tidak valid!']);
             }
-
-            $user_id =  Auth::user()->id;
+            $auth = Auth::user();
+            // dd($auth);
+            $user_id =  $auth->id;
+            $study_program_id = (int)$request->study_program_id;
+            if($auth->hasRole('Admin')){
+                $study_program_id = $auth->study_program_id;
+            }
             $date = date("d/m/Y");
             $category_name = CategoryAssets::where('id', $request->category_id)->pluck('name');
             $category_name = Str::upper(str_replace(array('["','"]'), '', $category_name));
@@ -418,7 +423,7 @@ class AssetsController extends BaseController
                 "condition" => "0",
                 "code" => $code,
                 "name" => ucwords($request->name),
-                "study_program_id" => (int)$request->study_program_id,
+                "study_program_id" => $study_program_id,
                 "category_id" => (int)$request->category_id,
                 "placement_id" => (int)$request->placement_id,
             );
