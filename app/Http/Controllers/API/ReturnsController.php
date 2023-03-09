@@ -99,7 +99,7 @@ class ReturnsController extends BaseController
                     $loan_ids[] = $rowloan->id;
                 }
             }
-            // \DB::enableQueryLog();
+            \DB::enableQueryLog();
             // dd($request->loaner_ids == NULL);
             
             $returns = Returns::join('users as loaners', 'returns.loaner_id', '=', 'loaners.id')
@@ -111,10 +111,10 @@ class ReturnsController extends BaseController
             ->whereIn('returns.loaner_id', $loaner_ids)
             ->when(isset($recipient_keyWords))
             ->whereIn('returns.recipient_id', $recipient_ids)
-            ->when(isset($dateOne) && !isset($dateTwo))
-            ->where('returns.date', $from)
             ->when(isset($dateOne) && isset($dateTwo))
-            ->whereBetween('returns.date', [$from, $to])
+            ->whereBetween('returns.date', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->when(isset($dateOne) && !isset($dateTwo))
+            ->whereBetween('returns.date', [$from.' 00:00:00', $from.' 23:59:59'])
             ->when(isset($loan_code))
             ->whereIn('returns.loan_id', $loan_ids)
             ->select(
@@ -138,17 +138,17 @@ class ReturnsController extends BaseController
                 // dd("test");
                 // dd(Loans::all());
                 // dd(Auth::user()->name);
-                // \DB::enableQueryLog();
-            // dd(\DB::getQueryLog());
+                // dd(\DB::getQueryLog());
                 // dd($loans);
             if ($returns->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             $count = $returns->count();
-            $countDelete = Returns::onlyTrashed()->count();
+            // \DB::enableQueryLog();
+            // $countDelete = Returns::onlyTrashed()->count();
             // dd(\DB::getQueryLog());
             $success['count'] = $count;
-            $success['countDelete'] = $countDelete;
+            // $success['countDelete'] = $countDelete;
             $success['returns']= $returns
                 ->when(isset($skip))
                 ->skip($skip)
