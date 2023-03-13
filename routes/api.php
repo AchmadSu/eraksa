@@ -156,6 +156,7 @@ Route::controller(LoansController::class)->group(function(){
         Route::get('loans/percentage', 'percentage');
         Route::put('loans/restore', 'restore');
         Route::get('loans/getAll', 'index');
+        Route::get('loans/historyAssets', 'historyAssets');
         Route::post('loans/create', 'create'); 
         Route::get('loans/detail/{id}', 'show');
     });

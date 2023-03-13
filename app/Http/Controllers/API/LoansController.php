@@ -186,6 +186,122 @@ class LoansController extends BaseController
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
         }
     }
+    
+    /** 
+     * Get History Assets Loans
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function historyAssets(Request $request){
+        try {
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
+
+            $asset_id = $request->asset_id;
+            $dateOne = $request->dateOne;
+            $dateTwo = $request->dateTwo;
+            $status = $request->status;
+            $dueDateOne = $request->dueDateOne;
+            $dueDateTwo = $request->dueDateTwo;
+            $skip = $request->skip;
+            $take = $request->take;
+            $trash = $request->trash;
+            $orderDate = $request->orderDate;
+            $orderDueDate = $request->orderDueDate;
+
+            $from = date($dateOne);
+            $to = date($dateTwo);
+            
+            $dueFrom = date($dueDateOne);
+            $dueTo = date($dueDateTwo);
+
+            if(!isset($asset_id)){
+                return $this->sendError('Error!', [
+                    'error' => 
+                    'Tidak ada riwayat aset yang dipilih!'
+                ]);
+            }
+
+            if(isset($dateTwo)){
+                if($from > $to){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
+                    ]);
+                }
+            }
+
+            if(isset($dueDateTwo)){
+                if($dueFrom > $dueTo){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal tenggang waktu pertama harus lebih kecil atau sama dengan tanggal tenggang waktu kedua!'
+                    ]);
+                }
+            }
+            // dd($request->loaner_ids)
+
+            // \DB::enableQueryLog();
+            $loans = Loans::
+            join('loan_details as loan_details', 'loans.id', '=', 'loan_details.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->when(isset($dateOne) && isset($dateTwo))
+            ->whereBetween('loans.date', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->when(isset($dateOne) && !isset($dateTwo))
+            ->whereBetween('loans.date', [$from.' 00:00:00', $from.' 23:59:59'])
+            ->when(isset($dueDateOne) && isset($dueDateTwo))
+            ->whereBetween('loans.due_date', [$dueFrom.' 00:00:00', $dueTo.' 23:59:59'])
+            ->when(isset($dueDateOne) && !isset($dueDateTwo))
+            ->whereBetween('loans.due_date', [$dueFrom.' 00:00:00', $dueFrom.' 23:59:59'])
+            ->when(isset($asset_id))
+            ->where('loan_details.asset_id', $asset_id)
+            ->when(isset($status))
+            ->where('loans.status', $status)
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',  
+            )
+            ->when($trash == 1)
+            ->onlyTrashed()
+            ->when($orderDate)
+            ->orderby('date', $orderDate)
+            ->when($orderDueDate)
+            ->orderby('due_date', $orderDueDate)
+            ->get();
+                // dd(Loans::all());
+                // dd(Auth::user()->name);
+            // dd(\DB::getQueryLog());
+            // \DB::enableQueryLog();
+            
+            // dd($loans);
+            if ($loans->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            $count = $loans->count();
+            $countDelete = Loans::onlyTrashed()->count();
+            // dd(\DB::getQueryLog());
+            $success['count'] = $count;
+            $success['loans'] = $loans
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all Loans data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
+        }
+    }
 
     /** 
      * Get Loans By Id
@@ -730,7 +846,7 @@ class LoansController extends BaseController
                     // if()
                     $unSetStatusAssets->status = "0";
                     $unSetStatusAssets->save();
-                    $getAssetFromLoanDetails[$i]->delete();
+                    $getAssetFromLoanDetails[$i]->forceDelete();
                     // dd("test");
                     // dd($updateLoanDetails['asset_id']);
                     // dd($getAssetFromLoanDetails[$i]['asset_id']);
@@ -1031,8 +1147,8 @@ class LoansController extends BaseController
                         $unSetStatusAssets->save();
                     }
                     // dd($getAssetFromLoanDetails[$i]);
-                    $getAssetFromLoanDetails[$i]['deleted_at'] = Carbon::now();
-                    $getAssetFromLoanDetails[$i]->delete();
+                    // $getAssetFromLoanDetails[$i]['deleted_at'] = Carbon::now();
+                    $getAssetFromLoanDetails[$i]->forceDelete();
                 }     
                 $deleteLoans->deleted_at = Carbon::now();
                 $deleteLoans->delete();
