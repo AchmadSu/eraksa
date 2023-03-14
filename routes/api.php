@@ -63,6 +63,7 @@ Route::controller(AssetsController::class)->group(function(){
             Route::post('assets/create', 'create'); 
             Route::put('assets/update', 'update');
             Route::delete('assets/delete', 'delete');
+            Route::delete('assets/deletePermanently', 'deletePermanently');
             Route::put('assets/restore', 'restore');
         });
         Route::get('assets/getAll', 'index');

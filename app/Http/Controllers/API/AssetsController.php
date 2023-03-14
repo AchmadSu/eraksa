@@ -615,4 +615,48 @@ class AssetsController extends BaseController
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
     }
+
+    /**
+     * Put Multiple Assets into trash
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+     public function deletePermanently(Request $request)
+     {
+        try {
+            sleep(5);
+            $ids = $request->ids;
+            // dd($ids);
+            if($ids == NULL) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada aset yang dipilih!']);
+            }
+            // \DB::enableQueryLog();
+            $checkAssets = Assets::whereIn('id', $ids)->onlyTrashed()->get();
+            // dd(\DB::getQueryLog());
+            if($checkAssets->isEmpty()){
+                return $this->sendError('Error!', ['error'=> 'Data tidak ditemukan!']);
+            }
+
+            // dd($checkAssets);
+            // \DB::enableQueryLog();
+        //  $deleteAssets = Assets::findMany($ids);
+            // dd(\DB::getQueryLog());
+            $totalDelete = 0;
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            foreach($checkAssets as $rowAssets){
+                $rowAssets->forceDelete();  
+                $totalDelete++;
+            }
+
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Delete selected data";
+            $success['total_deleted'] = $totalDelete;
+            return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+        }
+     }
 }

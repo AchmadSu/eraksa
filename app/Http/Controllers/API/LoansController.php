@@ -1149,6 +1149,7 @@ class LoansController extends BaseController
             // dd(\DB::getQueryLog());\
             $totalDelete = 0;
             if($deleteLoans) {
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
                 $getAssetFromLoanDetails = LoanDetails::
                 where('loan_id', $id)->get();
                 for($i = 0; $i < count($getAssetFromLoanDetails); $i++) {
@@ -1161,8 +1162,7 @@ class LoansController extends BaseController
                     // $getAssetFromLoanDetails[$i]['deleted_at'] = Carbon::now();
                     $getAssetFromLoanDetails[$i]->forceDelete();
                 }     
-                $deleteLoans->deleted_at = Carbon::now();
-                $deleteLoans->delete();
+                $deleteLoans->forceDelete();
                 // $totalDelete++;
     
                 $tokenMsg = Str::random(15);
