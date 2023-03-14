@@ -268,13 +268,13 @@ class CategoryAssetsController extends BaseController
                 return $this->sendError('Error!', ['error'=> 'Data tidak ditemukan!']);
             }
 
-            // dd($checkAssets);
             // \DB::enableQueryLog();
-        //  $deleteAssets = Assets::findMany($ids);
+            //  $deleteAssets = Assets::findMany($ids);
             // dd(\DB::getQueryLog());
             $totalDelete = 0;
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             foreach($checkData as $rowData){
+                // dd($rowData);
                 $rowData->forceDelete();  
                 $totalDelete++;
             }

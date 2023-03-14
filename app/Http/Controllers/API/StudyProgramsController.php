@@ -260,7 +260,7 @@ class StudyProgramsController extends BaseController
         //  $deleteAssets = Assets::findMany($ids);
             // dd(\DB::getQueryLog());
             $totalDelete = 0;
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             foreach($checkData as $rowData){
                 $rowData->forceDelete();  
                 $totalDelete++;
