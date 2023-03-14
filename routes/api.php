@@ -37,10 +37,11 @@ Route::controller(UsersController::class)->group(function(){
             Route::put('users/assignRoles', 'assignRoles');
         });
         Route::middleware(['role:Super-Admin|Admin'])->group(function(){
-        Route::get('users/getAll', 'index')->name('all users');
-        Route::delete('users/delete', 'delete');
-        Route::get('users/trash', 'trash');
-        Route::put('users/restore', 'restore');
+            Route::get('users/getAll', 'index')->name('all users');
+            Route::delete('users/delete', 'delete');
+            Route::get('users/trash', 'trash');
+            Route::put('users/restore', 'restore');
+            Route::delete('users/deletePermanently', 'deletePermanently');
         });
         Route::get('users/detail/{id}', 'show');
         Route::put('users/update', 'update');
@@ -78,6 +79,7 @@ Route::controller(CategoryAssetsController::class)->group(function(){
             Route::post('categoryAssets/create', 'create'); 
             Route::put('categoryAssets/update', 'update');
             Route::delete('categoryAssets/delete', 'delete');
+            Route::delete('categoryAssets/deletePermanently', 'deletePermanently');
             Route::get('categoryAssets/trash', 'trash');
             Route::put('categoryAssets/restore', 'restore');
         });
@@ -93,8 +95,10 @@ Route::controller(PlacementsController::class)->group(function(){
             Route::post('placements/create', 'create'); 
             Route::put('placements/update', 'update');
             Route::delete('placements/delete', 'delete');
+            Route::delete('placements/deletePermanently', 'deletePermanently');
             Route::get('placements/trash', 'trash');
             Route::put('placements/restore', 'restore');
+
         });
         Route::get('placements/getAll', 'index');
         Route::get('placements/detail/{id}', 'show');

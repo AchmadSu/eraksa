@@ -617,14 +617,14 @@ class AssetsController extends BaseController
     }
 
     /**
-     * Put Multiple Assets into trash
+     * Delete Multiple Assets permanently
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
-     public function deletePermanently(Request $request)
-     {
+    public function deletePermanently(Request $request)
+    {
         try {
             sleep(5);
             $ids = $request->ids;
@@ -658,5 +658,5 @@ class AssetsController extends BaseController
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
-     }
+    }
 }
