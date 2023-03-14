@@ -206,7 +206,6 @@ class LoansController extends BaseController
             $asset_id = $request->asset_id;
             $dateOne = $request->dateOne;
             $dateTwo = $request->dateTwo;
-            $status = $request->status;
             $dueDateOne = $request->dueDateOne;
             $dueDateTwo = $request->dueDateTwo;
             $skip = $request->skip;
@@ -227,6 +226,18 @@ class LoansController extends BaseController
                     'Tidak ada riwayat aset yang dipilih!'
                 ]);
             }
+
+            
+            $checkAssets = Assets::find($asset_id);
+            
+            if(!$checkAssets){
+                return $this->sendError('Error!', [
+                    'error' => 
+                    'Tidak ada riwayat aset yang dipilih!'
+                ]);
+            }
+
+            // dd($checkAssets);
 
             if(isset($dateTwo)){
                 if($from > $to){
@@ -249,7 +260,7 @@ class LoansController extends BaseController
 
             // \DB::enableQueryLog();
             $loans = Loans::
-            join('loan_details as loan_details', 'loans.id', '=', 'loan_details.id')
+            join('loan_details as loan_details', 'loans.id', '=', 'loan_details.loan_id')
             ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
             ->when(isset($dateOne) && isset($dateTwo))
             ->whereBetween('loans.date', [$from.' 00:00:00', $to.' 23:59:59'])
@@ -259,10 +270,8 @@ class LoansController extends BaseController
             ->whereBetween('loans.due_date', [$dueFrom.' 00:00:00', $dueTo.' 23:59:59'])
             ->when(isset($dueDateOne) && !isset($dueDateTwo))
             ->whereBetween('loans.due_date', [$dueFrom.' 00:00:00', $dueFrom.' 23:59:59'])
-            ->when(isset($asset_id))
             ->where('loan_details.asset_id', $asset_id)
-            ->when(isset($status))
-            ->where('loans.status', $status)
+            ->whereIn('loans.status', ['0', '1', '3'])
             ->select(
                 'loans.id as id',
                 'loans.code as code',
@@ -287,8 +296,10 @@ class LoansController extends BaseController
             if ($loans->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
+
+            $success['asset_name'] = $checkAssets->name;
+            $success['asset_code'] = $checkAssets->code;
             $count = $loans->count();
-            $countDelete = Loans::onlyTrashed()->count();
             // dd(\DB::getQueryLog());
             $success['count'] = $count;
             $success['loans'] = $loans
