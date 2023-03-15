@@ -353,6 +353,7 @@ class UsersController extends BaseController
     public function update(Request $request)
     {
         try {
+            // dd(Auth::user()->email);
             sleep(5);
             // dd(Auth::user()->id);
             $id = Auth::user()->id;
@@ -391,12 +392,12 @@ class UsersController extends BaseController
             // dd($checkPhone);
 
             if (!$checkPassword) {
-                return $this->sendError('Error!', $credentials = ['Password lama yang anda masukkan salah!']);
+                return $this->sendError('Error!', ['error' => 'Password lama yang anda masukkan salah!']);
             }
 
             // \DB::enableQueryLog();
             $checkCode = User::where('id', $id)->where('code', $code)->first();
-            //dd($checkCode);
+            // dd($checkCode);
 
             if(!$checkCode){
                 // dd(!$checkCode);
@@ -404,7 +405,7 @@ class UsersController extends BaseController
                     'code' => 'required|unique:users,code',
                 ]);
                 if ($validator->fails()) {
-                    return $this->sendError('Error!', 'NIM atau NIDN sudah digunakan oleh pengguna lain');
+                    return $this->sendError('Error!', ['error' => 'NIM atau NIDN sudah digunakan oleh pengguna lain']);
                 }
             }
 
@@ -431,7 +432,7 @@ class UsersController extends BaseController
             }   
 
             if ($validator->fails()) {
-                return $this->sendError('Error!', ['error'=>'Data tidak valid. Masukan data valid!']);
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. Masukkan data valid!']);
             }
 
             if ($new_email != NULL) {
