@@ -4,11 +4,12 @@ namespace App\Http\Controllers\API;
 
 use Carbon\Carbon;
 use App\Models\Assets;
-use App\Models\CategoryAssets;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use App\Models\CategoryAssets;
+use Illuminate\Support\Facades\DB;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
@@ -272,7 +273,7 @@ class CategoryAssetsController extends BaseController
             //  $deleteAssets = Assets::findMany($ids);
             // dd(\DB::getQueryLog());
             $totalDelete = 0;
-            // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             foreach($checkData as $rowData){
                 // dd($rowData);
                 $rowData->forceDelete();  

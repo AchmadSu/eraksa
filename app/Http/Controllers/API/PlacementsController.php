@@ -4,12 +4,13 @@ namespace App\Http\Controllers\API;
 
 use Carbon\Carbon;
 use App\Models\Assets;
-use App\Models\CategoryAssets;
 use App\Models\Placements;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use App\Models\CategoryAssets;
+use Illuminate\Support\Facades\DB;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
@@ -244,18 +245,19 @@ class PlacementsController extends BaseController
                 return $this->sendError('Error!', ['error' => 'Tidak ada aset yang dipilih!']);
             }
             // \DB::enableQueryLog();
-            $checkData = Placements::whereIn('id', $ids)->onlyTrashed()->get();
+            $checkData = Placements::onlyTrashed()->findMany($ids);
             // dd(\DB::getQueryLog());
             if($checkData->isEmpty()){
                 return $this->sendError('Error!', ['error'=> 'Data tidak ditemukan!']);
             }
 
             // dd($checkAssets);
-            // \DB::enableQueryLog();
-        //  $deleteAssets = Assets::findMany($ids);
-            // dd(\DB::getQueryLog());
             $totalDelete = 0;
-            // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            //  $deleteAssets = Assets::findMany($ids);
+            // $checkData->forceDelete();
+            // \DB::enableQueryLog();
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            // dd(\DB::getQueryLog());
             foreach($checkData as $rowData){
                 $rowData->forceDelete();  
                 $totalDelete++;

@@ -129,6 +129,7 @@ Route::controller(StudyProgramsController::class)->group(function(){
             Route::post('studyPrograms/create', 'create'); 
             Route::put('studyPrograms/update', 'update');
             Route::delete('studyPrograms/delete', 'delete');
+            Route::delete('studyPrograms/deletePermanently', 'deletePermanently');
             Route::put('studyPrograms/restore', 'restore');
         });
         Route::get('studyPrograms/getAll', 'index');
