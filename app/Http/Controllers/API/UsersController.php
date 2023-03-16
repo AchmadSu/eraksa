@@ -389,6 +389,7 @@ class UsersController extends BaseController
             // dd($phone);
 
             $checkPhone = User::where('id', $id)->where('phone', $phone)->first();
+            
             // dd($checkPhone);
 
             if (!$checkPassword) {
@@ -397,7 +398,7 @@ class UsersController extends BaseController
 
             // \DB::enableQueryLog();
             $checkCode = User::where('id', $id)->where('code', $code)->first();
-            // dd($checkCode);
+            // dd(\DB::getQueryLog());
 
             if(!$checkCode){
                 // dd(!$checkCode);
@@ -409,24 +410,20 @@ class UsersController extends BaseController
                 }
             }
 
-            if ($new_password == NULL) {
+            if ($new_password == NULL || $new_password == '') {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
                     'code' => 'required',
                     'code_type' => 'required',
-                    'new_email' => 'email|unique:users,email',
-                    'new_phone' => 'numeric|unique:users,phone',
                 ]);
 
-            } elseif ($new_password != NULL) {
+            } elseif ($new_password != NULL || $new_password != '') {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
                     'code' => 'required',
                     'code_type' => 'required',
-                    'new_email' => 'email|unique:users,email',
                     'new_password' => 'required',
                     'confirm_new_password' => 'required|same:new_password',
-                    'new_phone' => 'numeric|unique:users,phone',
                 ]);
                 $updateDataUser->password = bcrypt($new_password);
             }   
@@ -435,12 +432,20 @@ class UsersController extends BaseController
                 return $this->sendError('Error!', ['error'=>'Data tidak valid. Masukkan data valid!']);
             }
 
-            if ($new_email != NULL) {
+            if ($new_email != NULL || $new_email != '') {
+                $checkEmail = User::where('email', $new_email)->first();
+                if($checkEmail){
+                    return $this->sendError('Error!', ['error' => 'Email baru sudah digunakan oleh pengguna lain!']);
+                }
                 $updateDataUser->email = $new_email;
             }
 
             if ($checkPhone) {
-                if($new_phone != NULL) {
+                if($new_phone != NULL || $new_phone != '') {
+                    $checkNewPhone = User::where('phone', $new_phone)->first();
+                    if($checkNewPhone){
+                        return $this->sendError('Error!', ['error' => 'Nomor baru sudah digunakan oleh pengguna lain!']);
+                    }
                     $spiltPhone = str_split($new_phone);
                     if($spiltPhone[0] === '8'){
                         $new_phone = '+62'.$new_phone;
