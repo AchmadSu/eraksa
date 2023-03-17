@@ -19,9 +19,9 @@ class CategoryAssetsController extends BaseController
 {
     /** ATTRIVE CATEGORY ASSETS DATA */
 
-    /** 
+    /**
      * Get All Category Assets
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
@@ -48,8 +48,6 @@ class CategoryAssetsController extends BaseController
             ->when($trash == 1)
             ->onlyTrashed()
             ->get();
-            // dd(\DB::getQueryLog());
-            // dd($categoryAssets);
             if ($categoryAssets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
@@ -70,9 +68,9 @@ class CategoryAssetsController extends BaseController
         }
     }
 
-    /** 
+    /**
      * Get Category Asset By Id
-     * 
+     *
      * @param Int $id
      * @return \Illuminate\Http\Response
     */
@@ -98,7 +96,7 @@ class CategoryAssetsController extends BaseController
     
     /**
      * Create Category Asset
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
@@ -113,28 +111,28 @@ class CategoryAssetsController extends BaseController
             ]);
             
             if ($validator->fails()){
-                return $this->sendError('Error!', ['error'=>'Nama sudah tersedia atau deskripsi kurang dari 5 karakter!']);
+                return $this->sendError('Error!', ['error'=>'Nama tersedia atau deskripsi kurang dari 5 karakter!']);
             }
             $name = ucwords($request->name);
             $desc = ucfirst(strtolower($request->description));
             $input = array(
                 "name" => $name,
-                "description" => $desc 
+                "description" => $desc
             );
 
             // dd($input);
             $createCategory = CategoryAssets::create($input);
             $success['token'] = Str::random(15);
     
-            return $this->sendResponse($success, 'Category Asset ditambahkan!');    
+            return $this->sendResponse($success, 'Category Asset ditambahkan!');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
-        } 
+        }
     }
 
     /**
      * Update Category Asset
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
@@ -186,7 +184,7 @@ class CategoryAssetsController extends BaseController
 
     /**
      * Put Multiple Category Asset into trash
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
@@ -217,14 +215,13 @@ class CategoryAssetsController extends BaseController
 
     /**
      * Restore Multiple Category Asset from trash
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
     public function restore(Request $request)
     {
-        // return "Cek";exit();
         try {
             sleep(5);
             $ids = $request->ids;
@@ -248,7 +245,7 @@ class CategoryAssetsController extends BaseController
 
     /**
      * Delete Multiple data permanently
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
@@ -258,8 +255,7 @@ class CategoryAssetsController extends BaseController
         try {
             sleep(5);
             $ids = $request->ids;
-            // dd($ids);
-            if($ids == NULL) {
+            if ($ids == null) {
                 return $this->sendError('Error!', ['error' => 'Tidak ada aset yang dipilih!']);
             }
             // \DB::enableQueryLog();
@@ -269,14 +265,10 @@ class CategoryAssetsController extends BaseController
                 return $this->sendError('Error!', ['error'=> 'Data tidak ditemukan!']);
             }
 
-            // \DB::enableQueryLog();
-            //  $deleteAssets = Assets::findMany($ids);
-            // dd(\DB::getQueryLog());
             $totalDelete = 0;
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-            foreach($checkData as $rowData){
-                // dd($rowData);
-                $rowData->forceDelete();  
+            foreach ($checkData as $rowData) {
+                $rowData->forceDelete();
                 $totalDelete++;
             }
 

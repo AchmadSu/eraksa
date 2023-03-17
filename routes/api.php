@@ -156,6 +156,9 @@ Route::controller(LoansController::class)->group(function(){
                 Route::put('loans/confirmation', 'confirmation');
             });
             Route::post('loans/demand', 'demand');
+            Route::get('loans/reportWeekly', 'reportWeekly');
+            Route::get('loans/reportMonthly', 'reportMonthly');
+            Route::get('loans/reportSemester', 'reportSemester');
         });
         Route::put('loans/update', 'update');
         Route::delete('loans/delete', 'delete');

@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Validator;
 use App\Services\Loans\LoansRequestService;
 use App\Http\Controllers\API\BaseController;
+use App\Models\CategoryAssets;
 
 class LoansController extends BaseController
 {
@@ -501,6 +502,200 @@ class LoansController extends BaseController
             // dd(Auth::user()->name);
             // \DB::enableQueryLog();
             // dd($loans);
+            return $this->sendResponse($success, 'Displaying all Loans data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
+        }
+    }
+
+    /** 
+     * Get report per weekly loans
+     * 
+     *
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportWeekly(){
+        try {
+            sleep(2);
+            $from = Carbon::now()->subWeek()->startOfWeek();
+            $to = Carbon::now()->subWeek()->endOfWeek();
+
+            $loans = Loans::
+            join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->leftJoin('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+            ->whereIn('loans.status', ['1', '3'])
+            ->whereBetween('loans.date', [$from, $to])
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',
+                'loans.loaner_id as loaner_id', 
+                'loaners.name as loaner_name', 
+                'loaners.code_type as loaner_code_type', 
+                'loaners.code as loaner_code', 
+                'loans.lender_id as lender_id', 
+                'lenders.name as lender_name',
+                'lenders.code_type as lender_code_type', 
+                'lenders.code as lender_code',  
+                'recipients.id as recipient_id',
+                'recipients.name as recipient_name',
+                'recipients.code_type as recipient_code_type', 
+                'recipients.code as recipient_code',  
+            )->get();
+            if ($loans->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            $count = $loans->count();
+
+            $success['count'] = $count;
+            $success['range1'] = $from->format('d/m/Y');
+            $success['range2'] = $to->format('d/m/Y');
+            $success['loans'] = $loans;
+            return $this->sendResponse($success, 'Displaying all Loans data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
+        }
+    }
+
+
+    /** 
+     * Get report per monthly loans
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportMonthly(Request $request){
+        try {
+            sleep(2);
+            $month = $request->month;
+            $year = $request->year;
+            $nameOfMonth = array(
+                "1" => "Januari",
+                "2" => "Februari",
+                "3" => "Maret",
+                "4" => "April",
+                "5" => "Mei",
+                "6" => "Juni",
+                "7" => "Juli",
+                "8" => "Agustus",
+                "9" => "September",
+                "10" => "Oktober",
+                "11" => "November",
+                "12" => "Desember",
+            );
+            $loans = Loans::
+            join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->leftJoin('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+            ->whereYear('loans.date', '=', $year)
+            ->whereMonth('loans.date', '=', $month)
+            ->whereIn('loans.status', ['1', '3'])
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',
+                'loans.loaner_id as loaner_id', 
+                'loaners.name as loaner_name', 
+                'loaners.code_type as loaner_code_type', 
+                'loaners.code as loaner_code', 
+                'loans.lender_id as lender_id', 
+                'lenders.name as lender_name',
+                'lenders.code_type as lender_code_type', 
+                'lenders.code as lender_code',  
+                'recipients.id as recipient_id',
+                'recipients.name as recipient_name',
+                'recipients.code_type as recipient_code_type', 
+                'recipients.code as recipient_code',  
+            )->get();
+            if ($loans->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            $count = $loans->count();
+            $success['count'] = $count;
+            $success['month'] = $nameOfMonth[$month];
+            $success['year'] = $year;
+            $success['loans'] = $loans;
+            return $this->sendResponse($success, 'Displaying all Loans data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
+        }
+    }
+
+
+    /** 
+     * Get report per semester loans
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportSemester(Request $request){
+        try {
+            sleep(2);
+            $semester = $request->semester;
+            $year1 = $request->year;
+            $year2 = $year1+1;
+            $range = '';
+            $dateOne = '';
+            $dateTwo = '';
+            if ($semester == 1) {
+                $range = 'Ganjil';
+                $dateOne = $year1.'-02-01 00:00:00';
+                $dateTwo = $year1.'-07-31 23:59:59';
+            } else {
+                $range = 'Genap';
+                $dateOne = $year1.'-08-01 00:00:00';
+                $dateTwo = $year2.'-01-31 23:59:59';
+            }
+
+            $from = date($dateOne);
+            $to = date($dateTwo);
+
+            $loans = Loans::
+            join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->leftJoin('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+            ->whereBetween('loans.date', [$from, $to])
+            ->whereIn('loans.status', ['1', '3'])
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',
+                'loans.loaner_id as loaner_id', 
+                'loaners.name as loaner_name', 
+                'loaners.code_type as loaner_code_type', 
+                'loaners.code as loaner_code', 
+                'loans.lender_id as lender_id', 
+                'lenders.name as lender_name',
+                'lenders.code_type as lender_code_type', 
+                'lenders.code as lender_code',  
+                'recipients.id as recipient_id',
+                'recipients.name as recipient_name',
+                'recipients.code_type as recipient_code_type', 
+                'recipients.code as recipient_code',  
+            )->get();
+            if ($loans->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            $count = $loans->count();
+            $success['count'] = $count;
+            $success['range'] = $range;
+            $success['loans'] = $loans;
             return $this->sendResponse($success, 'Displaying all Loans data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
