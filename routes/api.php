@@ -66,6 +66,9 @@ Route::controller(AssetsController::class)->group(function(){
             Route::delete('assets/delete', 'delete');
             Route::delete('assets/deletePermanently', 'deletePermanently');
             Route::put('assets/restore', 'restore');
+            Route::get('assets/reportWeekly', 'reportWeekly');
+            Route::get('assets/reportMonthly', 'reportMonthly');
+            Route::get('assets/reportSemester', 'reportSemester');
         });
         Route::get('assets/getAll', 'index');
         Route::get('assets/detail/{id}', 'show');

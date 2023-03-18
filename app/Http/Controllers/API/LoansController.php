@@ -455,18 +455,6 @@ class LoansController extends BaseController
                     ]);
                 }
             }
-
-            // dd($request->loaner_ids);
-            // \DB::enableQueryLog();
-            // dd(isset($loaner_ids));
-            // $return = Returns::where('code', 'like', '%'.$return_code.'%')->get();
-            // $loans = Loans::whereIn('loaner_id', $loaner_ids)->get();
-            // $return_ids = array();
-            // foreach ($return as $rowReturn) {
-            //     $return_ids[] = $rowReturn->id;
-            // }
-            \DB::enableQueryLog();
-            // dd($request->loaner_ids == NULL);
             
             $loans = Loans::
             when(isset($dateOne) && !isset($dateTwo))
@@ -498,10 +486,6 @@ class LoansController extends BaseController
             $success['countAll'] = $countAll;
             $success['countRequest'] = $countRequest;
             $success['percentage'] = number_format((float)$countRequest/$countAll * 100, 0, '.', '');
-            // dd(Loans::all());
-            // dd(Auth::user()->name);
-            // \DB::enableQueryLog();
-            // dd($loans);
             return $this->sendResponse($success, 'Displaying all Loans data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
@@ -509,7 +493,7 @@ class LoansController extends BaseController
     }
 
     /** 
-     * Get report per weekly loans
+     * Get report per week loans
      * 
      *
      * @return \Illuminate\Http\Response
@@ -566,7 +550,7 @@ class LoansController extends BaseController
 
 
     /** 
-     * Get report per monthly loans
+     * Get report per month loans
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -651,12 +635,12 @@ class LoansController extends BaseController
             $range = '';
             $dateOne = '';
             $dateTwo = '';
-            if ($semester == 1) {
-                $range = 'Ganjil';
-                $dateOne = $year1.'-02-01 00:00:00';
-                $dateTwo = $year1.'-07-31 23:59:59';
-            } else {
+            if ($semester == 2) {
                 $range = 'Genap';
+                $dateOne = $year2.'-02-01 00:00:00';
+                $dateTwo = $year2.'-07-31 23:59:59';
+            } else if($semester == 1) {
+                $range = 'Ganjil';
                 $dateOne = $year1.'-08-01 00:00:00';
                 $dateTwo = $year2.'-01-31 23:59:59';
             }

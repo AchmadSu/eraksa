@@ -334,6 +334,8 @@ class AssetsController extends BaseController
             $category_id = $request->category_id;
             $dateOne = $request->dateOne;
             $dateTwo = $request->dateTwo;
+            $updated1 = $request->updated1;
+            $updated2 = $request->updated2;
             $condition = $request->condition;
             $status = $request->status;
             $study_program_id = $request->study_program_id;
@@ -341,8 +343,21 @@ class AssetsController extends BaseController
             $from = date($dateOne);
             $to = date($dateTwo);
 
+            $fromUpdated = date($updated1." 00:00:00");
+            // dd($fromUpdated);
+            $toUpdated = date($updated2." 23:59:59");
+
             if(isset($dateTwo)){
                 if($from > $to){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
+                    ]);
+                }
+            }
+
+            if(isset($updated2)){
+                if($fromUpdated > $toUpdated){
                     return $this->sendError('Error!', [
                         'error' => 
                         'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
@@ -360,6 +375,10 @@ class AssetsController extends BaseController
             ->where('assets.date', $from)
             ->when(isset($dateOne) && isset($dateTwo))
             ->whereBetween('date', [$from, $to])
+            ->when(isset($updated1) && !isset($updated2))
+            ->where('assets.updated_at', $fromUpdated)
+            ->when(isset($updated1) && isset($updated2))
+            ->whereBetween('updated_at', [$fromUpdated, $toUpdated])
             ->when(isset($status))
             ->where('assets.status', $status)
             ->when(isset($condition))
@@ -373,6 +392,213 @@ class AssetsController extends BaseController
             $success['countRequest'] = $countRequest;
             $success['percentage'] = number_format((float)$countRequest/$countAll * 100, 0, '.', '');
             return $this->sendResponse($success, 'Count Asset by Status and Condition');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+        }
+        
+    }
+
+    /** 
+     * Get report per week Assets
+     * 
+     *
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportWeekly()
+    {
+        try {
+            sleep(2);
+            $auth = Auth::user();
+            $from = Carbon::now()->subWeek()->startOfWeek();
+            $to = Carbon::now()->subWeek()->endOfWeek();
+            $assets = Assets::
+            join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->where('assets.condition', '1')
+            ->whereBetween('assets.updated_at', [$from, $to])
+            ->when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
+            ->select(
+                'assets.id as id',
+                'assets.name as name',
+                'assets.code as code',
+                'assets.condition as condition',
+                'assets.status as status',
+                'assets.date as date',
+                'assets.placement_id as placement_id', 
+                'placements.name as placement_name', 
+                'assets.category_id as category_id', 
+                'category_assets.name as category_name', 
+                'assets.user_id as user_id',
+                'users.name as user_name',
+                'assets.study_program_id as study_program_id',
+                'study_programs.name as study_program_name',
+            )
+            ->orderBy('study_program_name', 'ASC')
+            ->get();
+
+            if ($assets->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            
+            $success['range1'] = $from->format('d/m/Y');
+            $success['range2'] = $to->format('d/m/Y');
+            $success['count'] = $assets->count();
+            $success['assets']= $assets->values();
+
+            return $this->sendResponse($success, 'Displaying all Loans Data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+        }
+        
+    }
+
+    /** 
+     * Get report per month Assets
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportMonthly(Request $request)
+    {
+        try {
+            sleep(2);
+            $auth = Auth::user();
+
+            $month = $request->month;
+            $year = $request->year;
+            $nameOfMonth = array(
+                "1" => "Januari",
+                "2" => "Februari",
+                "3" => "Maret",
+                "4" => "April",
+                "5" => "Mei",
+                "6" => "Juni",
+                "7" => "Juli",
+                "8" => "Agustus",
+                "9" => "September",
+                "10" => "Oktober",
+                "11" => "November",
+                "12" => "Desember",
+            );
+
+            $assets = Assets::
+            join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->where('assets.condition', '1')
+            ->whereYear('assets.updated_at', '=', $year)
+            ->whereMonth('assets.updated_at', '=', $month)
+            ->when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
+            ->select(
+                'assets.id as id',
+                'assets.name as name',
+                'assets.code as code',
+                'assets.condition as condition',
+                'assets.status as status',
+                'assets.date as date',
+                'assets.placement_id as placement_id', 
+                'placements.name as placement_name', 
+                'assets.category_id as category_id', 
+                'category_assets.name as category_name', 
+                'assets.user_id as user_id',
+                'users.name as user_name',
+                'assets.study_program_id as study_program_id',
+                'study_programs.name as study_program_name',
+            )
+            ->orderBy('study_program_name', 'ASC')
+            ->get();
+
+            if ($assets->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+
+            $success['count'] = $assets->count();
+            $success['assets']= $assets->values();
+            $success['month'] = $nameOfMonth[$month];
+            $success['year'] = $year;
+            return $this->sendResponse($success, 'Displaying all Loans Data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+        }
+        
+    }
+
+    /** 
+     * Get report per month Assets
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportSemester(Request $request)
+    {
+        try {
+            sleep(2);
+            $auth = Auth::user();
+
+            $semester = $request->semester;
+            $year1 = $request->year;
+            $year2 = $year1+1;
+            $range = '';
+            $dateOne = '';
+            $dateTwo = '';
+            if ($semester == 2) {
+                $range = 'Genap';
+                $dateOne = $year2.'-02-01 00:00:00';
+                $dateTwo = $year2.'-07-31 23:59:59';
+            } else if($semester == 1) {
+                $range = 'Ganjil';
+                $dateOne = $year1.'-08-01 00:00:00';
+                $dateTwo = $year2.'-01-31 23:59:59';
+            }
+
+            $from = date($dateOne);
+            $to = date($dateTwo);
+
+            $assets = Assets::
+            join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->where('assets.condition', '1')
+            ->whereBetween('assets.updated_at', [$from, $to])
+            ->when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
+            ->select(
+                'assets.id as id',
+                'assets.name as name',
+                'assets.code as code',
+                'assets.condition as condition',
+                'assets.status as status',
+                'assets.date as date',
+                'assets.placement_id as placement_id', 
+                'placements.name as placement_name', 
+                'assets.category_id as category_id', 
+                'category_assets.name as category_name', 
+                'assets.user_id as user_id',
+                'users.name as user_name',
+                'assets.study_program_id as study_program_id',
+                'study_programs.name as study_program_name',
+            )
+            ->orderBy('study_program_name', 'ASC')
+            ->get();
+
+            if ($assets->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+
+            $success['count'] = $assets->count();
+            $success['assets']= $assets->values();
+            $success['range'] = $range;
+
+            return $this->sendResponse($success, 'Displaying all Loans Data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
