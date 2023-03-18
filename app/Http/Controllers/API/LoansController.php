@@ -520,7 +520,7 @@ class LoansController extends BaseController
             sleep(2);
             $from = Carbon::now()->subWeek()->startOfWeek();
             $to = Carbon::now()->subWeek()->endOfWeek();
-
+            
             $loans = Loans::
             join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
             ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
@@ -547,7 +547,8 @@ class LoansController extends BaseController
                 'recipients.name as recipient_name',
                 'recipients.code_type as recipient_code_type', 
                 'recipients.code as recipient_code',  
-            )->get();
+            )->orderBy('date')
+            ->get();
             if ($loans->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
@@ -617,7 +618,8 @@ class LoansController extends BaseController
                 'recipients.name as recipient_name',
                 'recipients.code_type as recipient_code_type', 
                 'recipients.code as recipient_code',  
-            )->get();
+            )->orderBy('date')
+            ->get();
             if ($loans->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
@@ -688,7 +690,8 @@ class LoansController extends BaseController
                 'recipients.name as recipient_name',
                 'recipients.code_type as recipient_code_type', 
                 'recipients.code as recipient_code',  
-            )->get();
+            )->orderBy('date')  
+            ->get();
             if ($loans->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
