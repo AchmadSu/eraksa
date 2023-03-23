@@ -831,7 +831,7 @@ class LoansController extends BaseController
             $createLoans = Loans::create($loanArray);
             $loan_id = $createLoans->id;
             $encodeId = base64_encode($loan_id);
-            // $link = '192.168.0.102:3000/manage/loans/confirmation?data='.$encodeId;
+            $link = 'https://eraksa.poltektedc.com/loans/confirmation?data='.$encodeId;
             $loaner_name = Auth::user()->name;
             $loaner_code = Auth::user()->code;
             $loaner_code_type = Auth::user()->code_type;
@@ -866,7 +866,7 @@ class LoansController extends BaseController
                                         } else {
                                             $strUserCode = 'NIDN';                                        
                                         }
-                                        $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                        $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                                         $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                         // dd($adminPhone[$rowPhone]);
                                     }
@@ -896,7 +896,7 @@ class LoansController extends BaseController
                         } else {
                             $strUserCode = 'NIDN';                                        
                         }
-                        $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                        $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                         $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                     }
                 }
@@ -1025,6 +1025,8 @@ class LoansController extends BaseController
             // \DB::enableQueryLog();
             $getAssetFromLoanDetails = LoanDetails::
             where('loan_id', $loan_id)->get();
+            $encodeId = base64_encode($loan_id);
+            $link = 'https://eraksa.poltektedc.com/loans/confirmation?data='.$encodeId;
             // dd(\DB::getQueryLog());
             // dd($getAssetFromLoanDetails[0]['asset_id']);
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
@@ -1077,7 +1079,7 @@ class LoansController extends BaseController
                                             } else {
                                                 $strUserCode = 'NIDN';                                        
                                             }
-                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                                             $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                             // dd($adminPhone[$rowPhone]);
                                         }
@@ -1106,7 +1108,7 @@ class LoansController extends BaseController
                             } else {
                                 $strUserCode = 'NIDN';                                        
                             }
-                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
+                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                             $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                         }
                     }
@@ -1185,7 +1187,7 @@ class LoansController extends BaseController
                 $loaner_phone = $loaner->phone;
 
                 $encodeId = base64_encode($id);
-                // $link = "http://localhost:3000/manage/loans/confirmation?data=".$encodeId;
+                $link = "https://eraksa.poltektedc.com/loans/myDetails?data=".$encodeId;
                 
                 // dd($getLoanerPhone->phone);
                 
@@ -1213,7 +1215,7 @@ class LoansController extends BaseController
                 }
 
                 if($loaner_phone) {
-                    $message = "Anda mendapatkan *Konfirmasi Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nKode Peminjaman: *$code*\nPesan Konfirmasi: \n*$confirmation*$instruction\n\nLihat detailnya melalui tautan berikut: ";
+                    $message = "Anda mendapatkan *Konfirmasi Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nKode Peminjaman: *$code*\nPesan Konfirmasi: \n*$confirmation*$instruction\n\nLihat detailnya melalui tautan berikut: \n$link";
                     $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
                 }
 
@@ -1262,6 +1264,8 @@ class LoansController extends BaseController
                     return $this->sendError('Error!', ['error'=> 'Peminjaman belum melewati tenggat waktu!']);
                 }
 
+                $encodeId = base64_encode($id);
+                $link = "https://eraksa.poltektedc.com/loans/myDetails?data=".$encodeId;
                 $code = $checkLoans->code;
                 $loaner = User::find($checkLoans->loaner_id);
                 $loaner_name = $loaner->name;
@@ -1281,7 +1285,7 @@ class LoansController extends BaseController
                 $instruction = "\nSegera kembalikan setiap aset kepada Admin dari masing-masing Program Studi terkait! Terima kasih.\n";
 
                 if($loaner_phone) {
-                    $message = "$demand $instruction\nRincian Peminjaman\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n\nLihat detailnya melalui tautan berikut: ";
+                    $message = "$demand $instruction\nRincian Peminjaman\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
                     $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
                 }
 

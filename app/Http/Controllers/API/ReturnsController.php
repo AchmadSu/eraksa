@@ -352,12 +352,14 @@ class ReturnsController extends BaseController
                 $recipient_name = $getRecipient->name;
                 $recipient_code = $getRecipient->code;
                 $recipient_code_type = $getRecipient->code_type;
+                $encodeId = base64_encode($createReturn->id);
+                $link = "https://eraksa.poltektedc.com/loans/returnDetails?data=".$encodeId;
                 
                 $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
                 for ($i=0; $i < count($studyProgramAssets); $i++) { 
                     if($sortNumber !== $studyProgramAssets[$i]['study_program_id']){
                         $adminPhone = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->pluck('phone');
-                        if($adminPhone->isEmpty() === FALSE) {
+                        if(!$adminPhone->isEmpty()) {
                             for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
                                 if($adminPhone[$rowPhone]) {
                                     $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
@@ -373,7 +375,7 @@ class ReturnsController extends BaseController
                                     } else {
                                         $strRecipientCode = 'NIDN';                                        
                                     }
-                                    $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: ";
+                                    $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
                                     $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
                                     // dd($adminPhone[$rowPhone]);
                                 }
@@ -384,7 +386,7 @@ class ReturnsController extends BaseController
                 }
                 
                 $superAdminPhone = User::role('Super-Admin')->pluck('phone');
-                if($superAdminPhone->isEmpty() === FALSE) {
+                if(!$superAdminPhone->isEmpty()) {
                     for ($rowPhone= 0; $rowPhone < count($superAdminPhone); $rowPhone++) {
                         if($superAdminPhone[$rowPhone]){
                             // dd($superAdminPhone);
@@ -395,7 +397,13 @@ class ReturnsController extends BaseController
                             } else {
                                 $strUserCode = 'NIDN';                                        
                             }
-                            $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: ";
+                            
+                            if($recipient_code_type == "0") {
+                                $strRecipientCode = 'NIM';
+                            } else {
+                                $strRecipientCode = 'NIDN';                                        
+                            }
+                            $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
                             $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
                             // dd("Test");
                         }
