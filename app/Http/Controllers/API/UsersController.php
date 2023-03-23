@@ -293,6 +293,12 @@ class UsersController extends BaseController
             if($checkEmail){
                 return $this->sendError('Error!', ['error'=>'Email sudah terdaftar, silakan login!']);
             }
+
+            $checkCode = User::where('code', $input['code'])->first();
+            // dd(\DB::getQueryLog());
+            if($checkCode){
+                return $this->sendError('Error!', ['error'=>'NIM/NIDN sudah terdaftar. Gunakan yang lain!']);
+            }
             
             $input['name'] = ucwords(strtolower($input['name']));
             $input['password'] = bcrypt($input['password']);
