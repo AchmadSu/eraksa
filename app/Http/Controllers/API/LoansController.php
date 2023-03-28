@@ -866,9 +866,13 @@ class LoansController extends BaseController
                                         } else {
                                             $strUserCode = 'NIDN';                                        
                                         }
-                                        $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
-                                        $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
-                                        // dd($adminPhone[$rowPhone]);
+                                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                                        try {
+                                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                            $success['adminWhatsApp'] = 'WhatsApp Berhasil dikirim';
+                                        } catch (\Throwable $th) {
+                                            $success['adminWhatsApp'] = 'WhatsApp Gagal dikirim. Error: '.$th;
+                                        }
                                     }
                                 }
                             }
@@ -896,8 +900,13 @@ class LoansController extends BaseController
                         } else {
                             $strUserCode = 'NIDN';                                        
                         }
-                        $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
-                        $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                        try {
+                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                            $success['superAdminWhatsApp'] = "WhatsApp berhasil dikirim!";
+                        } catch (\Throwable $th) {
+                            $success['superAdminWhatsApp'] = "WhatsApp gagal dikirim. Error: ".$th;
+                        }
                     }
                 }
             }
@@ -1080,7 +1089,12 @@ class LoansController extends BaseController
                                                 $strUserCode = 'NIDN';                                        
                                             }
                                             $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
-                                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                            try {
+                                                $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                                $success['adminWhatsApp'] = '';
+                                            } catch (\Throwable $th) {
+                                                $success['adminWhatsApp'] = 'Gagal mengirim pesan whatsApp kepada Admin. Error: '.$th;
+                                            }
                                             // dd($adminPhone[$rowPhone]);
                                         }
                                     }
@@ -1109,7 +1123,12 @@ class LoansController extends BaseController
                                 $strUserCode = 'NIDN';                                        
                             }
                             $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
-                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                            try {
+                                $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                $success['superAdminWhatsApp'] = '';
+                            } catch (\Throwable $th) {
+                                $success['superAdminWhatsApp'] = 'Gagal mengirim pesan whatsApp kepada Super-Admin. Error: '.$th;
+                            }
                         }
                     }
                 }
@@ -1216,10 +1235,15 @@ class LoansController extends BaseController
 
                 if($loaner_phone) {
                     $message = "Anda mendapatkan *Konfirmasi Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nKode Peminjaman: *$code*\nPesan Konfirmasi: \n*$confirmation*$instruction\n\nLihat detailnya melalui tautan berikut: \n$link";
-                    $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+                    try {
+                        $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+                        $success['whatsapp'] = "Pesan Konfirmasi Berhasil dikirim via WhatsApp";
+                    } catch (\Throwable $th) {
+                        $success['whatsapp'] = "Pesan Konfirmasi Gagal dikirim via WhatsApp. Error: ".$th;
+                    }
                 }
 
-                $success['message'] = "Pesan konfirmasi untuk permintaan peminjaman tersebut telah kami kirim melalui Pesan WhatsApp Peminjam!";
+                $success['message'] = "Transaksi berhasil dikonfirmasi!";
                 return $this->sendResponse($success, 'Konfirmasi Peminjaman Berhasil!');
             } else {
                 return $this->sendError('Error!', ['error'=> 'Set Status Konfirmasi salah!']);
@@ -1286,10 +1310,15 @@ class LoansController extends BaseController
 
                 if($loaner_phone) {
                     $message = "$demand $instruction\nRincian Peminjaman\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
-                    $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+                    try {
+                        $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+                        $success['whatsapp'] = "Pesan WhatsApp berhasil dikirim. ";
+                    } catch (\Throwable $th) {
+                        $success['whatsapp'] = "Pesan WhatsApp gagal dikirim. Error: ".$th;
+                    }
                 }
 
-                $success['message'] = "Pesan permintaan pengembalian aset yang dipinjam telah kami kirim melalui Pesan WhatsApp Peminjam!";
+                $success['message'] = $success['whatsapp'];
                 return $this->sendResponse($success, 'Pesan Pengembalian Berhasil dikirim!');
             } else {
                 return $this->sendError('Error!', ['error'=> 'Status peminjaman bukan peminjaman aktif!']);

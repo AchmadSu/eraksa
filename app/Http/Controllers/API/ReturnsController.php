@@ -376,7 +376,12 @@ class ReturnsController extends BaseController
                                         $strRecipientCode = 'NIDN';                                        
                                     }
                                     $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
-                                    $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
+                                    try {
+                                        $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
+                                        $success['whatsApp'] = "WhatsApp berhasil dikirim";
+                                    } catch (\Throwable $th) {
+                                        $success['whatsApp'] = "WhatsApp gagal dikirim. Error: ".$th;
+                                    }
                                     // dd($adminPhone[$rowPhone]);
                                 }
                             }
@@ -404,12 +409,16 @@ class ReturnsController extends BaseController
                                 $strRecipientCode = 'NIDN';                                        
                             }
                             $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
-                            $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
-                            // dd("Test");
+                            try {
+                                $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
+                                $success['whatsapp'] = "WhatsApp berhasil dikirim.";
+                            } catch (\Throwable $th) {
+                                $success['whatsapp'] = "WhatsApp gagal dikirim. Error: ".$th;
+                            }
                         }
                     }
                 }
-                $success['message'] = "Kami telah mengirimkan pesan konfirmasi pengembalian aset yang anda lakukan!";
+                $success['message'] = "Konfirmasi pengembalian aset berhasil!";
                 return $this->sendResponse($success, 'Konfirmasi pengembalian berhasil!');
                 // dd($getRecipient->name);
 

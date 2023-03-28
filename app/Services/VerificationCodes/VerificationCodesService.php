@@ -11,7 +11,7 @@ class VerificationCodesService{
 
     /** Sending OTP via Whats App */
     public function sendWhatsappNotification(String $otp, String $recipient){
-        sleep(5);
+        // sleep(5);
         // dd($recipient);
         $tokenMsg = Str::random(15);
         $sid    = getenv("TWILIO_SID");

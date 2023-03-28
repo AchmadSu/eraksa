@@ -266,7 +266,7 @@ class UsersController extends BaseController
 
     public function register(Request $request){
         try {
-            sleep(5);
+            // sleep(5);
             $validator = Validator::make($request->all(),[
                 'name' => 'required',
                 'code' => 'required|unique:users,code',
@@ -334,7 +334,12 @@ class UsersController extends BaseController
                 'expired_at' => Carbon::now()->addMinutes(10),
                 'status' => '0',
             ]);
-            $this->verificationCodesService->sendWhatsappNotification("$otp", $input['phone']);
+            try {
+                $this->verificationCodesService->sendWhatsappNotification("$otp", $input['phone']);
+                $success['whatsApp'] = "WhatsApp berhasil dikirim";
+            } catch (\Throwable $th) {
+                $success['whatsApp'] = "WhatsApp gagal dikirim. Error: ".$th;
+            }
             // $success['token'] = $user->createToken('MyApp')->plainTextToken;
             
             $success['message'] = "Hai, $user->name! Kami telah mengirimkan OTP ke nomor WhatsApp anda. Silakan login untuk melanjutkan!";
