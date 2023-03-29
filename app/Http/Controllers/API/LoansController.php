@@ -523,6 +523,7 @@ class LoansController extends BaseController
                 'loaners.name as loaner_name', 
                 'loaners.code_type as loaner_code_type', 
                 'loaners.code as loaner_code', 
+                'loaners.phone as loaner_phone', 
                 'loans.lender_id as lender_id', 
                 'lenders.name as lender_name',
                 'lenders.code_type as lender_code_type', 
@@ -594,6 +595,7 @@ class LoansController extends BaseController
                 'loaners.name as loaner_name', 
                 'loaners.code_type as loaner_code_type', 
                 'loaners.code as loaner_code', 
+                'loaners.phone as loaner_phone', 
                 'loans.lender_id as lender_id', 
                 'lenders.name as lender_name',
                 'lenders.code_type as lender_code_type', 
@@ -632,6 +634,7 @@ class LoansController extends BaseController
             $semester = $request->semester;
             $year1 = $request->year;
             $year2 = $year1+1;
+            $academicYear = $year1."/".$year2;
             $range = '';
             $dateOne = '';
             $dateTwo = '';
@@ -666,6 +669,7 @@ class LoansController extends BaseController
                 'loaners.name as loaner_name', 
                 'loaners.code_type as loaner_code_type', 
                 'loaners.code as loaner_code', 
+                'loaners.phone as loaner_phone', 
                 'loans.lender_id as lender_id', 
                 'lenders.name as lender_name',
                 'lenders.code_type as lender_code_type', 
@@ -680,6 +684,7 @@ class LoansController extends BaseController
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             $count = $loans->count();
+            $success['academicYear'] = $academicYear;
             $success['count'] = $count;
             $success['range'] = $range;
             $success['loans'] = $loans;
@@ -798,10 +803,9 @@ class LoansController extends BaseController
                     break;
             }
             $date = date("d/m/Y");
-            $phone = Auth::user()->phone;
             $inv = rand(1000, 9999);
             $strInv = "$inv";
-            $code = "INV-".$date."-ERK-LOANS"."/".$phone."/".$strInv;
+            $code = "INV-".$date."-ERK-PINJAM"."/".$strInv;
             
             $checkCodeLoans = Loans::
             where('code', $code)
@@ -861,10 +865,12 @@ class LoansController extends BaseController
                                     if($adminPhone[$rowPhone]) {
                                         $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
                                         // var_dump($adminNumber);exit();
-                                        if($loaner_code_type == "0") {
+                                        if ($loaner_code_type == "0") {
                                             $strUserCode = 'NIM';
-                                        } else {
+                                        } elseif ($loaner_code_type == "1") {
                                             $strUserCode = 'NIDN';                                        
+                                        } elseif ($loaner_code_type == "2") {
+                                            $strUserCode = 'NIP';                                        
                                         }
                                         $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                                         try {
@@ -897,8 +903,10 @@ class LoansController extends BaseController
                         // var_dump($adminNumber);exit();
                         if($loaner_code_type == "0") {
                             $strUserCode = 'NIM';
-                        } else {
+                        } elseif($loaner_code_type == "1") {
                             $strUserCode = 'NIDN';                                        
+                        } elseif($loaner_code_type == "2") {
+                            $strUserCode = 'NIP';                                        
                         }
                         $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                         try {
@@ -1085,8 +1093,10 @@ class LoansController extends BaseController
                                             // var_dump($adminNumber);exit();
                                             if($loaner_code_type == "0") {
                                                 $strUserCode = 'NIM';
-                                            } else {
+                                            } elseif($loaner_code_type == "1") {
                                                 $strUserCode = 'NIDN';                                        
+                                            } elseif($loaner_code_type == "2") {
+                                                $strUserCode = 'NIP';                                        
                                             }
                                             $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                                             try {
@@ -1119,8 +1129,10 @@ class LoansController extends BaseController
                             // var_dump($adminNumber);exit();
                             if($loaner_code_type == "0") {
                                 $strUserCode = 'NIM';
-                            } else {
+                            } elseif($loaner_code_type == "1") {
                                 $strUserCode = 'NIDN';                                        
+                            } elseif($loaner_code_type == "2") {
+                                $strUserCode = 'NIP';                                        
                             }
                             $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                             try {
@@ -1299,8 +1311,10 @@ class LoansController extends BaseController
                 $strUserCode = '';
                 if($loaner_code_type == '0') {
                     $strUserCode = 'NIM';
-                } else {
+                } elseif($loaner_code_type == '1') {
                     $strUserCode = 'NIDN';
+                } elseif($loaner_code_type == '2') {
+                    $strUserCode = 'NIP';
                 }
                 $loaner_phone = $loaner->phone;
                 

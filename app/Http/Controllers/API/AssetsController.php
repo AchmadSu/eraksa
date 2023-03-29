@@ -546,6 +546,7 @@ class AssetsController extends BaseController
             $semester = $request->semester;
             $year1 = $request->year;
             $year2 = $year1+1;
+            $academicYear = $year1."/".$year2;
             $range = '';
             $dateOne = '';
             $dateTwo = '';
@@ -596,6 +597,7 @@ class AssetsController extends BaseController
 
             $success['count'] = $assets->count();
             $success['assets']= $assets->values();
+            $success['academicYear'] = $academicYear;
             $success['range'] = $range;
 
             return $this->sendResponse($success, 'Displaying all Loans Data');

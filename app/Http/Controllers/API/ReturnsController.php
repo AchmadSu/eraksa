@@ -297,10 +297,9 @@ class ReturnsController extends BaseController
 
                 // dd($getLoaner->phone);
                 $date = date("d/m/Y");
-                $phone = $getLoaner->phone;
                 $inv = rand(1000, 9999);
                 $strInv = "$inv";
-                $code = "INV-".$date."-ERK-RETURNS"."/".$phone."/".$strInv;
+                $code = "INV-".$date."-ERK-KEMBALI"."/".$strInv;
                 
                 $checkCodeLoans = Returns::
                 where('code', $code)
@@ -366,14 +365,18 @@ class ReturnsController extends BaseController
                                     // var_dump($adminNumber);exit();
                                     if($loaner_code_type == "0") {
                                         $strUserCode = 'NIM';
-                                    } else {
+                                    } elseif($loaner_code_type == "1") {
                                         $strUserCode = 'NIDN';                                        
+                                    } elseif($loaner_code_type == "2") {
+                                        $strUserCode = 'NIP';                                        
                                     }
 
                                     if($recipient_code_type == "0") {
                                         $strRecipientCode = 'NIM';
-                                    } else {
+                                    } elseif($recipient_code_type == "1") {
                                         $strRecipientCode = 'NIDN';                                        
+                                    } elseif($recipient_code_type == "2") {
+                                        $strRecipientCode = 'NIP';                                        
                                     }
                                     $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
                                     try {
@@ -399,14 +402,18 @@ class ReturnsController extends BaseController
                             // var_dump($adminNumber);exit();
                             if($loaner_code_type == "0") {
                                 $strUserCode = 'NIM';
-                            } else {
+                            } elseif($loaner_code_type == "1") {
                                 $strUserCode = 'NIDN';                                        
+                            } elseif($loaner_code_type == "2") {
+                                $strUserCode = 'NIP';                                        
                             }
                             
                             if($recipient_code_type == "0") {
                                 $strRecipientCode = 'NIM';
-                            } else {
+                            } elseif($recipient_code_type == "1") {
                                 $strRecipientCode = 'NIDN';                                        
+                            } elseif($recipient_code_type == "2") {
+                                $strRecipientCode = 'NIP';                                        
                             }
                             $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
                             try {
