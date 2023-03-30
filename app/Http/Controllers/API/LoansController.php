@@ -325,7 +325,6 @@ class LoansController extends BaseController
     public function show(Int $id)
     {
         try {
-            sleep(2);
             // dd(Auth::user()->id);
             $loans = Loans::find($id);
             // $loaner_id = $request->loaner_id;
@@ -485,6 +484,7 @@ class LoansController extends BaseController
             }
             $success['countAll'] = $countAll;
             $success['countRequest'] = $countRequest;
+            $success['fraction'] = $countRequest."/".$countAll;
             $success['percentage'] = number_format((float)$countRequest/$countAll * 100, 0, '.', '');
             return $this->sendResponse($success, 'Displaying all Loans data');
         } catch (\Throwable $th) {
@@ -501,7 +501,6 @@ class LoansController extends BaseController
 
     public function reportWeekly(){
         try {
-            sleep(2);
             $from = Carbon::now()->subWeek()->startOfWeek();
             $to = Carbon::now()->subWeek()->endOfWeek();
             
@@ -559,7 +558,6 @@ class LoansController extends BaseController
 
     public function reportMonthly(Request $request){
         try {
-            sleep(2);
             $month = $request->month;
             $year = $request->year;
             $nameOfMonth = array(
@@ -630,7 +628,6 @@ class LoansController extends BaseController
 
     public function reportSemester(Request $request){
         try {
-            sleep(2);
             $semester = $request->semester;
             $year1 = $request->year;
             $year2 = $year1+1;
@@ -707,7 +704,7 @@ class LoansController extends BaseController
         try {
             // dd();
             // $this->loansRequestService->sendWhatsappNotification("Test", Auth::user()->phone);
-            // sleep(2);
+        
             $loaner_id = Auth::user()->id;
 
             // \DB::enableQueryLog();

@@ -324,12 +324,6 @@ class AssetsController extends BaseController
     public function percentage(Request $request)
     {
         try {
-            $sleep = $request->sleep;
-            if($sleep) {
-                sleep($sleep);
-            } else {
-                sleep(5);
-            }
             // \DB::enableQueryLog();
             $category_id = $request->category_id;
             $dateOne = $request->dateOne;
@@ -390,6 +384,7 @@ class AssetsController extends BaseController
             }
             $success['countAll'] = $countAll;
             $success['countRequest'] = $countRequest;
+            $success['fraction'] = $countRequest."/".$countAll;
             $success['percentage'] = number_format((float)$countRequest/$countAll * 100, 0, '.', '');
             return $this->sendResponse($success, 'Count Asset by Status and Condition');
         } catch (\Throwable $th) {
@@ -408,7 +403,6 @@ class AssetsController extends BaseController
     public function reportWeekly()
     {
         try {
-            sleep(2);
             $auth = Auth::user();
             $from = Carbon::now()->subWeek()->startOfWeek();
             $to = Carbon::now()->subWeek()->endOfWeek();
@@ -466,7 +460,6 @@ class AssetsController extends BaseController
     public function reportMonthly(Request $request)
     {
         try {
-            sleep(2);
             $auth = Auth::user();
 
             $month = $request->month;
@@ -540,7 +533,6 @@ class AssetsController extends BaseController
     public function reportSemester(Request $request)
     {
         try {
-            sleep(2);
             $auth = Auth::user();
 
             $semester = $request->semester;
