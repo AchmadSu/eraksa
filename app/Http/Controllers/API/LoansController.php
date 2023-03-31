@@ -484,7 +484,7 @@ class LoansController extends BaseController
             }
             $success['countAll'] = $countAll;
             $success['countRequest'] = $countRequest;
-            $success['fraction'] = $countRequest."/".$countAll;
+            $success['fraction'] = number_format($countRequest)."/".number_format($countAll);
             $success['percentage'] = number_format((float)$countRequest/$countAll * 100, 0, '.', '');
             return $this->sendResponse($success, 'Displaying all Loans data');
         } catch (\Throwable $th) {
