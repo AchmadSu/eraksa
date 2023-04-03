@@ -312,6 +312,7 @@ class AssetsController extends BaseController
     {
         try {
             // \DB::enableQueryLog();
+            $auth = Auth::user();
             $category_id = $request->category_id;
             $dateOne = $request->dateOne;
             $dateTwo = $request->dateTwo;
@@ -346,7 +347,10 @@ class AssetsController extends BaseController
                 }
             }
             
-            $countAll = Assets::count();
+            $countAll = Assets::
+            when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
+            ->count();
             $countRequest = Assets::
             when(isset($category_id))
             ->where('assets.category_id', $category_id)
@@ -364,6 +368,8 @@ class AssetsController extends BaseController
             ->where('assets.status', $status)
             ->when(isset($condition))
             ->where('assets.condition', $condition)
+            ->when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
             ->count();
             // dd(\DB::getQueryLog());
             if (!$countAll && !$countRequest) {

@@ -418,6 +418,7 @@ class LoansController extends BaseController
     public function percentage(Request $request){
         try {
             // sleep(1);
+            $auth = Auth::user();
             $sleep = $request->sleep;
             if($sleep) {
                 sleep($sleep);
@@ -476,9 +477,15 @@ class LoansController extends BaseController
                 $loans_ids[] = $rowLoans->id;
             }
             // dd(\DB::getQueryLog());
-            $countAll = Assets::count();
+            $countAll = Assets::
+            when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
+            ->count();
             // dd($loans);
-            $countRequest = LoanDetails::whereIn('loan_id', $loans_ids)->count();
+            $countRequest = LoanDetails::
+            join('assets as assets', 'loan_details.asset_id', '=', 'assets.id')
+            ->when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)->whereIn('loan_details.loan_id', $loans_ids)->count();
             if (!$countAll && !$countRequest) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
