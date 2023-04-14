@@ -246,7 +246,7 @@
 </style>
 <body>
     <div style="margin: 20px, 0" class="container">
-        <h3 class="text-center">ERAKSA - Assets Management System</h3>
+        <h3 class="text-center">{{getenv("APP_NAME")}}</h3>
         <h4 class="text-center">{{ $mailData['name'] }}</h4>
         <div class="text-justify">
             <p>

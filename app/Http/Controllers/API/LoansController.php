@@ -839,7 +839,7 @@ class LoansController extends BaseController
             $createLoans = Loans::create($loanArray);
             $loan_id = $createLoans->id;
             $encodeId = base64_encode($loan_id);
-            $link = 'https://eraksa.poltektedc.com/loans/confirmation?data='.$encodeId;
+            $link = getenv("APP_URL_FE").'/loans/confirmation?data='.$encodeId;
             $loaner_name = Auth::user()->name;
             $loaner_code = Auth::user()->code;
             $loaner_code_type = Auth::user()->code_type;
@@ -876,7 +876,7 @@ class LoansController extends BaseController
                                         } elseif ($loaner_code_type == "2") {
                                             $strUserCode = 'NIP';                                        
                                         }
-                                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                                         try {
                                             $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                             $success['adminWhatsApp'] = 'WhatsApp Berhasil dikirim';
@@ -912,7 +912,7 @@ class LoansController extends BaseController
                         } elseif($loaner_code_type == "2") {
                             $strUserCode = 'NIP';                                        
                         }
-                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                         try {
                             $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                             $success['superAdminWhatsApp'] = "WhatsApp berhasil dikirim!";
@@ -1047,7 +1047,7 @@ class LoansController extends BaseController
             $getAssetFromLoanDetails = LoanDetails::
             where('loan_id', $loan_id)->get();
             $encodeId = base64_encode($loan_id);
-            $link = 'https://eraksa.poltektedc.com/loans/confirmation?data='.$encodeId;
+            $link = getenv("APP_URL_FE").'/loans/confirmation?data='.$encodeId;
             // dd(\DB::getQueryLog());
             // dd($getAssetFromLoanDetails[0]['asset_id']);
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
@@ -1102,7 +1102,7 @@ class LoansController extends BaseController
                                             } elseif($loaner_code_type == "2") {
                                                 $strUserCode = 'NIP';                                        
                                             }
-                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                                             try {
                                                 $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                                 $success['adminWhatsApp'] = '';
@@ -1138,7 +1138,7 @@ class LoansController extends BaseController
                             } elseif($loaner_code_type == "2") {
                                 $strUserCode = 'NIP';                                        
                             }
-                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                             try {
                                 $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                 $success['superAdminWhatsApp'] = '';
@@ -1222,7 +1222,7 @@ class LoansController extends BaseController
                 $loaner_phone = $loaner->phone;
 
                 $encodeId = base64_encode($id);
-                $link = "https://eraksa.poltektedc.com/loans/myDetails?data=".$encodeId;
+                $link = getenv("APP_URL_FE")."/loans/myDetails?data=".$encodeId;
                 
                 // dd($getLoanerPhone->phone);
                 
@@ -1305,7 +1305,7 @@ class LoansController extends BaseController
                 }
 
                 $encodeId = base64_encode($id);
-                $link = "https://eraksa.poltektedc.com/loans/myDetails?data=".$encodeId;
+                $link = getenv("APP_URL_FE")."/loans/myDetails?data=".$encodeId;
                 $code = $checkLoans->code;
                 $loaner = User::find($checkLoans->loaner_id);
                 $loaner_name = $loaner->name;

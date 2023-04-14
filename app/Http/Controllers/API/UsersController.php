@@ -645,7 +645,7 @@ class UsersController extends BaseController
                 $checkUser->save();
                 $mailData = [
                     "name" => "Reset Password",
-                    "link" => config('app.url').':3000/resetPassword/'.'data?token='.$token.'&email='.urlencode($email).'&expired_at='.Carbon::now()->addMinutes(10),
+                    "link" => getenv('APP_URL_FE').'/resetPassword/data?token='.$token.'&email='.urlencode($email).'&expired_at='.Carbon::now()->addMinutes(10),
                 ];
                 Mail::to($email)->send(new ResetPasswordLink($mailData));
                 $success['message'] = "Link reset password berhasil dikirim kepada $email. Silakan cek pesan masuk anda!";

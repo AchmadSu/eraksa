@@ -352,7 +352,7 @@ class ReturnsController extends BaseController
                 $recipient_code = $getRecipient->code;
                 $recipient_code_type = $getRecipient->code_type;
                 $encodeId = base64_encode($createReturn->id);
-                $link = "https://eraksa.poltektedc.com/loans/returnDetails?data=".$encodeId;
+                $link = getenv("APP_URL_FE")."/loans/returnDetails?data=".$encodeId;
                 
                 $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
                 for ($i=0; $i < count($studyProgramAssets); $i++) { 
