@@ -29,13 +29,6 @@ class AssetsController extends BaseController
 
     public function index(Request $request){
         try {
-            $sleep = $request->sleep;
-            if($sleep) {
-                sleep($sleep);
-            } else {
-                sleep(5);
-            }
-            
             $negation_ids = $request->negation_ids;
             $order = $request->order;
             $keyWords = $request->keyWords;
@@ -153,12 +146,6 @@ class AssetsController extends BaseController
 
     public function trash(Request $request){
         try {
-            $sleep = $request->sleep;
-            if($sleep) {
-                sleep($sleep);
-            } else {
-                sleep(5);
-            }
             $negation_ids = $request->negation_ids;
             $order = $request->order;
             $keyWords = $request->keyWords;
@@ -324,22 +311,23 @@ class AssetsController extends BaseController
     public function percentage(Request $request)
     {
         try {
-            $sleep = $request->sleep;
-            if($sleep) {
-                sleep($sleep);
-            } else {
-                sleep(5);
-            }
             // \DB::enableQueryLog();
+            $auth = Auth::user();
             $category_id = $request->category_id;
             $dateOne = $request->dateOne;
             $dateTwo = $request->dateTwo;
+            $updated1 = $request->updated1;
+            $updated2 = $request->updated2;
             $condition = $request->condition;
             $status = $request->status;
             $study_program_id = $request->study_program_id;
             
             $from = date($dateOne);
             $to = date($dateTwo);
+
+            $fromUpdated = date($updated1." 00:00:00");
+            // dd($fromUpdated);
+            $toUpdated = date($updated2." 23:59:59");
 
             if(isset($dateTwo)){
                 if($from > $to){
@@ -349,8 +337,20 @@ class AssetsController extends BaseController
                     ]);
                 }
             }
+
+            if(isset($updated2)){
+                if($fromUpdated > $toUpdated){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
+                    ]);
+                }
+            }
             
-            $countAll = Assets::count();
+            $countAll = Assets::
+            when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
+            ->count();
             $countRequest = Assets::
             when(isset($category_id))
             ->where('assets.category_id', $category_id)
@@ -360,10 +360,16 @@ class AssetsController extends BaseController
             ->where('assets.date', $from)
             ->when(isset($dateOne) && isset($dateTwo))
             ->whereBetween('date', [$from, $to])
+            ->when(isset($updated1) && !isset($updated2))
+            ->where('assets.updated_at', $fromUpdated)
+            ->when(isset($updated1) && isset($updated2))
+            ->whereBetween('updated_at', [$fromUpdated, $toUpdated])
             ->when(isset($status))
             ->where('assets.status', $status)
             ->when(isset($condition))
             ->where('assets.condition', $condition)
+            ->when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
             ->count();
             // dd(\DB::getQueryLog());
             if (!$countAll && !$countRequest) {
@@ -371,8 +377,215 @@ class AssetsController extends BaseController
             }
             $success['countAll'] = $countAll;
             $success['countRequest'] = $countRequest;
+            $success['fraction'] = number_format($countRequest)."/".number_format($countAll);
             $success['percentage'] = number_format((float)$countRequest/$countAll * 100, 0, '.', '');
             return $this->sendResponse($success, 'Count Asset by Status and Condition');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+        }
+        
+    }
+
+    /** 
+     * Get report per week Assets
+     * 
+     *
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportWeekly()
+    {
+        try {
+            $auth = Auth::user();
+            $from = Carbon::now()->subWeek()->startOfWeek();
+            $to = Carbon::now()->subWeek()->endOfWeek();
+            $assets = Assets::
+            join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->where('assets.condition', '1')
+            ->whereBetween('assets.updated_at', [$from, $to])
+            ->when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
+            ->select(
+                'assets.id as id',
+                'assets.name as name',
+                'assets.code as code',
+                'assets.condition as condition',
+                'assets.status as status',
+                'assets.date as date',
+                'assets.placement_id as placement_id', 
+                'placements.name as placement_name', 
+                'assets.category_id as category_id', 
+                'category_assets.name as category_name', 
+                'assets.user_id as user_id',
+                'users.name as user_name',
+                'assets.study_program_id as study_program_id',
+                'study_programs.name as study_program_name',
+            )
+            ->orderBy('study_program_name', 'ASC')
+            ->get();
+
+            if ($assets->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            
+            $success['range1'] = $from->format('d/m/Y');
+            $success['range2'] = $to->format('d/m/Y');
+            $success['count'] = $assets->count();
+            $success['assets']= $assets->values();
+
+            return $this->sendResponse($success, 'Displaying all Loans Data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+        }
+        
+    }
+
+    /** 
+     * Get report per month Assets
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportMonthly(Request $request)
+    {
+        try {
+            $auth = Auth::user();
+
+            $month = $request->month;
+            $year = $request->year;
+            $nameOfMonth = array(
+                "1" => "Januari",
+                "2" => "Februari",
+                "3" => "Maret",
+                "4" => "April",
+                "5" => "Mei",
+                "6" => "Juni",
+                "7" => "Juli",
+                "8" => "Agustus",
+                "9" => "September",
+                "10" => "Oktober",
+                "11" => "November",
+                "12" => "Desember",
+            );
+
+            $assets = Assets::
+            join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->where('assets.condition', '1')
+            ->whereYear('assets.updated_at', '=', $year)
+            ->whereMonth('assets.updated_at', '=', $month)
+            ->when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
+            ->select(
+                'assets.id as id',
+                'assets.name as name',
+                'assets.code as code',
+                'assets.condition as condition',
+                'assets.status as status',
+                'assets.date as date',
+                'assets.placement_id as placement_id', 
+                'placements.name as placement_name', 
+                'assets.category_id as category_id', 
+                'category_assets.name as category_name', 
+                'assets.user_id as user_id',
+                'users.name as user_name',
+                'assets.study_program_id as study_program_id',
+                'study_programs.name as study_program_name',
+            )
+            ->orderBy('study_program_name', 'ASC')
+            ->get();
+
+            if ($assets->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+
+            $success['count'] = $assets->count();
+            $success['assets']= $assets->values();
+            $success['month'] = $nameOfMonth[$month];
+            $success['year'] = $year;
+            return $this->sendResponse($success, 'Displaying all Loans Data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+        }
+        
+    }
+
+    /** 
+     * Get report per month Assets
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportSemester(Request $request)
+    {
+        try {
+            $auth = Auth::user();
+
+            $semester = $request->semester;
+            $year1 = $request->year;
+            $year2 = $year1+1;
+            $academicYear = $year1."/".$year2;
+            $range = '';
+            $dateOne = '';
+            $dateTwo = '';
+            if ($semester == 2) {
+                $range = 'Genap';
+                $dateOne = $year2.'-02-01 00:00:00';
+                $dateTwo = $year2.'-07-31 23:59:59';
+            } else if($semester == 1) {
+                $range = 'Ganjil';
+                $dateOne = $year1.'-08-01 00:00:00';
+                $dateTwo = $year2.'-01-31 23:59:59';
+            }
+
+            $from = date($dateOne);
+            $to = date($dateTwo);
+
+            $assets = Assets::
+            join('users as users', 'assets.user_id', '=', 'users.id')
+            ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
+            ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
+            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            ->where('assets.condition', '1')
+            ->whereBetween('assets.updated_at', [$from, $to])
+            ->when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
+            ->select(
+                'assets.id as id',
+                'assets.name as name',
+                'assets.code as code',
+                'assets.condition as condition',
+                'assets.status as status',
+                'assets.date as date',
+                'assets.placement_id as placement_id', 
+                'placements.name as placement_name', 
+                'assets.category_id as category_id', 
+                'category_assets.name as category_name', 
+                'assets.user_id as user_id',
+                'users.name as user_name',
+                'assets.study_program_id as study_program_id',
+                'study_programs.name as study_program_name',
+            )
+            ->orderBy('study_program_name', 'ASC')
+            ->get();
+
+            if ($assets->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+
+            $success['count'] = $assets->count();
+            $success['assets']= $assets->values();
+            $success['academicYear'] = $academicYear;
+            $success['range'] = $range;
+
+            return $this->sendResponse($success, 'Displaying all Loans Data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
@@ -401,8 +614,13 @@ class AssetsController extends BaseController
             if ($validator->fails()){
                 return $this->sendError('Error!', ['error'=>'Data tidak valid!']);
             }
-
-            $user_id =  Auth::user()->id;
+            $auth = Auth::user();
+            // dd($auth);
+            $user_id =  $auth->id;
+            $study_program_id = (int)$request->study_program_id;
+            if($auth->hasRole('Admin')){
+                $study_program_id = $auth->study_program_id;
+            }
             $date = date("d/m/Y");
             $category_name = CategoryAssets::where('id', $request->category_id)->pluck('name');
             $category_name = Str::upper(str_replace(array('["','"]'), '', $category_name));
@@ -418,7 +636,7 @@ class AssetsController extends BaseController
                 "condition" => "0",
                 "code" => $code,
                 "name" => ucwords($request->name),
-                "study_program_id" => (int)$request->study_program_id,
+                "study_program_id" => $study_program_id,
                 "category_id" => (int)$request->category_id,
                 "placement_id" => (int)$request->placement_id,
             );
@@ -606,6 +824,50 @@ class AssetsController extends BaseController
             $success['message'] = "Restore asset data";
             $success['total_restored'] = $totalRestore;
             return $this->sendResponse($success, 'Data dipulihkan');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+        }
+    }
+
+    /**
+     * Delete Multiple Assets permanently
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function deletePermanently(Request $request)
+    {
+        try {
+            sleep(5);
+            $ids = $request->ids;
+            // dd($ids);
+            if($ids == NULL) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada aset yang dipilih!']);
+            }
+            // \DB::enableQueryLog();
+            $checkAssets = Assets::whereIn('id', $ids)->onlyTrashed()->get();
+            // dd(\DB::getQueryLog());
+            if($checkAssets->isEmpty()){
+                return $this->sendError('Error!', ['error'=> 'Data tidak ditemukan!']);
+            }
+
+            // dd($checkAssets);
+            // \DB::enableQueryLog();
+        //  $deleteAssets = Assets::findMany($ids);
+            // dd(\DB::getQueryLog());
+            $totalDelete = 0;
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            foreach($checkAssets as $rowAssets){
+                $rowAssets->forceDelete();  
+                $totalDelete++;
+            }
+
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Delete selected data";
+            $success['total_deleted'] = $totalDelete;
+            return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }

@@ -37,10 +37,11 @@ Route::controller(UsersController::class)->group(function(){
             Route::put('users/assignRoles', 'assignRoles');
         });
         Route::middleware(['role:Super-Admin|Admin'])->group(function(){
-        Route::get('users/getAll', 'index')->name('all users');
-        Route::delete('users/delete', 'delete');
-        Route::get('users/trash', 'trash');
-        Route::put('users/restore', 'restore');
+            Route::get('users/getAll', 'index')->name('all users');
+            Route::delete('users/delete', 'delete');
+            Route::get('users/trash', 'trash');
+            Route::put('users/restore', 'restore');
+            Route::delete('users/deletePermanently', 'deletePermanently');
         });
         Route::get('users/detail/{id}', 'show');
         Route::put('users/update', 'update');
@@ -63,7 +64,11 @@ Route::controller(AssetsController::class)->group(function(){
             Route::post('assets/create', 'create'); 
             Route::put('assets/update', 'update');
             Route::delete('assets/delete', 'delete');
+            Route::delete('assets/deletePermanently', 'deletePermanently');
             Route::put('assets/restore', 'restore');
+            Route::get('assets/reportWeekly', 'reportWeekly');
+            Route::get('assets/reportMonthly', 'reportMonthly');
+            Route::get('assets/reportSemester', 'reportSemester');
         });
         Route::get('assets/getAll', 'index');
         Route::get('assets/detail/{id}', 'show');
@@ -77,6 +82,7 @@ Route::controller(CategoryAssetsController::class)->group(function(){
             Route::post('categoryAssets/create', 'create'); 
             Route::put('categoryAssets/update', 'update');
             Route::delete('categoryAssets/delete', 'delete');
+            Route::delete('categoryAssets/deletePermanently', 'deletePermanently');
             Route::get('categoryAssets/trash', 'trash');
             Route::put('categoryAssets/restore', 'restore');
         });
@@ -92,8 +98,10 @@ Route::controller(PlacementsController::class)->group(function(){
             Route::post('placements/create', 'create'); 
             Route::put('placements/update', 'update');
             Route::delete('placements/delete', 'delete');
+            Route::delete('placements/deletePermanently', 'deletePermanently');
             Route::get('placements/trash', 'trash');
             Route::put('placements/restore', 'restore');
+
         });
         Route::get('placements/getAll', 'index');
         Route::get('placements/detail/{id}', 'show');
@@ -124,6 +132,7 @@ Route::controller(StudyProgramsController::class)->group(function(){
             Route::post('studyPrograms/create', 'create'); 
             Route::put('studyPrograms/update', 'update');
             Route::delete('studyPrograms/delete', 'delete');
+            Route::delete('studyPrograms/deletePermanently', 'deletePermanently');
             Route::put('studyPrograms/restore', 'restore');
         });
         Route::get('studyPrograms/getAll', 'index');
@@ -150,12 +159,16 @@ Route::controller(LoansController::class)->group(function(){
                 Route::put('loans/confirmation', 'confirmation');
             });
             Route::post('loans/demand', 'demand');
+            Route::get('loans/reportWeekly', 'reportWeekly');
+            Route::get('loans/reportMonthly', 'reportMonthly');
+            Route::get('loans/reportSemester', 'reportSemester');
         });
         Route::put('loans/update', 'update');
         Route::delete('loans/delete', 'delete');
         Route::get('loans/percentage', 'percentage');
         Route::put('loans/restore', 'restore');
         Route::get('loans/getAll', 'index');
+        Route::get('loans/historyAssets', 'historyAssets');
         Route::post('loans/create', 'create'); 
         Route::get('loans/detail/{id}', 'show');
     });

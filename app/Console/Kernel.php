@@ -15,7 +15,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('study_programs:truncate')->everyFiveMinutes();
+        $schedule->command('placements:truncate')->everyFiveMinutes();
+        $schedule->command('category_assets:truncate')->everyFiveMinutes();
+        $schedule->command('users:truncate')->everyFiveMinutes();
+        $schedule->command('assets:truncate')->everyFiveMinutes();
     }
 
     /**

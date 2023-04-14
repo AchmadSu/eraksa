@@ -54,10 +54,8 @@ class UsersController extends BaseController
     public function index(Request $request){
         try {
             // dd(Auth::user()->name);
-            sleep(5);
             //$users = User::all();
             $keyWords = $request->keyWords;
-            $code = $request->code;
             $code_type = $request->code_type;
             $status = $request->status;
             $phone = $request->phone;
@@ -98,10 +96,11 @@ class UsersController extends BaseController
             ->leftJoin('study_programs as study_programs','users.study_program_id', '=', 'study_programs.id')
             ->when(isset($keyWords))
             ->where(function ($query) use ($keyWords){
-                $query->where('users.name', 'like', '%'.$keyWords.'%')->orWhere('users.email', 'like', '%'.$keyWords.'%');
+                $query
+                ->where('users.name', 'like', '%'.$keyWords.'%')
+                ->orWhere('users.email', 'like', '%'.$keyWords.'%')
+                ->orWhere('users.code', 'like', '%'.$keyWords.'%');
             })
-            ->when(isset($code))
-            ->where('users.code', 'like', '%'.$code.'%')
             ->when(isset($code_type))
             ->where('users.code_type', $code_type)
             ->when(isset($status))
@@ -168,7 +167,25 @@ class UsersController extends BaseController
     {
         try {
             sleep(5);
-            $user = User::find($id);
+            $user = User::
+            leftJoin('model_has_roles as model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+            ->leftJoin('roles as roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->leftJoin('study_programs as study_programs','users.study_program_id', '=', 'study_programs.id')
+            ->select(
+                'users.id as id',
+                'users.name as name',
+                'users.code as code',
+                'users.code_type as code_type',
+                'users.email as email',
+                'users.status as status',
+                'users.created_at as created_at',
+                'users.phone as phone',
+                'users.updated_at as updated_at',
+                'study_programs.id as study_program_id',
+                'study_programs.name as study_program_name',
+                'roles.name as user_role'
+                )
+            ->find($id);
             // dd(\DB::getQueryLog());
             if (!$user) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
@@ -248,7 +265,7 @@ class UsersController extends BaseController
 
     public function register(Request $request){
         try {
-            sleep(5);
+            // sleep(5);
             $validator = Validator::make($request->all(),[
                 'name' => 'required',
                 'code' => 'required|unique:users,code',
@@ -274,6 +291,12 @@ class UsersController extends BaseController
             // dd(\DB::getQueryLog());
             if($checkEmail){
                 return $this->sendError('Error!', ['error'=>'Email sudah terdaftar, silakan login!']);
+            }
+
+            $checkCode = User::where('code', $input['code'])->first();
+            // dd(\DB::getQueryLog());
+            if($checkCode){
+                return $this->sendError('Error!', ['error'=>'NIM/NIDN/NIP sudah terdaftar. Gunakan yang lain!']);
             }
             
             $input['name'] = ucwords(strtolower($input['name']));
@@ -310,7 +333,12 @@ class UsersController extends BaseController
                 'expired_at' => Carbon::now()->addMinutes(10),
                 'status' => '0',
             ]);
-            $this->verificationCodesService->sendWhatsappNotification("$otp", $input['phone']);
+            try {
+                $this->verificationCodesService->sendWhatsappNotification("$otp", $input['phone']);
+                $success['whatsApp'] = "WhatsApp berhasil dikirim";
+            } catch (\Throwable $th) {
+                $success['whatsApp'] = "WhatsApp gagal dikirim. Error: ".$th;
+            }
             // $success['token'] = $user->createToken('MyApp')->plainTextToken;
             
             $success['message'] = "Hai, $user->name! Kami telah mengirimkan OTP ke nomor WhatsApp anda. Silakan login untuk melanjutkan!";
@@ -335,7 +363,7 @@ class UsersController extends BaseController
     public function update(Request $request)
     {
         try {
-            sleep(5);
+            // dd(Auth::user()->email);
             // dd(Auth::user()->id);
             $id = Auth::user()->id;
             $updateDataUser = User::find($id);
@@ -370,15 +398,16 @@ class UsersController extends BaseController
             // dd($phone);
 
             $checkPhone = User::where('id', $id)->where('phone', $phone)->first();
+            
             // dd($checkPhone);
 
             if (!$checkPassword) {
-                return $this->sendError('Error!', $credentials = ['Password lama yang anda masukkan salah!']);
+                return $this->sendError('Error!', ['error' => 'Password lama yang anda masukkan salah!']);
             }
 
             // \DB::enableQueryLog();
             $checkCode = User::where('id', $id)->where('code', $code)->first();
-            //dd($checkCode);
+            // dd(\DB::getQueryLog());
 
             if(!$checkCode){
                 // dd(!$checkCode);
@@ -386,42 +415,46 @@ class UsersController extends BaseController
                     'code' => 'required|unique:users,code',
                 ]);
                 if ($validator->fails()) {
-                    return $this->sendError('Error!', 'NIM atau NIDN sudah digunakan oleh pengguna lain');
+                    return $this->sendError('Error!', ['error' => 'NIM/NIDN/NIP sudah digunakan oleh pengguna lain']);
                 }
             }
 
-            if ($new_password == NULL) {
+            if ($new_password == NULL || $new_password == '') {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
                     'code' => 'required',
                     'code_type' => 'required',
-                    'new_email' => 'email|unique:users,email',
-                    'new_phone' => 'numeric|unique:users,phone',
                 ]);
 
-            } elseif ($new_password != NULL) {
+            } elseif ($new_password != NULL || $new_password != '') {
                 $validator = Validator::make($request->all(),[
                     'name' => 'required',
                     'code' => 'required',
                     'code_type' => 'required',
-                    'new_email' => 'email|unique:users,email',
                     'new_password' => 'required',
                     'confirm_new_password' => 'required|same:new_password',
-                    'new_phone' => 'numeric|unique:users,phone',
                 ]);
                 $updateDataUser->password = bcrypt($new_password);
             }   
 
             if ($validator->fails()) {
-                return $this->sendError('Error!', ['error'=>'Data tidak valid. Masukan data valid!']);
+                return $this->sendError('Error!', ['error'=>'Data tidak valid. Masukkan data valid!']);
             }
 
-            if ($new_email != NULL) {
+            if ($new_email != NULL || $new_email != '') {
+                $checkEmail = User::where('email', $new_email)->first();
+                if($checkEmail){
+                    return $this->sendError('Error!', ['error' => 'Email baru sudah digunakan oleh pengguna lain!']);
+                }
                 $updateDataUser->email = $new_email;
             }
 
             if ($checkPhone) {
-                if($new_phone != NULL) {
+                if($new_phone != NULL || $new_phone != '') {
+                    $checkNewPhone = User::where('phone', $new_phone)->first();
+                    if($checkNewPhone){
+                        return $this->sendError('Error!', ['error' => 'Nomor baru sudah digunakan oleh pengguna lain!']);
+                    }
                     $spiltPhone = str_split($new_phone);
                     if($spiltPhone[0] === '8'){
                         $new_phone = '+62'.$new_phone;
@@ -496,6 +529,50 @@ class UsersController extends BaseController
     }
 
     /**
+     * Delete Multiple data permanently
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+     public function deletePermanently(Request $request)
+     {
+         try {
+             sleep(5);
+             $ids = $request->ids;
+             // dd($ids);
+             if($ids == NULL) {
+                 return $this->sendError('Error!', ['error' => 'Tidak ada aset yang dipilih!']);
+             }
+             // \DB::enableQueryLog();
+             $checkData = User::whereIn('id', $ids)->onlyTrashed()->get();
+             // dd(\DB::getQueryLog());
+             if($checkData->isEmpty()){
+                 return $this->sendError('Error!', ['error'=> 'Data tidak ditemukan!']);
+             }
+ 
+             // dd($checkAssets);
+             // \DB::enableQueryLog();
+         //  $deleteAssets = Assets::findMany($ids);
+             // dd(\DB::getQueryLog());
+             $totalDelete = 0;
+             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+             foreach($checkData as $rowData){
+                 $rowData->forceDelete();  
+                 $totalDelete++;
+             }
+ 
+             $tokenMsg = Str::random(15);
+             $success['token'] = $tokenMsg;
+             $success['message'] = "Delete selected data";
+             $success['total_deleted'] = $totalDelete;
+             return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
+         } catch (\Throwable $th) {
+             return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
+         }
+     }
+
+    /**
      * Restore Multiple User from trash
      * 
      * @param \Illuminate\Http\Request $request
@@ -568,7 +645,7 @@ class UsersController extends BaseController
                 $checkUser->save();
                 $mailData = [
                     "name" => "Reset Password",
-                    "link" => config('app.url').':3000/resetPassword/'.'data?token='.$token.'&email='.urlencode($email).'&expired_at='.Carbon::now()->addMinutes(10),
+                    "link" => getenv('APP_URL_FE').'/resetPassword/data?token='.$token.'&email='.urlencode($email).'&expired_at='.Carbon::now()->addMinutes(10),
                 ];
                 Mail::to($email)->send(new ResetPasswordLink($mailData));
                 $success['message'] = "Link reset password berhasil dikirim kepada $email. Silakan cek pesan masuk anda!";

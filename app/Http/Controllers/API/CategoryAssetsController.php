@@ -4,11 +4,12 @@ namespace App\Http\Controllers\API;
 
 use Carbon\Carbon;
 use App\Models\Assets;
-use App\Models\CategoryAssets;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use App\Models\CategoryAssets;
+use Illuminate\Support\Facades\DB;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use function PHPUnit\Framework\isEmpty;
 use Illuminate\Support\Facades\Validator;
@@ -18,9 +19,9 @@ class CategoryAssetsController extends BaseController
 {
     /** ATTRIVE CATEGORY ASSETS DATA */
 
-    /** 
+    /**
      * Get All Category Assets
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
     */
@@ -47,8 +48,6 @@ class CategoryAssetsController extends BaseController
             ->when($trash == 1)
             ->onlyTrashed()
             ->get();
-            // dd(\DB::getQueryLog());
-            // dd($categoryAssets);
             if ($categoryAssets->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
@@ -69,9 +68,9 @@ class CategoryAssetsController extends BaseController
         }
     }
 
-    /** 
+    /**
      * Get Category Asset By Id
-     * 
+     *
      * @param Int $id
      * @return \Illuminate\Http\Response
     */
@@ -97,7 +96,7 @@ class CategoryAssetsController extends BaseController
     
     /**
      * Create Category Asset
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
@@ -112,28 +111,28 @@ class CategoryAssetsController extends BaseController
             ]);
             
             if ($validator->fails()){
-                return $this->sendError('Error!', ['error'=>'Nama sudah tersedia atau deskripsi kurang dari 5 karakter!']);
+                return $this->sendError('Error!', ['error'=>'Nama tersedia atau deskripsi kurang dari 5 karakter!']);
             }
             $name = ucwords($request->name);
             $desc = ucfirst(strtolower($request->description));
             $input = array(
                 "name" => $name,
-                "description" => $desc 
+                "description" => $desc
             );
 
             // dd($input);
             $createCategory = CategoryAssets::create($input);
             $success['token'] = Str::random(15);
     
-            return $this->sendResponse($success, 'Category Asset ditambahkan!');    
+            return $this->sendResponse($success, 'Category Asset ditambahkan!');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
-        } 
+        }
     }
 
     /**
      * Update Category Asset
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
@@ -185,7 +184,7 @@ class CategoryAssetsController extends BaseController
 
     /**
      * Put Multiple Category Asset into trash
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
@@ -216,14 +215,13 @@ class CategoryAssetsController extends BaseController
 
     /**
      * Restore Multiple Category Asset from trash
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
 
     public function restore(Request $request)
     {
-        // return "Cek";exit();
         try {
             sleep(5);
             $ids = $request->ids;
@@ -242,6 +240,45 @@ class CategoryAssetsController extends BaseController
             return $this->sendResponse($success, 'Data dipulihkan');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan"]);
+        }
+    }
+
+    /**
+     * Delete Multiple data permanently
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function deletePermanently(Request $request)
+    {
+        try {
+            sleep(5);
+            $ids = $request->ids;
+            if ($ids == null) {
+                return $this->sendError('Error!', ['error' => 'Tidak ada aset yang dipilih!']);
+            }
+            // \DB::enableQueryLog();
+            $checkData = CategoryAssets::whereIn('id', $ids)->onlyTrashed()->get();
+            // dd(\DB::getQueryLog());
+            if($checkData->isEmpty()){
+                return $this->sendError('Error!', ['error'=> 'Data tidak ditemukan!']);
+            }
+
+            $totalDelete = 0;
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            foreach ($checkData as $rowData) {
+                $rowData->forceDelete();
+                $totalDelete++;
+            }
+
+            $tokenMsg = Str::random(15);
+            $success['token'] = $tokenMsg;
+            $success['message'] = "Delete selected data";
+            $success['total_deleted'] = $totalDelete;
+            return $this->sendResponse($success, 'Data terpilih berhasil dihapus');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => 'Permintaan tidak dapat dilakukan']);
         }
     }
 }

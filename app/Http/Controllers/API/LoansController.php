@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Validator;
 use App\Services\Loans\LoansRequestService;
 use App\Http\Controllers\API\BaseController;
+use App\Models\CategoryAssets;
 
 class LoansController extends BaseController
 {
@@ -110,151 +111,58 @@ class LoansController extends BaseController
                 }
             }
 
-            if($status != "0") {
-                if($status == "3") {
-                    $loans = Loans::
-                        join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-                        ->join('users as lenders', 'loans.lender_id', '=', 'lenders.id')
-                        ->join('returns as returns', 'loans.return_id', '=', 'returns.id')
-                        ->join('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
-                        ->when(isset($code))
-                        ->where('loans.code', 'like', '%'.$code.'%')
-                        ->when(isset($loaner_id))
-                        ->where('loans.loaner_id', $loaner_id)
-                        ->when(isset($loaner_keyWords))
-                        ->whereIn('loans.loaner_id', $loaner_ids)
-                        ->when(isset($lender_id))
-                        ->where('loans.lender_id', $lender_id)
-                        ->when(isset($lender_keyWords))
-                        ->whereIn('loans.lender_id', $lender_ids)
-                        ->when(isset($dateOne) && isset($dateTwo))
-                        ->whereBetween('loans.date', [$from, $to])
-                        ->when(isset($dateOne) && !isset($dateTwo))
-                        ->where('loans.date', $from)
-                        ->when(isset($dueDateOne) && isset($dueDateTwo))
-                        ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
-                        ->when(isset($dueDateOne) && !isset($dueDateTwo))
-                        ->where('loans.due_date', $dueFrom)
-                        ->when(isset($status))
-                        ->where('loans.status', $status)
-                        ->select(
-                            'loans.id as id',
-                            'loans.code as code',
-                            'loans.status as status',
-                            'loans.date as date',
-                            'loans.due_date as due_date',
-                            'loans.return_id as return_id',
-                            'loans.loaner_id as loaner_id', 
-                            'loaners.name as loaner_name', 
-                            'loaners.code_type as loaner_code_type', 
-                            'loaners.code as loaner_code', 
-                            'loans.lender_id as lender_id', 
-                            'lenders.name as lender_name',
-                            'lenders.code_type as lender_code_type', 
-                            'lenders.code as lender_code',  
-                            'recipients.id as recipient_id',
-                            'recipients.name as recipient_name',
-                            'recipients.code_type as recipient_code_type', 
-                            'recipients.code as recipient_code',  
-                        )
-                        ->when($trash == 1)
-                        ->onlyTrashed()
-                        ->when($orderDate)
-                        ->orderby('date', $orderDate)
-                        ->when($orderDueDate)
-                        ->orderby('due_date', $orderDueDate)
-                        ->get()
-                    ;
-                } else {
-                    $loans = Loans::
-                        join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-                        ->join('users as lenders', 'loans.lender_id', '=', 'lenders.id')
-                        ->when(isset($code))
-                        ->where('loans.code', 'like', '%'.$code.'%')
-                        ->when(isset($loaner_id))
-                        ->where('loans.loaner_id', $loaner_id)
-                        ->when(isset($loaner_keyWords))
-                        ->whereIn('loans.loaner_id', $loaner_ids)
-                        ->when(isset($lender_id))
-                        ->where('loans.lender_id', $lender_id)
-                        ->when(isset($lender_keyWords))
-                        ->whereIn('loans.lender_id', $lender_ids)
-                        ->when(isset($dateOne) && isset($dateTwo))
-                        ->whereBetween('loans.date', [$from, $to])
-                        ->when(isset($dateOne) && !isset($dateTwo))
-                        ->where('loans.date', $from)
-                        ->when(isset($dueDateOne) && isset($dueDateTwo))
-                        ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
-                        ->when(isset($dueDateOne) && !isset($dueDateTwo))
-                        ->where('loans.due_date', $dueFrom)
-                        ->when(isset($status))
-                        ->where('loans.status', $status)
-                        ->select(
-                            'loans.id as id',
-                            'loans.code as code',
-                            'loans.status as status',
-                            'loans.date as date',
-                            'loans.due_date as due_date',
-                            'loans.return_id as return_id',
-                            'loans.loaner_id as loaner_id', 
-                            'loaners.name as loaner_name', 
-                            'loaners.code_type as loaner_code_type', 
-                            'loaners.code as loaner_code', 
-                            'loans.lender_id as lender_id', 
-                            'lenders.name as lender_name',
-                            'lenders.code_type as lender_code_type', 
-                            'lenders.code as lender_code',  
-                        )
-                        ->when($trash == 1)
-                        ->onlyTrashed()
-                        ->when($orderDate)
-                        ->orderby('date', $orderDate)
-                        ->when($orderDueDate)
-                        ->orderby('due_date', $orderDueDate)
-                        ->get()
-                    ;
-                }
-                // dd(\DB::getQueryLog());
-            } else {
-                // \DB::enableQueryLog();
-                $loans = Loans::
-                    join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-                    ->when(isset($code))
-                    ->where('loans.code', 'like', '%'.$code.'%')
-                    ->when(isset($loaner_id))
-                    ->where('loans.loaner_id', $loaner_id)
-                    ->when(isset($loaner_keyWords))
-                    ->whereIn('loans.loaner_id', $loaner_ids)
-                    ->when(isset($dateOne) && isset($dateTwo))
-                    ->whereBetween('loans.date', [$from, $to])
-                    ->when(isset($dateOne) && !isset($dateTwo))
-                    ->where('loans.date', $from)
-                    ->when(isset($dueDateOne) && isset($dueDateTwo))
-                    ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
-                    ->when(isset($dueDateOne) && !isset($dueDateTwo))
-                    ->where('loans.due_date', $dueFrom)
-                    ->when(isset($status))
-                    ->where('loans.status', $status)
-                    ->select(
-                        'loans.id as id',
-                        'loans.code as code',
-                        'loans.status as status',
-                        'loans.date as date',
-                        'loans.due_date as due_date',
-                        'loans.loaner_id as loaner_id', 
-                        'loaners.name as loaner_name', 
-                        'loaners.code_type as loaner_code_type', 
-                        'loaners.code as loaner_code', 
-                    )
-                    ->when($trash == 1)
-                    ->onlyTrashed()
-                    ->when($orderDate)
-                    ->orderby('date', $orderDate)
-                    ->when($orderDueDate)
-                    ->orderby('due_date', $orderDueDate)
-                    ->get()
-                ;
-            }
+            $loans = Loans::
+            join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->leftJoin('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+            ->when(isset($code))
+            ->where('loans.code', 'like', '%'.$code.'%')
+            ->when(isset($loaner_id))
+            ->where('loans.loaner_id', $loaner_id)
+            ->when(isset($loaner_keyWords))
+            ->whereIn('loans.loaner_id', $loaner_ids)
+            ->when(isset($lender_id))
+            ->where('loans.lender_id', $lender_id)
+            ->when(isset($lender_keyWords))
+            ->whereIn('loans.lender_id', $lender_ids)
+            ->when(isset($dateOne) && isset($dateTwo))
+            ->whereBetween('loans.date', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->when(isset($dateOne) && !isset($dateTwo))
+            ->whereBetween('loans.date', [$from.' 00:00:00', $from.' 23:59:59'])
+            ->when(isset($dueDateOne) && isset($dueDateTwo))
+            ->whereBetween('loans.due_date', [$dueFrom.' 00:00:00', $dueTo.' 23:59:59'])
+            ->when(isset($dueDateOne) && !isset($dueDateTwo))
+            ->whereBetween('loans.due_date', [$dueFrom.' 00:00:00', $dueFrom.' 23:59:59'])
+            ->when(isset($status))
+            ->where('loans.status', $status)
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',
+                'loans.loaner_id as loaner_id', 
+                'loaners.name as loaner_name', 
+                'loaners.code_type as loaner_code_type', 
+                'loaners.code as loaner_code', 
+                'loans.lender_id as lender_id', 
+                'lenders.name as lender_name',
+                'lenders.code_type as lender_code_type', 
+                'lenders.code as lender_code',  
+                'recipients.id as recipient_id',
+                'recipients.name as recipient_name',
+                'recipients.code_type as recipient_code_type', 
+                'recipients.code as recipient_code',  
+            )
+            ->when($trash == 1)
+            ->onlyTrashed()
+            ->when($orderDate)
+            ->orderby('date', $orderDate)
+            ->when($orderDueDate)
+            ->orderby('due_date', $orderDueDate)
+            ->get();
                 // dd(Loans::all());
                 // dd(Auth::user()->name);
             // \DB::enableQueryLog();
@@ -279,6 +187,133 @@ class LoansController extends BaseController
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
         }
     }
+    
+    /** 
+     * Get History Assets Loans
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function historyAssets(Request $request){
+        try {
+            $sleep = $request->sleep;
+            if($sleep) {
+                sleep($sleep);
+            } else {
+                sleep(5);
+            }
+
+            $asset_id = $request->asset_id;
+            $dateOne = $request->dateOne;
+            $dateTwo = $request->dateTwo;
+            $dueDateOne = $request->dueDateOne;
+            $dueDateTwo = $request->dueDateTwo;
+            $skip = $request->skip;
+            $take = $request->take;
+            $trash = $request->trash;
+            $orderDate = $request->orderDate;
+            $orderDueDate = $request->orderDueDate;
+
+            $from = date($dateOne);
+            $to = date($dateTwo);
+            
+            $dueFrom = date($dueDateOne);
+            $dueTo = date($dueDateTwo);
+
+            if(!isset($asset_id)){
+                return $this->sendError('Error!', [
+                    'error' => 
+                    'Tidak ada riwayat aset yang dipilih!'
+                ]);
+            }
+
+            
+            $checkAssets = Assets::find($asset_id);
+            
+            if(!$checkAssets){
+                return $this->sendError('Error!', [
+                    'error' => 
+                    'Tidak ada riwayat aset yang dipilih!'
+                ]);
+            }
+
+            // dd($checkAssets);
+
+            if(isset($dateTwo)){
+                if($from > $to){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal pertama harus lebih kecil atau sama dengan tanggal kedua!'
+                    ]);
+                }
+            }
+
+            if(isset($dueDateTwo)){
+                if($dueFrom > $dueTo){
+                    return $this->sendError('Error!', [
+                        'error' => 
+                        'Parameter tanggal salah. Tanggal tenggang waktu pertama harus lebih kecil atau sama dengan tanggal tenggang waktu kedua!'
+                    ]);
+                }
+            }
+            // dd($request->loaner_ids)
+
+            // \DB::enableQueryLog();
+            $loans = Loans::
+            join('loan_details as loan_details', 'loans.id', '=', 'loan_details.loan_id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->when(isset($dateOne) && isset($dateTwo))
+            ->whereBetween('loans.date', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->when(isset($dateOne) && !isset($dateTwo))
+            ->whereBetween('loans.date', [$from.' 00:00:00', $from.' 23:59:59'])
+            ->when(isset($dueDateOne) && isset($dueDateTwo))
+            ->whereBetween('loans.due_date', [$dueFrom.' 00:00:00', $dueTo.' 23:59:59'])
+            ->when(isset($dueDateOne) && !isset($dueDateTwo))
+            ->whereBetween('loans.due_date', [$dueFrom.' 00:00:00', $dueFrom.' 23:59:59'])
+            ->where('loan_details.asset_id', $asset_id)
+            ->whereIn('loans.status', ['0', '1', '3'])
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',  
+            )
+            ->when($trash == 1)
+            ->onlyTrashed()
+            ->when($orderDate)
+            ->orderby('date', $orderDate)
+            ->when($orderDueDate)
+            ->orderby('due_date', $orderDueDate)
+            ->get();
+                // dd(Loans::all());
+                // dd(Auth::user()->name);
+            // dd(\DB::getQueryLog());
+            // \DB::enableQueryLog();
+            
+            // dd($loans);
+            if ($loans->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+
+            $success['asset_name'] = $checkAssets->name;
+            $success['asset_code'] = $checkAssets->code;
+            $count = $loans->count();
+            // dd(\DB::getQueryLog());
+            $success['count'] = $count;
+            $success['loans'] = $loans
+                ->when(isset($skip))
+                ->skip($skip)
+                ->when(isset($take))
+                ->take($take)
+            ;
+            return $this->sendResponse($success, 'Displaying all Loans data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
+        }
+    }
 
     /** 
      * Get Loans By Id
@@ -290,50 +325,42 @@ class LoansController extends BaseController
     public function show(Int $id)
     {
         try {
-            sleep(2);
+            // dd(Auth::user()->id);
             $loans = Loans::find($id);
+            // $loaner_id = $request->loaner_id;
+            if (!$loans) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            // \DB::enableQueryLog();
+            $loans = Loans::join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->leftJoin('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',
+                'loans.loaner_id as loaner_id', 
+                'loaners.name as loaner_name', 
+                'loaners.code_type as loaner_code_type', 
+                'loaners.code as loaner_code', 
+                'loans.lender_id as lender_id', 
+                'lenders.name as lender_name',
+                'lenders.code_type as lender_code_type', 
+                'lenders.code as lender_code',  
+                'recipients.id as recipient_id',
+                'recipients.name as recipient_name',
+                'recipients.code_type as recipient_code_type', 
+                'recipients.code as recipient_code', 
+            )->find($id);
             // dd(\DB::getQueryLog());
             if (!$loans) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
-            if($loans->status == '0') {
-                $loans = Loans::join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-                ->select(
-                    'loans.id as id',
-                    'loans.code as code',
-                    'loans.status as status',
-                    'loans.date as date',
-                    'loans.due_date as due_date',
-                    'loans.loaner_id as loaner_id', 
-                    'loaners.name as loaner_name', 
-                    'loaners.code_type as loaner_code_type', 
-                    'loaners.code as loaner_code', 
-                )->find($id);
-            } else {
-                $loans = Loans::join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
-                ->join('users as lenders', 'loans.lender_id', '=', 'lenders.id')
-                ->select(
-                    'loans.id as id',
-                    'loans.code as code',
-                    'loans.status as status',
-                    'loans.date as date',
-                    'loans.due_date as due_date',
-                    'loans.loaner_id as loaner_id', 
-                    'loans.return_id as return_id', 
-                    'loaners.name as loaner_name',
-                    'loaners.code_type as loaner_code_type', 
-                    'loaners.code as loaner_code', 
-                    'loans.lender_id as lender_id', 
-                    'lenders.name as lender_name',
-                    'lenders.code_type as lender_code_type', 
-                    'lenders.code as lender_code',
-                )->find($id);
-            }
-
-            if (!$loans) {
-                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
-            }
-                // \DB::enableQueryLog();
+            
             $loan_details = LoanDetails::
             join('assets', 'loan_details.asset_id', '=', 'assets.id')
             ->join('users as users', 'assets.user_id', '=', 'users.id')
@@ -391,6 +418,7 @@ class LoansController extends BaseController
     public function percentage(Request $request){
         try {
             // sleep(1);
+            $auth = Auth::user();
             $sleep = $request->sleep;
             if($sleep) {
                 sleep($sleep);
@@ -427,28 +455,18 @@ class LoansController extends BaseController
                     ]);
                 }
             }
-
-            // dd($request->loaner_ids);
-            // \DB::enableQueryLog();
-            // dd(isset($loaner_ids));
-            // $return = Returns::where('code', 'like', '%'.$return_code.'%')->get();
-            // $loans = Loans::whereIn('loaner_id', $loaner_ids)->get();
-            // $return_ids = array();
-            // foreach ($return as $rowReturn) {
-            //     $return_ids[] = $rowReturn->id;
-            // }
-            \DB::enableQueryLog();
-            // dd($request->loaner_ids == NULL);
             
             $loans = Loans::
             when(isset($dateOne) && !isset($dateTwo))
             ->where('loans.date', $from)
             ->when(isset($dateOne) && isset($dateTwo))
-            ->whereBetween('loans.date', [$from, $to])
-            ->when(isset($dueDateOne) && !isset($dueDateTwo))
-            ->whereBetween('loans.due_date', $dueFrom)
+            ->whereBetween('loans.date', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->when(isset($dateOne) && !isset($dateTwo))
+            ->whereBetween('loans.date', [$from.' 00:00:00', $from.' 23:59:59'])
             ->when(isset($dueDateOne) && isset($dueDateTwo))
-            ->whereBetween('loans.due_date', [$dueFrom, $dueTo])
+            ->whereBetween('loans.due_date', [$dueFrom.' 00:00:00', $dueTo.' 23:59:59'])
+            ->when(isset($dueDateOne) && !isset($dueDateTwo))
+            ->whereBetween('loans.due_date', [$dueFrom.' 00:00:00', $dueFrom.' 23:59:59'])
             ->when(isset($status))
             ->where('loans.status', $status)
             ->select('id')
@@ -459,19 +477,221 @@ class LoansController extends BaseController
                 $loans_ids[] = $rowLoans->id;
             }
             // dd(\DB::getQueryLog());
-            $countAll = Assets::count();
+            $countAll = Assets::
+            when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)
+            ->count();
             // dd($loans);
-            $countRequest = LoanDetails::whereIn('loan_id', $loans_ids)->count();
+            $countRequest = LoanDetails::
+            join('assets as assets', 'loan_details.asset_id', '=', 'assets.id')
+            ->when($auth->hasRole('Admin'))
+            ->where('assets.study_program_id', $auth->study_program_id)->whereIn('loan_details.loan_id', $loans_ids)->count();
             if (!$countAll && !$countRequest) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             $success['countAll'] = $countAll;
             $success['countRequest'] = $countRequest;
+            $success['fraction'] = number_format($countRequest)."/".number_format($countAll);
             $success['percentage'] = number_format((float)$countRequest/$countAll * 100, 0, '.', '');
-            // dd(Loans::all());
-            // dd(Auth::user()->name);
-            // \DB::enableQueryLog();
-            // dd($loans);
+            return $this->sendResponse($success, 'Displaying all Loans data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
+        }
+    }
+
+    /** 
+     * Get report per week loans
+     * 
+     *
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportWeekly(){
+        try {
+            $from = Carbon::now()->subWeek()->startOfWeek();
+            $to = Carbon::now()->subWeek()->endOfWeek();
+            
+            $loans = Loans::
+            join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->leftJoin('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+            ->whereIn('loans.status', ['1', '3'])
+            ->whereBetween('loans.date', [$from, $to])
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',
+                'loans.loaner_id as loaner_id', 
+                'loaners.name as loaner_name', 
+                'loaners.code_type as loaner_code_type', 
+                'loaners.code as loaner_code', 
+                'loaners.phone as loaner_phone', 
+                'loans.lender_id as lender_id', 
+                'lenders.name as lender_name',
+                'lenders.code_type as lender_code_type', 
+                'lenders.code as lender_code',  
+                'recipients.id as recipient_id',
+                'recipients.name as recipient_name',
+                'recipients.code_type as recipient_code_type', 
+                'recipients.code as recipient_code',  
+            )->orderBy('date')
+            ->get();
+            if ($loans->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            $count = $loans->count();
+
+            $success['count'] = $count;
+            $success['range1'] = $from->format('d/m/Y');
+            $success['range2'] = $to->format('d/m/Y');
+            $success['loans'] = $loans;
+            return $this->sendResponse($success, 'Displaying all Loans data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
+        }
+    }
+
+
+    /** 
+     * Get report per month loans
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportMonthly(Request $request){
+        try {
+            $month = $request->month;
+            $year = $request->year;
+            $nameOfMonth = array(
+                "1" => "Januari",
+                "2" => "Februari",
+                "3" => "Maret",
+                "4" => "April",
+                "5" => "Mei",
+                "6" => "Juni",
+                "7" => "Juli",
+                "8" => "Agustus",
+                "9" => "September",
+                "10" => "Oktober",
+                "11" => "November",
+                "12" => "Desember",
+            );
+            $loans = Loans::
+            join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->leftJoin('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+            ->whereYear('loans.date', '=', $year)
+            ->whereMonth('loans.date', '=', $month)
+            ->whereIn('loans.status', ['1', '3'])
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',
+                'loans.loaner_id as loaner_id', 
+                'loaners.name as loaner_name', 
+                'loaners.code_type as loaner_code_type', 
+                'loaners.code as loaner_code', 
+                'loaners.phone as loaner_phone', 
+                'loans.lender_id as lender_id', 
+                'lenders.name as lender_name',
+                'lenders.code_type as lender_code_type', 
+                'lenders.code as lender_code',  
+                'recipients.id as recipient_id',
+                'recipients.name as recipient_name',
+                'recipients.code_type as recipient_code_type', 
+                'recipients.code as recipient_code',  
+            )->orderBy('date')
+            ->get();
+            if ($loans->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            $count = $loans->count();
+            $success['count'] = $count;
+            $success['month'] = $nameOfMonth[$month];
+            $success['year'] = $year;
+            $success['loans'] = $loans;
+            return $this->sendResponse($success, 'Displaying all Loans data');
+        } catch (\Throwable $th) {
+            return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
+        }
+    }
+
+
+    /** 
+     * Get report per semester loans
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+    */
+
+    public function reportSemester(Request $request){
+        try {
+            $semester = $request->semester;
+            $year1 = $request->year;
+            $year2 = $year1+1;
+            $academicYear = $year1."/".$year2;
+            $range = '';
+            $dateOne = '';
+            $dateTwo = '';
+            if ($semester == 2) {
+                $range = 'Genap';
+                $dateOne = $year2.'-02-01 00:00:00';
+                $dateTwo = $year2.'-07-31 23:59:59';
+            } else if($semester == 1) {
+                $range = 'Ganjil';
+                $dateOne = $year1.'-08-01 00:00:00';
+                $dateTwo = $year2.'-01-31 23:59:59';
+            }
+
+            $from = date($dateOne);
+            $to = date($dateTwo);
+
+            $loans = Loans::
+            join('users as loaners', 'loans.loaner_id', '=', 'loaners.id')
+            ->leftJoin('users as lenders', 'loans.lender_id', '=', 'lenders.id')
+            ->leftJoin('returns as returns', 'loans.return_id', '=', 'returns.id')
+            ->leftJoin('users as recipients', 'returns.recipient_id', '=', 'recipients.id')
+            ->whereBetween('loans.date', [$from, $to])
+            ->whereIn('loans.status', ['1', '3'])
+            ->select(
+                'loans.id as id',
+                'loans.code as code',
+                'loans.status as status',
+                'loans.date as date',
+                'loans.due_date as due_date',
+                'loans.return_id as return_id',
+                'loans.loaner_id as loaner_id', 
+                'loaners.name as loaner_name', 
+                'loaners.code_type as loaner_code_type', 
+                'loaners.code as loaner_code', 
+                'loaners.phone as loaner_phone', 
+                'loans.lender_id as lender_id', 
+                'lenders.name as lender_name',
+                'lenders.code_type as lender_code_type', 
+                'lenders.code as lender_code',  
+                'recipients.id as recipient_id',
+                'recipients.name as recipient_name',
+                'recipients.code_type as recipient_code_type', 
+                'recipients.code as recipient_code',  
+            )->orderBy('date')  
+            ->get();
+            if ($loans->isEmpty()) {
+                return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
+            }
+            $count = $loans->count();
+            $success['academicYear'] = $academicYear;
+            $success['count'] = $count;
+            $success['range'] = $range;
+            $success['loans'] = $loans;
             return $this->sendResponse($success, 'Displaying all Loans data');
         } catch (\Throwable $th) {
             return $this->sendError('Error!', ['error' => "Permintaan tidak dapat dilakukan."]);
@@ -491,7 +711,7 @@ class LoansController extends BaseController
         try {
             // dd();
             // $this->loansRequestService->sendWhatsappNotification("Test", Auth::user()->phone);
-            // sleep(2);
+        
             $loaner_id = Auth::user()->id;
 
             // \DB::enableQueryLog();
@@ -587,10 +807,9 @@ class LoansController extends BaseController
                     break;
             }
             $date = date("d/m/Y");
-            $phone = Auth::user()->phone;
             $inv = rand(1000, 9999);
             $strInv = "$inv";
-            $code = "INV-".$date."-ERK-LOANS"."/".$phone."/".$strInv;
+            $code = "INV-".$date."-ERK-PINJAM"."/".$strInv;
             
             $checkCodeLoans = Loans::
             where('code', $code)
@@ -620,7 +839,7 @@ class LoansController extends BaseController
             $createLoans = Loans::create($loanArray);
             $loan_id = $createLoans->id;
             $encodeId = base64_encode($loan_id);
-            // $link = '192.168.0.102:3000/manage/loans/confirmation?data='.$encodeId;
+            $link = getenv("APP_URL_FE").'/loans/confirmation?data='.$encodeId;
             $loaner_name = Auth::user()->name;
             $loaner_code = Auth::user()->code;
             $loaner_code_type = Auth::user()->code_type;
@@ -650,14 +869,20 @@ class LoansController extends BaseController
                                     if($adminPhone[$rowPhone]) {
                                         $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
                                         // var_dump($adminNumber);exit();
-                                        if($loaner_code_type == "0") {
+                                        if ($loaner_code_type == "0") {
                                             $strUserCode = 'NIM';
-                                        } else {
+                                        } elseif ($loaner_code_type == "1") {
                                             $strUserCode = 'NIDN';                                        
+                                        } elseif ($loaner_code_type == "2") {
+                                            $strUserCode = 'NIP';                                        
                                         }
-                                        $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
-                                        $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
-                                        // dd($adminPhone[$rowPhone]);
+                                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                                        try {
+                                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                            $success['adminWhatsApp'] = 'WhatsApp Berhasil dikirim';
+                                        } catch (\Throwable $th) {
+                                            $success['adminWhatsApp'] = 'WhatsApp Gagal dikirim. Error: '.$th;
+                                        }
                                     }
                                 }
                             }
@@ -682,11 +907,18 @@ class LoansController extends BaseController
                         // var_dump($adminNumber);exit();
                         if($loaner_code_type == "0") {
                             $strUserCode = 'NIM';
-                        } else {
+                        } elseif($loaner_code_type == "1") {
                             $strUserCode = 'NIDN';                                        
+                        } elseif($loaner_code_type == "2") {
+                            $strUserCode = 'NIP';                                        
                         }
-                        $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
-                        $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                        try {
+                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                            $success['superAdminWhatsApp'] = "WhatsApp berhasil dikirim!";
+                        } catch (\Throwable $th) {
+                            $success['superAdminWhatsApp'] = "WhatsApp gagal dikirim. Error: ".$th;
+                        }
                     }
                 }
             }
@@ -814,6 +1046,8 @@ class LoansController extends BaseController
             // \DB::enableQueryLog();
             $getAssetFromLoanDetails = LoanDetails::
             where('loan_id', $loan_id)->get();
+            $encodeId = base64_encode($loan_id);
+            $link = getenv("APP_URL_FE").'/loans/confirmation?data='.$encodeId;
             // dd(\DB::getQueryLog());
             // dd($getAssetFromLoanDetails[0]['asset_id']);
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
@@ -828,7 +1062,7 @@ class LoansController extends BaseController
                     // if()
                     $unSetStatusAssets->status = "0";
                     $unSetStatusAssets->save();
-                    $getAssetFromLoanDetails[$i]->delete();
+                    $getAssetFromLoanDetails[$i]->forceDelete();
                     // dd("test");
                     // dd($updateLoanDetails['asset_id']);
                     // dd($getAssetFromLoanDetails[$i]['asset_id']);
@@ -863,11 +1097,18 @@ class LoansController extends BaseController
                                             // var_dump($adminNumber);exit();
                                             if($loaner_code_type == "0") {
                                                 $strUserCode = 'NIM';
-                                            } else {
+                                            } elseif($loaner_code_type == "1") {
                                                 $strUserCode = 'NIDN';                                        
+                                            } elseif($loaner_code_type == "2") {
+                                                $strUserCode = 'NIP';                                        
                                             }
-                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
-                                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                                            try {
+                                                $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                                $success['adminWhatsApp'] = '';
+                                            } catch (\Throwable $th) {
+                                                $success['adminWhatsApp'] = 'Gagal mengirim pesan whatsApp kepada Admin. Error: '.$th;
+                                            }
                                             // dd($adminPhone[$rowPhone]);
                                         }
                                     }
@@ -892,11 +1133,18 @@ class LoansController extends BaseController
                             // var_dump($adminNumber);exit();
                             if($loaner_code_type == "0") {
                                 $strUserCode = 'NIM';
-                            } else {
+                            } elseif($loaner_code_type == "1") {
                                 $strUserCode = 'NIDN';                                        
+                            } elseif($loaner_code_type == "2") {
+                                $strUserCode = 'NIP';                                        
                             }
-                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Periode: *$range*\n\nLihat detailnya melalui tautan berikut: ";
-                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                            try {
+                                $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
+                                $success['superAdminWhatsApp'] = '';
+                            } catch (\Throwable $th) {
+                                $success['superAdminWhatsApp'] = 'Gagal mengirim pesan whatsApp kepada Super-Admin. Error: '.$th;
+                            }
                         }
                     }
                 }
@@ -974,7 +1222,7 @@ class LoansController extends BaseController
                 $loaner_phone = $loaner->phone;
 
                 $encodeId = base64_encode($id);
-                // $link = "http://localhost:3000/manage/loans/confirmation?data=".$encodeId;
+                $link = getenv("APP_URL_FE")."/loans/myDetails?data=".$encodeId;
                 
                 // dd($getLoanerPhone->phone);
                 
@@ -1002,11 +1250,16 @@ class LoansController extends BaseController
                 }
 
                 if($loaner_phone) {
-                    $message = "Anda mendapatkan *Konfirmasi Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nKode Peminjaman: *$code*\nPesan Konfirmasi: \n*$confirmation*$instruction\n\nLihat detailnya melalui tautan berikut: ";
-                    $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+                    $message = "Anda mendapatkan *Konfirmasi Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\nKode Peminjaman: *$code*\nPesan Konfirmasi: \n*$confirmation*$instruction\n\nLihat detailnya melalui tautan berikut: \n$link";
+                    try {
+                        $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+                        $success['whatsapp'] = "Pesan Konfirmasi Berhasil dikirim via WhatsApp";
+                    } catch (\Throwable $th) {
+                        $success['whatsapp'] = "Pesan Konfirmasi Gagal dikirim via WhatsApp. Error: ".$th;
+                    }
                 }
 
-                $success['message'] = "Pesan konfirmasi untuk permintaan peminjaman tersebut telah kami kirim melalui Pesan WhatsApp Peminjam!";
+                $success['message'] = "Transaksi berhasil dikonfirmasi!";
                 return $this->sendResponse($success, 'Konfirmasi Peminjaman Berhasil!');
             } else {
                 return $this->sendError('Error!', ['error'=> 'Set Status Konfirmasi salah!']);
@@ -1051,6 +1304,8 @@ class LoansController extends BaseController
                     return $this->sendError('Error!', ['error'=> 'Peminjaman belum melewati tenggat waktu!']);
                 }
 
+                $encodeId = base64_encode($id);
+                $link = getenv("APP_URL_FE")."/loans/myDetails?data=".$encodeId;
                 $code = $checkLoans->code;
                 $loaner = User::find($checkLoans->loaner_id);
                 $loaner_name = $loaner->name;
@@ -1060,8 +1315,10 @@ class LoansController extends BaseController
                 $strUserCode = '';
                 if($loaner_code_type == '0') {
                     $strUserCode = 'NIM';
-                } else {
+                } elseif($loaner_code_type == '1') {
                     $strUserCode = 'NIDN';
+                } elseif($loaner_code_type == '2') {
+                    $strUserCode = 'NIP';
                 }
                 $loaner_phone = $loaner->phone;
                 
@@ -1070,11 +1327,16 @@ class LoansController extends BaseController
                 $instruction = "\nSegera kembalikan setiap aset kepada Admin dari masing-masing Program Studi terkait! Terima kasih.\n";
 
                 if($loaner_phone) {
-                    $message = "$demand $instruction\nRincian Peminjaman\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n\nLihat detailnya melalui tautan berikut: ";
-                    $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+                    $message = "$demand $instruction\nRincian Peminjaman\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                    try {
+                        $this->loansRequestService->sendWhatsappNotification($message, $loaner_phone);
+                        $success['whatsapp'] = "Pesan WhatsApp berhasil dikirim. ";
+                    } catch (\Throwable $th) {
+                        $success['whatsapp'] = "Pesan WhatsApp gagal dikirim. Error: ".$th;
+                    }
                 }
 
-                $success['message'] = "Pesan permintaan pengembalian aset yang dipinjam telah kami kirim melalui Pesan WhatsApp Peminjam!";
+                $success['message'] = $success['whatsapp'];
                 return $this->sendResponse($success, 'Pesan Pengembalian Berhasil dikirim!');
             } else {
                 return $this->sendError('Error!', ['error'=> 'Status peminjaman bukan peminjaman aktif!']);
@@ -1120,6 +1382,7 @@ class LoansController extends BaseController
             // dd(\DB::getQueryLog());\
             $totalDelete = 0;
             if($deleteLoans) {
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
                 $getAssetFromLoanDetails = LoanDetails::
                 where('loan_id', $id)->get();
                 for($i = 0; $i < count($getAssetFromLoanDetails); $i++) {
@@ -1129,11 +1392,10 @@ class LoansController extends BaseController
                         $unSetStatusAssets->save();
                     }
                     // dd($getAssetFromLoanDetails[$i]);
-                    $getAssetFromLoanDetails[$i]['deleted_at'] = Carbon::now();
-                    $getAssetFromLoanDetails[$i]->delete();
+                    // $getAssetFromLoanDetails[$i]['deleted_at'] = Carbon::now();
+                    $getAssetFromLoanDetails[$i]->forceDelete();
                 }     
-                $deleteLoans->deleted_at = Carbon::now();
-                $deleteLoans->delete();
+                $deleteLoans->forceDelete();
                 // $totalDelete++;
     
                 $tokenMsg = Str::random(15);

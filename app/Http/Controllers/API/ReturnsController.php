@@ -99,7 +99,7 @@ class ReturnsController extends BaseController
                     $loan_ids[] = $rowloan->id;
                 }
             }
-            // \DB::enableQueryLog();
+            \DB::enableQueryLog();
             // dd($request->loaner_ids == NULL);
             
             $returns = Returns::join('users as loaners', 'returns.loaner_id', '=', 'loaners.id')
@@ -111,10 +111,10 @@ class ReturnsController extends BaseController
             ->whereIn('returns.loaner_id', $loaner_ids)
             ->when(isset($recipient_keyWords))
             ->whereIn('returns.recipient_id', $recipient_ids)
-            ->when(isset($dateOne) && !isset($dateTwo))
-            ->where('returns.date', $from)
             ->when(isset($dateOne) && isset($dateTwo))
-            ->whereBetween('returns.date', [$from, $to])
+            ->whereBetween('returns.date', [$from.' 00:00:00', $to.' 23:59:59'])
+            ->when(isset($dateOne) && !isset($dateTwo))
+            ->whereBetween('returns.date', [$from.' 00:00:00', $from.' 23:59:59'])
             ->when(isset($loan_code))
             ->whereIn('returns.loan_id', $loan_ids)
             ->select(
@@ -138,17 +138,17 @@ class ReturnsController extends BaseController
                 // dd("test");
                 // dd(Loans::all());
                 // dd(Auth::user()->name);
-                // \DB::enableQueryLog();
-            // dd(\DB::getQueryLog());
+                // dd(\DB::getQueryLog());
                 // dd($loans);
             if ($returns->isEmpty()) {
                 return $this->sendError('Error!', ['error' => 'Data tidak ditemukan!']);
             }
             $count = $returns->count();
-            $countDelete = Returns::onlyTrashed()->count();
+            // \DB::enableQueryLog();
+            // $countDelete = Returns::onlyTrashed()->count();
             // dd(\DB::getQueryLog());
             $success['count'] = $count;
-            $success['countDelete'] = $countDelete;
+            // $success['countDelete'] = $countDelete;
             $success['returns']= $returns
                 ->when(isset($skip))
                 ->skip($skip)
@@ -297,10 +297,9 @@ class ReturnsController extends BaseController
 
                 // dd($getLoaner->phone);
                 $date = date("d/m/Y");
-                $phone = $getLoaner->phone;
                 $inv = rand(1000, 9999);
                 $strInv = "$inv";
-                $code = "INV-".$date."-ERK-RETURNS"."/".$phone."/".$strInv;
+                $code = "INV-".$date."-ERK-KEMBALI"."/".$strInv;
                 
                 $checkCodeLoans = Returns::
                 where('code', $code)
@@ -352,29 +351,40 @@ class ReturnsController extends BaseController
                 $recipient_name = $getRecipient->name;
                 $recipient_code = $getRecipient->code;
                 $recipient_code_type = $getRecipient->code_type;
+                $encodeId = base64_encode($createReturn->id);
+                $link = getenv("APP_URL_FE")."/loans/returnDetails?data=".$encodeId;
                 
                 $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
                 for ($i=0; $i < count($studyProgramAssets); $i++) { 
                     if($sortNumber !== $studyProgramAssets[$i]['study_program_id']){
                         $adminPhone = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->pluck('phone');
-                        if($adminPhone->isEmpty() === FALSE) {
+                        if(!$adminPhone->isEmpty()) {
                             for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
                                 if($adminPhone[$rowPhone]) {
                                     $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
                                     // var_dump($adminNumber);exit();
                                     if($loaner_code_type == "0") {
                                         $strUserCode = 'NIM';
-                                    } else {
+                                    } elseif($loaner_code_type == "1") {
                                         $strUserCode = 'NIDN';                                        
+                                    } elseif($loaner_code_type == "2") {
+                                        $strUserCode = 'NIP';                                        
                                     }
 
                                     if($recipient_code_type == "0") {
                                         $strRecipientCode = 'NIM';
-                                    } else {
+                                    } elseif($recipient_code_type == "1") {
                                         $strRecipientCode = 'NIDN';                                        
+                                    } elseif($recipient_code_type == "2") {
+                                        $strRecipientCode = 'NIP';                                        
                                     }
-                                    $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: ";
-                                    $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
+                                    $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                                    try {
+                                        $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
+                                        $success['whatsApp'] = "WhatsApp berhasil dikirim";
+                                    } catch (\Throwable $th) {
+                                        $success['whatsApp'] = "WhatsApp gagal dikirim. Error: ".$th;
+                                    }
                                     // dd($adminPhone[$rowPhone]);
                                 }
                             }
@@ -384,7 +394,7 @@ class ReturnsController extends BaseController
                 }
                 
                 $superAdminPhone = User::role('Super-Admin')->pluck('phone');
-                if($superAdminPhone->isEmpty() === FALSE) {
+                if(!$superAdminPhone->isEmpty()) {
                     for ($rowPhone= 0; $rowPhone < count($superAdminPhone); $rowPhone++) {
                         if($superAdminPhone[$rowPhone]){
                             // dd($superAdminPhone);
@@ -392,16 +402,30 @@ class ReturnsController extends BaseController
                             // var_dump($adminNumber);exit();
                             if($loaner_code_type == "0") {
                                 $strUserCode = 'NIM';
-                            } else {
+                            } elseif($loaner_code_type == "1") {
                                 $strUserCode = 'NIDN';                                        
+                            } elseif($loaner_code_type == "2") {
+                                $strUserCode = 'NIP';                                        
                             }
-                            $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: ";
-                            $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
-                            // dd("Test");
+                            
+                            if($recipient_code_type == "0") {
+                                $strRecipientCode = 'NIM';
+                            } elseif($recipient_code_type == "1") {
+                                $strRecipientCode = 'NIDN';                                        
+                            } elseif($recipient_code_type == "2") {
+                                $strRecipientCode = 'NIP';                                        
+                            }
+                            $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                            try {
+                                $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
+                                $success['whatsapp'] = "WhatsApp berhasil dikirim.";
+                            } catch (\Throwable $th) {
+                                $success['whatsapp'] = "WhatsApp gagal dikirim. Error: ".$th;
+                            }
                         }
                     }
                 }
-                $success['message'] = "Kami telah mengirimkan pesan konfirmasi pengembalian aset yang anda lakukan!";
+                $success['message'] = "Konfirmasi pengembalian aset berhasil!";
                 return $this->sendResponse($success, 'Konfirmasi pengembalian berhasil!');
                 // dd($getRecipient->name);
 
