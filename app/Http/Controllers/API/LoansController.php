@@ -807,7 +807,7 @@ class LoansController extends BaseController
                     break;
             }
             $date = date("d/m/Y");
-            $inv = rand(1000, 9999);
+            $inv = rand(100000, 999999);
             $strInv = "$inv";
             $code = "INV-".$date."-ERK-PINJAM"."/".$strInv;
             
