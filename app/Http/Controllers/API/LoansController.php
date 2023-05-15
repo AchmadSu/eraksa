@@ -644,12 +644,12 @@ class LoansController extends BaseController
             $dateTwo = '';
             if ($semester == 2) {
                 $range = 'Genap';
-                $dateOne = $year2.'-02-01 00:00:00';
-                $dateTwo = $year2.'-07-31 23:59:59';
+                $dateOne = $year2.'-01-01 00:00:00';
+                $dateTwo = $year2.'-06-30 23:59:59';
             } else if($semester == 1) {
                 $range = 'Ganjil';
-                $dateOne = $year1.'-08-01 00:00:00';
-                $dateTwo = $year2.'-01-31 23:59:59';
+                $dateOne = $year1.'-07-01 00:00:00';
+                $dateTwo = $year2.'-12-31 23:59:59';
             }
 
             $from = date($dateOne);
@@ -859,36 +859,6 @@ class LoansController extends BaseController
                     // dd($message);
                     // \DB::enableQueryLog();
                     // var_dump($studyProgramAssets[$i] == $checkAssets->study_program_id);exit();
-                    $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
-                    if($sortNumber !== $studyProgramAssets[$i]['study_program_id']){
-                        $checkAdmin = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->role('Admin')->get();
-                        if(!($checkAdmin->isEmpty())) {
-                            $adminPhone = $checkAdmin->pluck('phone');
-                            if(!($adminPhone->isEmpty())) {
-                                for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
-                                    if($adminPhone[$rowPhone]) {
-                                        $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
-                                        // var_dump($adminNumber);exit();
-                                        if ($loaner_code_type == "0") {
-                                            $strUserCode = 'NIM';
-                                        } elseif ($loaner_code_type == "1") {
-                                            $strUserCode = 'NIDN';                                        
-                                        } elseif ($loaner_code_type == "2") {
-                                            $strUserCode = 'NIP';                                        
-                                        }
-                                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\nLama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
-                                        try {
-                                            $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
-                                            $success['adminWhatsApp'] = 'WhatsApp Berhasil dikirim';
-                                        } catch (\Throwable $th) {
-                                            $success['adminWhatsApp'] = 'WhatsApp Gagal dikirim. Error: '.$th;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }   
-                    $sortNumber = $studyProgramAssets[$i]['study_program_id'];
                 } else {
                     return $this->sendError('Error!', [
                         'error' =>
@@ -1085,37 +1055,6 @@ class LoansController extends BaseController
                         // dd($message);
                         // \DB::enableQueryLog();
                         // var_dump($studyProgramAssets[$i] == $checkAssets->study_program_id);exit();
-                        $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
-                        if($sortNumber !== $studyProgramAssets[$i]['study_program_id']){
-                            $checkAdmin = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->role('Admin')->get();
-                            if(!($checkAdmin->isEmpty())) {
-                                $adminPhone = $checkAdmin->pluck('phone');
-                                if(!($adminPhone->isEmpty())) {
-                                    for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
-                                        if($adminPhone[$rowPhone]) {
-                                            $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
-                                            // var_dump($adminNumber);exit();
-                                            if($loaner_code_type == "0") {
-                                                $strUserCode = 'NIM';
-                                            } elseif($loaner_code_type == "1") {
-                                                $strUserCode = 'NIDN';                                        
-                                            } elseif($loaner_code_type == "2") {
-                                                $strUserCode = 'NIP';                                        
-                                            }
-                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\nLama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
-                                            try {
-                                                $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
-                                                $success['adminWhatsApp'] = '';
-                                            } catch (\Throwable $th) {
-                                                $success['adminWhatsApp'] = 'Gagal mengirim pesan whatsApp kepada Admin. Error: '.$th;
-                                            }
-                                            // dd($adminPhone[$rowPhone]);
-                                        }
-                                    }
-                                }
-                            }
-                        }   
-                        $sortNumber = $studyProgramAssets[$i]['study_program_id'];
                     } else {
                         return $this->sendError('Error!', [
                             'error' =>
@@ -1228,7 +1167,7 @@ class LoansController extends BaseController
                 
                 if($checkLoans->status == "1") {
                     $confirmation = "Selamat, Permintaan Anda DISETUJUI!";
-                    $instruction = "\nSilakan temui Admin dari masing-masing Program Studi terkait! Terima kasih.\n";
+                    $instruction = "\nSilakan temui Admin dari Sarana dan Prasarana! Terima kasih.\n";
                 } elseif($checkLoans->status == "2") {
                     $getAssetFromLoanDetails = LoanDetails::
                     where('loan_id', $id)->get();
@@ -1324,7 +1263,7 @@ class LoansController extends BaseController
                 
                 // dd($getLoanerPhone->phone);
                 $demand = "*Hai $loaner_name!*\nPeminjaman anda telah *MELAMPAUI BATAS WAKTU*.";
-                $instruction = "\nSegera kembalikan setiap aset kepada Admin dari masing-masing Program Studi terkait! Terima kasih.\n";
+                $instruction = "\nSegera kembalikan setiap aset kepada Admin dari Sarana dan Prasarana! Terima kasih.\n";
 
                 if($loaner_phone) {
                     $message = "$demand $instruction\nRincian Peminjaman\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";

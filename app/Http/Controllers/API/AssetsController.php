@@ -68,7 +68,7 @@ class AssetsController extends BaseController
             $assets = Assets::join('users as users', 'assets.user_id', '=', 'users.id')
             ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
-            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            
             ->when(isset($keyWords))
             ->where(function ($query) use ($keyWords){
                 $query->where('assets.code', 'like', '%'.$keyWords.'%')->orWhere('assets.name', 'like', '%'.$keyWords.'%');
@@ -103,8 +103,7 @@ class AssetsController extends BaseController
                 'category_assets.name as category_name', 
                 'assets.user_id as user_id',
                 'users.name as user_name',
-                'assets.study_program_id as study_program_id',
-                'study_programs.name as study_program_name',
+                
             )
             ->when($order)
             ->orderBy($order, 'ASC')
@@ -187,7 +186,6 @@ class AssetsController extends BaseController
             join('users as users', 'assets.user_id', '=', 'users.id')
             ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
-            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
             ->when(isset($keyWords))
             ->where(function ($query) use ($keyWords){
                 $query->where('assets.code', 'like', '%'.$keyWords.'%')->orWhere('assets.name', 'like', '%'.$keyWords.'%');
@@ -223,8 +221,6 @@ class AssetsController extends BaseController
                 'category_assets.name as category_name', 
                 'assets.user_id as user_id',
                 'users.name as user_name',
-                'assets.study_program_id as study_program_id',
-                'study_programs.name as study_program_name',
             )
             ->when($order)
             ->orderBy($order, 'ASC')
@@ -271,7 +267,7 @@ class AssetsController extends BaseController
             $asset = Assets::join('users as users', 'assets.user_id', '=', 'users.id')
             ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
-            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            
             ->select(
                 'assets.id as id',
                 'assets.name as name',
@@ -286,8 +282,7 @@ class AssetsController extends BaseController
                 'category_assets.name as category_name', 
                 'assets.user_id as user_id',
                 'users.name as user_name',
-                'assets.study_program_id as study_program_id',
-                'study_programs.name as study_program_name',
+                
             )
             ->find($id);
             // dd(\DB::getQueryLog());
@@ -403,7 +398,7 @@ class AssetsController extends BaseController
             join('users as users', 'assets.user_id', '=', 'users.id')
             ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
-            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            
             ->where('assets.condition', '1')
             ->whereBetween('assets.updated_at', [$from, $to])
             ->when($auth->hasRole('Admin'))
@@ -421,8 +416,6 @@ class AssetsController extends BaseController
                 'category_assets.name as category_name', 
                 'assets.user_id as user_id',
                 'users.name as user_name',
-                'assets.study_program_id as study_program_id',
-                'study_programs.name as study_program_name',
             )
             ->orderBy('study_program_name', 'ASC')
             ->get();
@@ -476,7 +469,7 @@ class AssetsController extends BaseController
             join('users as users', 'assets.user_id', '=', 'users.id')
             ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
-            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            
             ->where('assets.condition', '1')
             ->whereYear('assets.updated_at', '=', $year)
             ->whereMonth('assets.updated_at', '=', $month)
@@ -495,8 +488,7 @@ class AssetsController extends BaseController
                 'category_assets.name as category_name', 
                 'assets.user_id as user_id',
                 'users.name as user_name',
-                'assets.study_program_id as study_program_id',
-                'study_programs.name as study_program_name',
+                
             )
             ->orderBy('study_program_name', 'ASC')
             ->get();
@@ -537,12 +529,12 @@ class AssetsController extends BaseController
             $dateTwo = '';
             if ($semester == 2) {
                 $range = 'Genap';
-                $dateOne = $year2.'-02-01 00:00:00';
-                $dateTwo = $year2.'-07-31 23:59:59';
+                $dateOne = $year2.'-01-01 00:00:00';
+                $dateTwo = $year2.'-06-30 23:59:59';
             } else if($semester == 1) {
                 $range = 'Ganjil';
-                $dateOne = $year1.'-08-01 00:00:00';
-                $dateTwo = $year2.'-01-31 23:59:59';
+                $dateOne = $year1.'-07-01 00:00:00';
+                $dateTwo = $year2.'-12-31 23:59:59';
             }
 
             $from = date($dateOne);
@@ -552,11 +544,9 @@ class AssetsController extends BaseController
             join('users as users', 'assets.user_id', '=', 'users.id')
             ->join('category_assets as category_assets', 'assets.category_id', '=', 'category_assets.id')
             ->join('placements as placements', 'assets.placement_id', '=', 'placements.id')
-            ->join('study_programs as study_programs', 'assets.study_program_id', '=', 'study_programs.id')
+            
             ->where('assets.condition', '1')
             ->whereBetween('assets.updated_at', [$from, $to])
-            ->when($auth->hasRole('Admin'))
-            ->where('assets.study_program_id', $auth->study_program_id)
             ->select(
                 'assets.id as id',
                 'assets.name as name',
@@ -570,10 +560,8 @@ class AssetsController extends BaseController
                 'category_assets.name as category_name', 
                 'assets.user_id as user_id',
                 'users.name as user_name',
-                'assets.study_program_id as study_program_id',
-                'study_programs.name as study_program_name',
             )
-            ->orderBy('study_program_name', 'ASC')
+            ->orderBy('name', 'ASC')
             ->get();
 
             if ($assets->isEmpty()) {

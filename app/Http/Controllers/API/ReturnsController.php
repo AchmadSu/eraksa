@@ -354,45 +354,6 @@ class ReturnsController extends BaseController
                 $encodeId = base64_encode($createReturn->id);
                 $link = getenv("APP_URL_FE")."/loans/returnDetails?data=".$encodeId;
                 
-                $studyProgramAssets = Assets::orderBy('study_program_id')->whereIn('id', $asset_ids)->get();
-                for ($i=0; $i < count($studyProgramAssets); $i++) { 
-                    if($sortNumber !== $studyProgramAssets[$i]['study_program_id']){
-                        $adminPhone = User::where('study_program_id', $studyProgramAssets[$i]['study_program_id'])->pluck('phone');
-                        if(!$adminPhone->isEmpty()) {
-                            for ($rowPhone= 0; $rowPhone < count($adminPhone); $rowPhone++) { 
-                                if($adminPhone[$rowPhone]) {
-                                    $strPhone = implode('|', (array) $adminPhone[$rowPhone]);
-                                    // var_dump($adminNumber);exit();
-                                    if($loaner_code_type == "0") {
-                                        $strUserCode = 'NIM';
-                                    } elseif($loaner_code_type == "1") {
-                                        $strUserCode = 'NIDN';                                        
-                                    } elseif($loaner_code_type == "2") {
-                                        $strUserCode = 'NIP';                                        
-                                    }
-
-                                    if($recipient_code_type == "0") {
-                                        $strRecipientCode = 'NIM';
-                                    } elseif($recipient_code_type == "1") {
-                                        $strRecipientCode = 'NIDN';                                        
-                                    } elseif($recipient_code_type == "2") {
-                                        $strRecipientCode = 'NIP';                                        
-                                    }
-                                    $message = "Anda mendapatkan pesan *Pengembalian Peminjaman*!\n\nRincian Pengembalian\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nNama penerima aset: *$recipient_name*\n$strRecipientCode: *$recipient_code*\nKode Pengembalian: *$code*\n\nLihat detailnya melalui tautan berikut: \n$link";
-                                    try {
-                                        $this->returnsRequestService->sendWhatsappNotification($message, $strPhone);
-                                        $success['whatsApp'] = "WhatsApp berhasil dikirim";
-                                    } catch (\Throwable $th) {
-                                        $success['whatsApp'] = "WhatsApp gagal dikirim. Error: ".$th;
-                                    }
-                                    // dd($adminPhone[$rowPhone]);
-                                }
-                            }
-                        }
-                    }   
-                    $sortNumber = $studyProgramAssets[$i]['study_program_id'];
-                }
-                
                 $superAdminPhone = User::role('Super-Admin')->pluck('phone');
                 if(!$superAdminPhone->isEmpty()) {
                     for ($rowPhone= 0; $rowPhone < count($superAdminPhone); $rowPhone++) {

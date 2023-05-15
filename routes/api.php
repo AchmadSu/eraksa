@@ -125,21 +125,21 @@ Route::controller(WorkshopsController::class)->group(function(){
 });
 
 /**--- Programs Study --- */
-Route::controller(StudyProgramsController::class)->group(function(){
-    Route::middleware('auth:sanctum')->group(function(){
-        // Route::middleware('role:Super-Admin|Admin')->group(function(){
-        Route::middleware('role:Super-Admin')->group(function(){
-            Route::post('studyPrograms/create', 'create'); 
-            Route::put('studyPrograms/update', 'update');
-            Route::delete('studyPrograms/delete', 'delete');
-            Route::delete('studyPrograms/deletePermanently', 'deletePermanently');
-            Route::put('studyPrograms/restore', 'restore');
-        });
-        Route::get('studyPrograms/getAll', 'index');
-        Route::get('studyPrograms/detail/{id}', 'show');
-        // });
-    });
-});
+// Route::controller(StudyProgramsController::class)->group(function(){
+//     Route::middleware('auth:sanctum')->group(function(){
+//         // Route::middleware('role:Super-Admin|Admin')->group(function(){
+//         Route::middleware('role:Super-Admin')->group(function(){
+//             Route::post('studyPrograms/create', 'create'); 
+//             Route::put('studyPrograms/update', 'update');
+//             Route::delete('studyPrograms/delete', 'delete');
+//             Route::delete('studyPrograms/deletePermanently', 'deletePermanently');
+//             Route::put('studyPrograms/restore', 'restore');
+//         });
+//         Route::get('studyPrograms/getAll', 'index');
+//         Route::get('studyPrograms/detail/{id}', 'show');
+//         // });
+//     });
+// });
 
 /** --- Verification Codes --- */
 Route::controller(VerificationCodesController::class)->group(function(){
