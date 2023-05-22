@@ -362,7 +362,7 @@ class ReturnsController extends BaseController
                             $strPhone = implode('|', (array) $superAdminPhone[$rowPhone]);
                             // var_dump($adminNumber);exit();
                             if($loaner_code_type == "0") {
-                                $strUserCode = 'NIM';
+                                $strUserCode = 'NISN';
                             } elseif($loaner_code_type == "1") {
                                 $strUserCode = 'NIDN';                                        
                             } elseif($loaner_code_type == "2") {
@@ -370,7 +370,7 @@ class ReturnsController extends BaseController
                             }
                             
                             if($recipient_code_type == "0") {
-                                $strRecipientCode = 'NIM';
+                                $strRecipientCode = 'NISN';
                             } elseif($recipient_code_type == "1") {
                                 $strRecipientCode = 'NIDN';                                        
                             } elseif($recipient_code_type == "2") {

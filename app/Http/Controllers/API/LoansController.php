@@ -876,7 +876,7 @@ class LoansController extends BaseController
                         $strPhone = implode('|', (array) $superAdminPhone[$rowPhone]);
                         // var_dump($adminNumber);exit();
                         if($loaner_code_type == "0") {
-                            $strUserCode = 'NIM';
+                            $strUserCode = 'NISN';
                         } elseif($loaner_code_type == "1") {
                             $strUserCode = 'NIDN';                                        
                         } elseif($loaner_code_type == "2") {
@@ -1071,7 +1071,7 @@ class LoansController extends BaseController
                             $strPhone = implode('|', (array) $superAdminPhone[$rowPhone]);
                             // var_dump($adminNumber);exit();
                             if($loaner_code_type == "0") {
-                                $strUserCode = 'NIM';
+                                $strUserCode = 'NISN';
                             } elseif($loaner_code_type == "1") {
                                 $strUserCode = 'NIDN';                                        
                             } elseif($loaner_code_type == "2") {
@@ -1253,7 +1253,7 @@ class LoansController extends BaseController
                 $loaner_code = $loaner->code;
                 $strUserCode = '';
                 if($loaner_code_type == '0') {
-                    $strUserCode = 'NIM';
+                    $strUserCode = 'NISN';
                 } elseif($loaner_code_type == '1') {
                     $strUserCode = 'NIDN';
                 } elseif($loaner_code_type == '2') {
