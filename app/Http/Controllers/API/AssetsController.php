@@ -594,7 +594,6 @@ class AssetsController extends BaseController
             sleep(5);
             $validator = Validator::make($request->all(),[
                 'name' => 'required',
-                'study_program_id' => 'required|numeric',
                 'category_id' => 'required|numeric',
                 'placement_id' => 'required|numeric',
             ]);
@@ -605,10 +604,6 @@ class AssetsController extends BaseController
             $auth = Auth::user();
             // dd($auth);
             $user_id =  $auth->id;
-            $study_program_id = (int)$request->study_program_id;
-            if($auth->hasRole('Admin')){
-                $study_program_id = $auth->study_program_id;
-            }
             $date = date("d/m/Y");
             $category_name = CategoryAssets::where('id', $request->category_id)->pluck('name');
             $category_name = Str::upper(str_replace(array('["','"]'), '', $category_name));
@@ -624,7 +619,7 @@ class AssetsController extends BaseController
                 "condition" => "0",
                 "code" => $code,
                 "name" => ucwords($request->name),
-                "study_program_id" => $study_program_id,
+                "study_program_id" => 0,
                 "category_id" => (int)$request->category_id,
                 "placement_id" => (int)$request->placement_id,
             );
@@ -686,14 +681,12 @@ class AssetsController extends BaseController
 
             $placement_id = $request->placement_id;
             $condition = $request->condition;
-            $study_program_id = $request->study_program_id;
             
             $validator = Validator::make($request->all(), [
                 'name' => 'required',
                 'condition' => 'required',
                 'category_id' => 'required|numeric',
-                'placement_id' => 'required|numeric',
-                'study_program_id' => 'required|numeric',
+                'placement_id' => 'required|numeric'
             ]);
             
             if ($validator->fails()){
@@ -705,7 +698,6 @@ class AssetsController extends BaseController
             $updateDataAsset->placement_id = $placement_id;
             $updateDataAsset->condition = $condition;
             $updateDataAsset->category_id = $category_id;
-            $updateDataAsset->study_program_id = $study_program_id;
             // dd($data);exit();
             
             // dd($updateDataAsset);
