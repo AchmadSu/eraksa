@@ -878,7 +878,7 @@ class LoansController extends BaseController
                         if($loaner_code_type == "0") {
                             $strUserCode = 'NISN';
                         } elseif($loaner_code_type == "1") {
-                            $strUserCode = 'NIDN';                                        
+                            $strUserCode = 'NUPTK';                                        
                         } elseif($loaner_code_type == "2") {
                             $strUserCode = 'NIP';                                        
                         }
@@ -1073,7 +1073,7 @@ class LoansController extends BaseController
                             if($loaner_code_type == "0") {
                                 $strUserCode = 'NISN';
                             } elseif($loaner_code_type == "1") {
-                                $strUserCode = 'NIDN';                                        
+                                $strUserCode = 'NUPTK';                                        
                             } elseif($loaner_code_type == "2") {
                                 $strUserCode = 'NIP';                                        
                             }
@@ -1255,7 +1255,7 @@ class LoansController extends BaseController
                 if($loaner_code_type == '0') {
                     $strUserCode = 'NISN';
                 } elseif($loaner_code_type == '1') {
-                    $strUserCode = 'NIDN';
+                    $strUserCode = 'NUPTK';
                 } elseif($loaner_code_type == '2') {
                     $strUserCode = 'NIP';
                 }

@@ -296,7 +296,7 @@ class UsersController extends BaseController
             $checkCode = User::where('code', $input['code'])->first();
             // dd(\DB::getQueryLog());
             if($checkCode){
-                return $this->sendError('Error!', ['error'=>'NIM/NIDN/NIP sudah terdaftar. Gunakan yang lain!']);
+                return $this->sendError('Error!', ['error'=>'NISN/NUPTK/NIP sudah terdaftar. Gunakan yang lain!']);
             }
             
             $input['name'] = ucwords(strtolower($input['name']));
@@ -415,7 +415,7 @@ class UsersController extends BaseController
                     'code' => 'required|unique:users,code',
                 ]);
                 if ($validator->fails()) {
-                    return $this->sendError('Error!', ['error' => 'NIM/NIDN/NIP sudah digunakan oleh pengguna lain']);
+                    return $this->sendError('Error!', ['error' => 'NISN/NUPTK/NIP sudah digunakan oleh pengguna lain']);
                 }
             }
 

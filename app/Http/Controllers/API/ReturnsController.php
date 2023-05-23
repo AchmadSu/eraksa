@@ -364,7 +364,7 @@ class ReturnsController extends BaseController
                             if($loaner_code_type == "0") {
                                 $strUserCode = 'NISN';
                             } elseif($loaner_code_type == "1") {
-                                $strUserCode = 'NIDN';                                        
+                                $strUserCode = 'NUPTK';                                        
                             } elseif($loaner_code_type == "2") {
                                 $strUserCode = 'NIP';                                        
                             }
@@ -372,7 +372,7 @@ class ReturnsController extends BaseController
                             if($recipient_code_type == "0") {
                                 $strRecipientCode = 'NISN';
                             } elseif($recipient_code_type == "1") {
-                                $strRecipientCode = 'NIDN';                                        
+                                $strRecipientCode = 'NUPTK';                                        
                             } elseif($recipient_code_type == "2") {
                                 $strRecipientCode = 'NIP';                                        
                             }
