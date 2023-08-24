@@ -807,7 +807,7 @@ class LoansController extends BaseController
                     break;
             }
             $date = date("d/m/Y");
-            $inv = rand(1000, 9999);
+            $inv = rand(100000, 999999);
             $strInv = "$inv";
             $code = "INV-".$date."-ERK-PINJAM"."/".$strInv;
             
@@ -876,7 +876,7 @@ class LoansController extends BaseController
                                         } elseif ($loaner_code_type == "2") {
                                             $strUserCode = 'NIP';                                        
                                         }
-                                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\nLama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                                         try {
                                             $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                             $success['adminWhatsApp'] = 'WhatsApp Berhasil dikirim';
@@ -912,7 +912,7 @@ class LoansController extends BaseController
                         } elseif($loaner_code_type == "2") {
                             $strUserCode = 'NIP';                                        
                         }
-                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                        $message = "Anda mendapatkan *Permintaan Peminjaman Baru*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\nLama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                         try {
                             $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                             $success['superAdminWhatsApp'] = "WhatsApp berhasil dikirim!";
@@ -1102,7 +1102,7 @@ class LoansController extends BaseController
                                             } elseif($loaner_code_type == "2") {
                                                 $strUserCode = 'NIP';                                        
                                             }
-                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\nLama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                                             try {
                                                 $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                                 $success['adminWhatsApp'] = '';
@@ -1138,7 +1138,7 @@ class LoansController extends BaseController
                             } elseif($loaner_code_type == "2") {
                                 $strUserCode = 'NIP';                                        
                             }
-                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\n Lama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
+                            $message = "Anda mendapatkan *Perubahan Permintaan Peminjaman*!\n\nRincian Permintaan\nNama peminjam: *$loaner_name*\n$strUserCode: *$loaner_code*\nKode: *$code*\nLama Peminjaman: *$range*\n\nLihat detailnya melalui tautan berikut: \n$link";
                             try {
                                 $this->loansRequestService->sendWhatsappNotification($message, $strPhone);
                                 $success['superAdminWhatsApp'] = '';
